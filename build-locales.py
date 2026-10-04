@@ -55,5 +55,7 @@ catch{}
     out+=extra
     (root/f'dist/app.{lang}.js').write_text(out)
     page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
+    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"></head>')
+    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')
