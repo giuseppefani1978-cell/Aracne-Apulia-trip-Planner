@@ -1,5 +1,28 @@
 # Aracne-Apulia-trip-Planner
 
+## V2 de test — experience-planner
+
+- Introduction animée courte, rejouable, avec pause et prise en compte de la réduction des animations.
+- 53 lieux, filtres par activité, 5 établissements spa/thermes et 4 offres bateau nommés.
+- Descriptions et sources pour les nouveaux lieux, durées conseillées sur place.
+- Durées de visites et de transferts modifiables ; total quotidien, amplitude et conflits horaires.
+- Estimations voiture indicatives, sans trafic en direct ; trajets en transports et vers les Tremiti à renseigner.
+- FR / IT / EN / ES. Sauvegardes V1 conservées. Les modifications restent sur cet appareil.
+- **Pas encore de synchronisation entre téléphones** : voir [la proposition de collaboration](docs/V2-COLLABORATION.md).
+
+Les ajouts V2 résident dans `dist/v2.js`, `dist/v2.css`, `dist/catalog-v2.js` et sont chargés
+par les quatre pages générées. `build-locales.py` conserve leur inclusion. Les traductions
+V2 sont regroupées par clé dans le module et par lieu dans le catalogue.
+
+Tests : `JSDOM_PATH=/chemin/vers/jsdom node tests/v2.dom.cjs` (ou installer `jsdom`).
+Tests visuels/interaction navigateur : `node tests/v2.browser.cjs` avec Playwright,
+Chromium installé et le serveur local sur le port 8765.
+
+Les tests DOM passent dans les quatre langues. La vérification visuelle navigateur
+reste à réaliser : le téléchargement de Chromium a échoué dans l’environnement de travail.
+
+---
+
 Première maquette fonctionnelle multilingue d’**Aracne · Ensemble dans les Pouilles**.
 Application distincte d’Il Volo d’Aracne, inspirée de son identité visuelle et de son concept de voyage personnalisable.
 

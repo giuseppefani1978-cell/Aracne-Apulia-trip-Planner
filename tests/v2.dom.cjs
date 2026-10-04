@@ -1,0 +1,32 @@
+const {JSDOM}=require(process.env.JSDOM_PATH||'jsdom');
+const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
+const root=path.join(__dirname,'..');
+for(const lang of ['fr','it','en','es']){
+ const html=fs.readFileSync(path.join(root,'dist',lang==='fr'?'index.html':`index.${lang}.html`),'utf8');
+ const dom=new JSDOM(html,{url:'https://example.test/dist/'+(lang==='fr'?'index.html':`index.${lang}.html`),runScripts:'outside-only'});
+ const w=dom.window,c=dom.getInternalVMContext();
+ w.matchMedia=()=>({matches:true});w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};
+ w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
+ w.confirm=()=>true;
+ for(const f of [`app.${lang}.js`,'catalog-v2.js','v2.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',f),'utf8'),c);
+ const run=s=>vm.runInContext(s,c);
+ assert.equal(w.document.querySelector('#modal').open,true);w.document.querySelector('#tourSkip').click();
+ run('drawMap()');assert.equal(w.document.querySelectorAll('#places .place').length,53);
+ w.document.querySelector('[data-category="spa"]').click();assert.equal(w.document.querySelectorAll('#places .place').length,5);
+ run("choosePlace('spa-vair')");w.document.querySelector('#confirmAdd').click();run("choosePlace('spa-coccaro')");w.document.querySelector('#confirmAdd').click();run("show('plan')");
+ const change=(selector,value)=>{const e=w.document.querySelector(selector);e.value=value;e.dispatchEvent(new w.Event('change'))};
+ change('[data-duration="0"]','240');change('[data-travel="1"]','35');
+ assert.equal(run('aracneV2Test.totals(state.plan[0]).occupied'),425);
+ assert.equal(JSON.parse(w.localStorage.getItem('aracne-puglia-v1')).plan[0][0].duration,240);
+ assert.equal(run("shareText('all',false).includes('7 h 05')"),true);
+ run("state.transport='transit'");assert.equal(run('aracneV2Test.totals(state.plan[0]).missing'),1);run("state.transport='driving'");
+ assert.equal(run("aracneV2Test.leg({id:'p6',uid:'a',lat:42,lon:15},{uid:'b',lat:41,lon:16}).minutes"),null);
+ assert.equal(run("(()=>{const bad=JSON.parse(JSON.stringify(state));bad.plan[0][0].duration=-3;try{validate(bad);return false}catch{return true}})()"),true);
+ run('move(1,-1)');assert.notEqual(run('aracneV2Test.totals(state.plan[0]).travel'),35);
+ run('shareDialog()');assert.equal(w.document.querySelectorAll('.v2Group').length,1);w.document.querySelector('#closeModal').click();
+ run("state.notes.push({id:'test-note',text:'secret',day:-1,privacy:'private'});save()");assert.equal(run("shareText('all',true).includes('secret')"),false);
+ run("editStep()");w.document.querySelector('#stepName').value='<script>alert(1)</script>';w.document.querySelector('#stepForm').dispatchEvent(new w.Event('submit',{cancelable:true}));
+ assert.equal(run('state.plan[0].length'),3);assert.equal(w.document.querySelectorAll('#itinerary script').length,0);
+ const legacy=run('defaults()');assert.equal(run('validate(defaults()).version'),1);
+ console.log(lang+': PASS — intro, catalog, filters, timings, persistence, manual transfer invalidation, transit/island gaps, validation, notes privacy, escaped manual steps, V1 defaults');dom.window.close();
+}
