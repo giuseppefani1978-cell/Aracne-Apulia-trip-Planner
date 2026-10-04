@@ -1,0 +1,27 @@
+/* Keep the existing travel photography visible on tablet and phone. */
+@media (min-width: 741px) and (max-width: 1150px) {
+  .app > aside { grid-column: 1; grid-row: 1 / span 2; }
+  .app > main { grid-column: 2; grid-row: 2; }
+  .app > .rightRail { display: block; grid-column: 2; grid-row: 1; }
+  .rightRail .photoCard { display: block; height: 190px; }
+  .rightRail .railCard { display: none; }
+  .rightRail .photoCaption h2 { font-size: 23px; }
+  .rightRail .photoCredit { margin-bottom: 0; }
+}
+@media (max-width: 740px) {
+  .app { display: flex; flex-direction: column; gap: 0; }
+  .app > aside { order: 0; }
+  .app > .rightRail { display: block; order: 1; margin-bottom: 18px; }
+  .app > main { order: 2; width: 100%; }
+  .rightRail .photoCard { display: block; height: 160px; border-radius: 18px; }
+  .rightRail .photoCard img { object-position: 40% 50%; }
+  .rightRail .photoCaption { padding: 17px; }
+  .rightRail .photoCaption h2 { font-size: 20px; margin-top: 6px; }
+  .rightRail .photoCaption span { font-size: 10px; }
+  .rightRail .railCard { display: none; }
+  .rightRail .photoCredit { font-size: 12px; margin: 7px 2px 0; }
+}
+@media (max-width: 380px) {
+  .brand small { display: none; }
+  .brand { min-width: 0; }
+}
