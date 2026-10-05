@@ -38,10 +38,10 @@ const texts={
  expense:['Dépenses incluses dans le voyage partagé. Aucun paiement bancaire.','Spese incluse nel viaggio condiviso. Nessun pagamento bancario.','Expenses included in the shared trip. No bank payments.','Gastos incluidos en el viaje compartido. Sin pagos bancarios.']
 };
 Object.assign(texts,{
- editShort:['Inviter à modifier','Invita a modificare','Invite to edit','Invitar a editar'],
- readShort:['Inviter en lecture seule','Invita in sola lettura','Invite to view','Invitar a consultar'],
- editHint:['Pour préparer ensemble : chacun peut ajuster le voyage.','Per organizzare insieme: tutti possono modificare il viaggio.','Plan together: everyone invited can update the trip.','Para organizar juntos: cada invitado puede modificar el viaje.'],
- readHint:['Pour consulter le programme sans le modifier.','Per consultare il programma senza modificarlo.','See the plan without changing it.','Para consultar el programa sin modificarlo.'],
+ editShort:['Partager pour modifier','Condividi per modificare','Share to edit','Compartir para editar'],
+ readShort:['Partager en lecture seule','Condividi in sola lettura','Share view-only','Compartir en solo lectura'],
+ editHint:['Lien de modification : les personnes qui le reçoivent peuvent consulter et modifier le voyage.','Per organizzare insieme: tutti possono modificare il viaggio.','Plan together: everyone invited can update the trip.','Para organizar juntos: cada invitado puede modificar el viaje.'],
+ readHint:['Lien de lecture : les personnes qui le reçoivent peuvent consulter le voyage sans le modifier.','Per consultare il programma senza modificarlo.','See the plan without changing it.','Para consultar el programa sin modificarlo.'],
  advanced:['Gestion du voyage','Gestione del viaggio','Manage trip','Gestionar el viaje'],
  repair:['Résoudre un problème','Risolvere un problema','Fix a problem','Resolver un problema'],
  help:['Comprendre le partage','Capire la condivisione','Understand sharing','Entender cómo compartir'],
@@ -107,6 +107,7 @@ async function tick(){
 }
 function link(token){const url=new URL(location.href);url.hash='trip='+session.id+'&key='+token;url.search='';return url.href}
 async function copyLink(token){const url=link(token);try{await navigator.clipboard.writeText(url);toast(tr('copied'))}catch{const field=document.createElement('textarea');field.readOnly=true;field.value=url;field.rows=4;$('#modalBody').append(field);field.focus();field.select()}}
+async function shareCapabilityLink(token,mode){const url=link(token),payload={title:tr('title'),text:tr(mode==='read'?'readHint':'editHint'),url};if(typeof navigator.share==='function'){try{await navigator.share(payload);return}catch(e){if(e&&e.name==='AbortError')return}}await copyLink(token)}
 function button(id,label){return `<button type="button" class="secondary" id="${id}">${esc(tr(label))}</button>`}
 function open(){
  const choice=(id,label,hint)=>`<div class="shareChoice">${button(id,label)}<p>${esc(tr(hint))}</p></div>`;
@@ -140,7 +141,7 @@ function open(){
    const result=await rpc('create',{p_document:doc,p_edit:edit,p_read:read},{token});
    session={id:result.id,token,edit,read,role:'owner',revision:result.revision,base:doc};base=doc;persist();paint('synced');toast(tr('saved'));open();
  });
- on('sharedEdit',()=>copyLink(session.edit));on('sharedRead',()=>copyLink(session.read));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>copyLink(session.token));
+ on('sharedEdit',()=>shareCapabilityLink(session.edit,'edit'));on('sharedRead',()=>shareCapabilityLink(session.read,'read'));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>shareCapabilityLink(session.token,session.role==='read'?'read':'edit'));
  on('sharedRotate',async()=>{if(!confirm(tr('rotateAsk')))return;const edit=secret(),read=secret();await rpc('rotate',{p_edit:edit,p_read:read});session.edit=edit;session.read=read;persist();open()});
  on('sharedDelete',async()=>{if(!confirm(tr('removeAsk')))return;await rpc('delete');disconnect()});
  on('sharedLeave',()=>{if(confirm(tr('leaveAsk')))disconnect()});
