@@ -31,176 +31,12 @@
  function alertBadge(count){let b=document.querySelector('.v4AlertBadge'),j=document.querySelector('nav [data-view="journal"]');if(!j)return;if(!b){b=document.createElement('span');b.className='v4AlertBadge';j.append(b)}b.textContent=String(count);b.hidden=!count}
  window.aracneSharedV4Events=events=>{if(!events?.length)return;lastAlert=events;const me=actorName(),external=events.filter(e=>e.actor!==me);if(!external.length)return;alertBadge(external.length);const e=external.at(-1),msg=(e.actor||'Participant')+' '+(e.action||'a modifiÃ© le voyage')+(e.detail?' Â· '+e.detail:'');toast(t('updated')+' Â· '+msg);const bar=document.querySelector('.sharedBar');if(bar){let a=document.querySelector('#v4AlertAction');if(!a){a=document.createElement('button');a.id='v4AlertAction';a.type='button';a.className='textBtn';bar.append(a)}a.textContent=external.length+' '+t('changes');a.onclick=()=>{alertBadge(0);show('journal')}}};
  async function switchTrip(entry){const current=api._getRaw();savePrivate(current?.id);api._backup();const workspace=window.aracneWorkspaceV4;const candidate={id:entry.id,token:entry.token||null,role:entry.role||'owner',workspaceId:entry.workspaceId||workspace?.id||null,workspaceToken:entry.workspaceToken||workspace?.token||null};const r=await api._rpc('read',{p_since_event:entry.lastEvent||0},candidate);state.notes=loadPrivate(entry.id);candidate.role=r.role;candidate.revision=r.revision;candidate.name=r.name||r.document.name;candidate.lastEvent=Number(r.last_event)||0;candidate.base=JSON.parse(JSON.stringify(r.document));api._setRaw(candidate);api._apply(r.document);upsertLibrary(candidate);document.querySelector('#modal')?.close();toast(t('switched')+' Â· '+candidate.name);show('plan')}
- async function openLibrary(){const local=loadLibrary(),workspace=await ensureWorkspace().catch(()=>null);let server=[];if(workspaaJ]ž^ÜÙ\™\J]ØZ]ÛÜšÜÜXÙTœÊ	Û\Ý	ËßKÛÜšÜÜXÙJJKš\ß×_XØ]ÚßXÛÛœÝžRY[™]ÈX\
-ØØ[›X\
-O–ÞšYJJNÜÙ\™\‹™›Ü‘XXÚ
-OžØÛÛœÝÛXžRY™Ù]
-šY
-_ßNØžRYœÙ]
-šYË‹‹›Û‹‹ž›ÛN‰ÛÝÛ™\‰ËÛÜšÜÜXÙRYÛÜšÜÜXÙOËšYÛÜšÜÜXÙUÚÙ[ŽÛÜšÜÜXÙOËÚÙ[ŸJ_JNØÛÛœÝ›ÝÜÏVË‹‹˜žRY˜[Y\Ê
-WKœÛÜ
-
-KŠOO”Ýš[™Ê‹\]YØ]‹\]Y]	ÉÊK›ØØ[PÛÛ\\™JÝš[™ÊK\]YØ]K\]Y]	ÉÊJJNÙX[ÙÊ
-	ÚX‰ÊK	Ï]ˆÛ\ÜÏHXœ˜\žRXY‰ÊÙ\ØÍ
-
-	ÜÙ\™\‰ÊJJÉÏÜ]ÛˆÛ\ÜÏHœš[X\žHˆYH™]Õš\»ï"È	ÊÙ\ØÍ
-
-	Û™]Õš\	ÊJJÉÏØ]ÛÙ]]ˆÛ\ÜÏHš\\Ý‰ÊÊ›ÝÜË›[™ÝÜ›ÝÜË›X\
-O‰Ï]ÛˆÛ\ÜÏHš\Ø\™	ÊÊšYOOX\K—ÙÙ]˜]Ê
-OËšYÉØXÝ]™IÎ‰ÉÊJÉÈˆ]K]š\ZYH‰ÊÙ\ØÍ
-šY
-JÉÈÜ[‰ÊÙ\ØÍ
-›˜[Y_	Õ›ÞXYÙIÊJÉÏØÛX[‰ÊÙ\ØÍ
-›ÛSX™[
-œ›ÛJJJÉÈ0­ÈÉÊÊ[X™\Šœ™]š\Ú[ÛŠ_
-JÉÏÜÛX[ÜÜ[Ü[¸ .ÜÜ[Ø]Û‰ÊKš›Ú[Š	ÉÊN‰Ï]ˆÛ\ÜÏH™[\H‰ÊÙ\ØÍ
-
-	Ù[\IÊJJÉÏÙ]‰ÊJÉÏÙ]‰ÊNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝ™]Õš\	ÊK›Û˜ÛXÚÏJ
-OOžØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÜØ]™Tš]˜]JÏËšY
-NØ\K—Ø˜XÚÝ\
-
-NØ\K—ÜÙ]˜]Ê[
-NÜÝ]OYY˜][Ê
-NÜÝ]Kš›Ý\›˜[V×NÝž^ÛØØ[ÝÜ˜YÙKœÙ]][J	Ø\˜XÛ™K\YÛXK]ŒIË”ÓÓ‹œÝš[™ÚYžJÝ]JJ_XØ]Úß[ØØ][Û‹œ™[ØY
-
-_NÙØÝ[Y[œ]Y\žTÙ[XÝÜ[
-	ÖÙ]K]š\ZYIÊK™›Ü‘XXÚ
-O˜‹›Û˜ÛXÚÏJ
-OOœÝÚ]Úš\
-žRY™Ù]
-‹™]\Ù]š\Y
-JK˜Ø]Ú
-
-
-OOØ\Ý
-	Ò[\ÜÜÚX›HHÚ\™Ù\ˆÙH›ÞXYÙIÊJJ_Bˆ\Þ[˜È[˜Ý[Ûˆ™[˜[YUš\
-
-^ØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÚYŠ\ßËœ›ÛHOOIÛÝÛ™\‰Ê\™]\›ŽØÛÛœÝ˜[YO\›Û\
-
-	Ü™[˜[YIÊKË›˜[Y_Ý]K›˜[Y_	ÉÊNÚYŠ[˜[YOËš[J
-J\™]\›ŽØÛÛœÝX]ØZ]\K—ÜœÊ	Ü™[˜[YIËÜÛ˜[YN›˜[YKš[J
-KØXÝÜŽ˜XÝÜ“˜[YJ
-_JNÜÝ]K›˜[YO\‹›˜[YNÜË›˜[YO\‹›˜[YNÜËœ™]š\Ú[Û\‹œ™]š\Ú[ÛŽÚYŠË˜˜\ÙJ\Ë˜˜\ÙK›˜[YO\‹›˜[YNØ\K—ÜÙ]˜]ÊÊNÝ\Ù\Xœ˜\žJÊNÙš[›Ü›J
-NÚYŠšY]ÏOOIÜ[‰Ê\™[™\”[Š
-NÝØ\Ý
-‹›˜[YJ_Bˆ\Þ[˜È[˜Ý[ÛˆÛ˜\ÚÝ
-
-^ØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÚYŠ\ßËœ›ÛHOOIÛÝÛ™\‰Ê\™]\›ŽØÛÛœÝX™[\›Û\
-
-	ÜÛ˜\ÚÝX™[	ÊK	ÉÊ_[Ø]ØZ]\K—ÜœÊ	ÜÛ˜\ÚÝ	ËÜØXÝÜŽ˜XÝÜ“˜[YJ
-KÛX™[›X™[JNÝØ\Ý
-
-	ÜØ]™Y	ÊJ_Bˆ\Þ[˜È[˜Ý[Ûˆ™\œÚ[ÛœÊ
-^ØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÚYŠ\Ê\™]\›ŽØÛÛœÝX]ØZ]\K—ÜœÊ	Ý™\œÚ[ÛœÉÊNÙX[ÙÊ
-	Ý™\œÚ[ÛœÉÊK	Ï]ˆÛ\ÜÏH™\œÚ[Û“\Ý‰ÊÊ
-‹™\œÚ[Ûœß×JK›X\
-O‰Ï\XÛO]‰ÊÙ\ØÍ
-‹›X™[‹›˜[YJJÉÏØÛX[ˆÉÊÝ‹œ™]š\Ú[ÛŠÉÈ0­È	ÊÙ\ØÍ
-™]È]J‹˜Ü™X]YØ]
-KÓØØ[TÝš[™ÊØÝ[Y[™ØÝ[Y[[[Y[›[™ÊJJÉÈ0­È	ÊÙ\ØÍ
-‹˜XÝÜŸ	ÉÊJÉÏÜÛX[Ù]‰ÊÊËœ›ÛOOOIÛÝÛ™\‰ÏÉÏ]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆ]K\™\ÝÜ™OH‰ÊÝ‹šY
-ÉÈ‰ÊÙ\ØÍ
-
-	Ü™\ÝÜ™IÊJJÉÏØ]Û‰Î‰ÉÊJÉÏØ\XÛO‰ÊKš›Ú[Š	ÉÊ_	Ï]ˆÛ\ÜÏH™[\H‰ÊÙ\ØÍ
-
-	Ù[\IÊJJÉÏÙ]‰ÊJÉÏÙ]‰ÊNÙØÝ[Y[œ]Y\žTÙ[XÝÜ[
-	ÖÙ]K\™\ÝÜ™WIÊK™›Ü‘XXÚ
-O˜‹›Û˜ÛXÚÏX\Þ[˜Ê
-OOžÚYŠXÛÛ™š\›J
-	ØÛÛ™š\›T™\ÝÜ™IÊJJ\™]\›ŽØÛÛœÝœX]ØZ]\K—ÜœÊ	Ü™\ÝÜ™IËÜÝ™\œÚ[Û—ÚY“[X™\Š‹™]\Ù]œ™\ÝÜ™JKØXÝÜŽ˜XÝÜ“˜[YJ
-_JNÜËœ™]š\Ú[Û\œ‹œ™]š\Ú[ÛŽÜË›˜[YO\œ‹›˜[YNÜË˜˜\ÙOR”ÓÓ‹œ\œÙJ”ÓÓ‹œÝš[™ÚYžJœ‹™ØÝ[Y[
-JNØ\K—ÜÙ]˜]ÊÊNÜÝ]K››Ý\Ï[ØYš]˜]JËšY
-NØ\K—Ø\Jœ‹™ØÝ[Y[
-NÝ\Ù\Xœ˜\žJÊNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÛ[Ù[	ÊK˜ÛÜÙJ
-NÝØ\Ý
-
-	Ü™\ÝÜ™Y	ÊJ_J_Bˆ\Þ[˜È[˜Ý[ÛˆÜ[’XŠ
-^ØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÝ\Ù\Xœ˜\žJÊNØÛÛœÝØ[“ÝÛ™\\ÏËœ›ÛOOOIÛÝÛ™\‰Ë\Ð[\[\Ý[\›[™ÝÛ][IÏ]ˆÛ\ÜÏHÝ\œ™[Ü[ˆÛ\ÜÏH™^YXœ›ÝÈ‰ÊÙ\ØÍ
-
-	ØÝ\œ™[	ÊJJÉÏÜÜ[Ï‰ÊÙ\ØÍ
-ÏË›˜[Y_Ý]K›˜[Y_	Õ›ÞXYÙIÊJÉÏÚÏ‰ÊÙ\ØÍ
-ÏÜ›ÛSX™[
-Ëœ›ÛJN‰ÓØØ[	ÊJÊÏÉÈ0­ÈÉÊÊËœ™]š\Ú[ÛŸ
-N‰ÉÊJÉÏÜÙ]]ˆÛ\ÜÏHX‘ÜšY]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYHš\È‰ÊÙ\ØÍ
-
-	ÚX‰ÊJJÉÏØ]Û‰ÎÚYŠØ[“ÝÛ™\ŠZ[
-ÏIÏ]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYH™[˜[YH‰ÊÙ\ØÍ
-
-	Ü™[˜[YIÊJJÉÏØ]Û]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYHÛ˜\ÚÝ‰ÊÙ\ØÍ
-
-	ÜØ]™U™\œÚ[Û‰ÊJJÉÏØ]Û‰ÎÚYŠÊZ[
-ÏIÏ]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYH™\œÚ[ÛœÈ‰ÊÙ\ØÍ
-
-	Ý™\œÚ[ÛœÉÊJJÉÏØ]Û‰ÎÚYŠØ[“ÝÛ™\ŠZ[
-ÏIÏ]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYHY]‰ÊÙ\ØÍ
-
-	ÜÚ\™QY]	ÊJJÉÏØ]Û]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYH™XY‰ÊÙ\ØÍ
-
-	ÜÚ\™T™XY	ÊJJÉÏØ]Û‰ÎÚYŠ\Ð[\
-Z[
-ÏIÏ]ÛˆÛ\ÜÏHœÙXÛÛ™\žHˆYHÚ]Ð\‰ÊÙ\ØÍ
-
-	ÝÚ]Ø\	ÊJJÉÏØ]Û‰ÎÚ[
-ÏIÏ]ÛˆÛ\ÜÏH^ˆˆYH[Ü™H‰ÊÙ\ØÍ
-
-	Û[Ü™IÊJJÉÏØ]ÛÙ]‰ÎÙX[ÙÊ
-	ÚX‰ÊK[
-NÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝš\ÉÊK›Û˜ÛXÚÏ[Ü[“Xœ˜\žNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝ™[˜[YIÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË
-
-OOœ™[˜[YUš\
-
-K˜Ø]Ú
-
-
-OOØ\Ý
-	Ñ\œ™]\‰ÊJJNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝÛ˜\ÚÝ	ÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË
-
-OOœÛ˜\ÚÝ
-
-K˜Ø]Ú
-
-
-OOØ\Ý
-	Ñ\œ™]\‰ÊJJNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝ™\œÚ[ÛœÉÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË
-
-OO™\œÚ[ÛœÊ
-K˜Ø]Ú
-
-
-OOØ\Ý
-	Ñ\œ™]\‰ÊJJNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝY]	ÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË\Þ[˜Ê
-OOžØÛÛœÝX]ØZ][œÝ\™R[š]TÙXÜ™]Ê
-NÜÚ\™U\›
-š\[šÊ™Y]
-K›˜[Y_Ý]K›˜[YJ_JNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝ™XY	ÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË\Þ[˜Ê
-OOžØÛÛœÝX]ØZ][œÝ\™R[š]TÙXÜ™]Ê
-NÜÚ\™U\›
-š\[šÊœ™XY
-K›˜[Y_Ý]K›˜[YJ_JNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝÚ]Ð\	ÊOË˜Y]™[\Ý[™\Š	ØÛXÚÉË
-
-OOžØÛÛœÝ[™\Ï[\Ý[\œÛXÙJMŠK›X\
-OO‰ø (ˆ	ÊÙK˜XÝÜŠÉÎˆ	ÊÙK˜XÝ[ÛŠÊK™]Z[ÉÈ8 %	ÊÙK™]Z[‰ÉÊJKš›Ú[Š	×‰ÊNÛÜ[Š	ÚÎ‹ËÝØK›YKÏÝ^IÊÙ[˜ÛÙUT’PÛÛ\Û™[
-
-ÏË›˜[Y_Ý]K›˜[YJJÉ×‰ÊÛ[™\ÊK	×Ø›[šÉË	Û›ÛÜ[™\‰Ê_JNÙØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ÈÝ[Ü™IÊK›Û˜ÛXÚÏ[YØXÞSÜ[ŸBˆ\K›Ü[[Ü[’XŽÂˆÛÛœÝÜYØÝ[Y[œ]Y\žTÙ[XÝÜŠ	ËœÚ\™Y˜\‰ÊNÚYŠÜ
-^ØÛÛœÝš\ÏYØÝ[Y[˜Ü™X]Q[[Y[
-	Ø]Û‰ÊNÝš\Ë\OIØ]Û‰ÎÝš\Ë˜Û\ÜÓ˜[YOIÝ^ˆš\ÔÚÜÝ]	ÎÝš\Ë^ÛÛ[]
-	ÚX‰ÊNÝš\Ë›Û˜ÛXÚÏ[Ü[“Xœ˜\žNÝÜ˜\[™
-š\Ê_Bˆ
-\Þ[˜Ê
-OOžØÛÛœÝÏX\K—ÙÙ]˜]Ê
-NÚYŠÊ^ÜË›˜[YO\Ë›˜[Y_Ë˜˜\ÙOË›˜[Y_Ý]K›˜[YNØ\K—ÜÙ]˜]ÊÊNÝ\Ù\Xœ˜\žJÊNÚYŠËœ›ÛOOOIÛÝÛ™\‰ÊX]ØZ]]XÚÝÛ™\Š
-K˜Ø]Ú
-
-
-OOžßJ_Y[ÙH]ØZ][œÝ\™UÛÜšÜÜXÙJ
-K˜Ø]Ú
-
-
-OOžßJ_JJ
-NÂŸJJ
-NÂ
+ async function openLibrary(){const local=loadLibrary(),workspace=await ensureWorkspace().catch(()=>null);let server=[];if(workspace)try{server=(await workspaceRpc('list',{},workspace)).trips||[]}catch{}const byId=new Map(local.map(x=>[x.id,x]));server.forEach(x=>{const old=byId.get(x.id)||{};byId.set(x.id,{...old,...x,role:'owner',workspaceId:workspace?.id,workspaceToken:workspace?.token})});const rows=[...byId.values()].sort((a,b)=>String(b.updated_at||b.updatedAt||'').localeCompare(String(a.updated_at||a.updatedAt||'')));dialog(t('hub'),'<div class="v4LibraryHead"><p>'+esc4(t('server'))+'</p><button class="primary" id="v4NewTrip">ï¼‹ '+esc4(t('newTrip'))+'</button></div><div class="v4TripList">'+(rows.length?rows.map(x=>'<button class="v4TripCard '+(x.id===api._getRaw()?.id?'active':'')+'" data-trip-id="'+esc4(x.id)+'"><span><b>'+esc4(x.name||'Voyage')+'</b><small>'+esc4(roleLabel(x.role))+' Â· #'+(Number(x.revision)||0)+'</small></span><span>â€º</span></button>').join(''):'<div class="empty">'+esc4(t('empty'))+'</div>')+'</div>');document.querySelector('#v4NewTrip').onclick=()=>{const s=api._getRaw();savePrivate(s?.id);api._backup();api._setRaw(null);state=defaults();state.journal=[];try{localStorage.setItem('aracne-puglia-v1',JSON.stringify(state))}catch{}location.reload()};document.querySelectorAll('[data-trip-id]').forEach(b=>b.onclick=()=>switchTrip(byId.get(b.dataset.tripId)).catch(()=>toast('Impossible de charger ce voyage')))}
+ async function renameTrip(){const s=api._getRaw();if(!s||s.role!=='owner')return;const name=prompt(t('rename'),s.name||state.name||'');if(!name?.trim())return;const r=await api._rpc('rename',{p_name:name.trim(),p_actor:actorName()});state.name=r.name;s.name=r.name;s.revision=r.revision;if(s.base)s.base.name=r.name;api._setRaw(s);upsertLibrary(s);fillForm();if(view==='plan')renderPlan();toast(r.name)}
+ async function snapshot(){const s=api._getRaw();if(!s||s.role!=='owner')return;const label=prompt(t('snapshotLabel'),'')||null;await api._rpc('snapshot',{p_actor:actorName(),p_label:label});toast(t('saved'))}
+ async function versions(){const s=api._getRaw();if(!s)return;const r=await api._rpc('versions');dialog(t('versions'),'<div class="v4VersionList">'+((r.versions||[]).map(v=>'<article><div><b>'+esc4(v.label||v.name)+'</b><small>#'+v.revision+' Â· '+esc4(new Date(v.created_at).toLocaleString(document.documentElement.lang))+' Â· '+esc4(v.actor||'')+'</small></div>'+(s.role==='owner'?'<button class="secondary" data-restore="'+v.id+'">'+esc4(t('restore'))+'</button>':'')+'</article>').join('')||'<div class="empty">'+esc4(t('empty'))+'</div>')+'</div>');document.querySelectorAll('[data-restore]').forEach(b=>b.onclick=async()=>{if(!confirm(t('confirmRestore')))return;const rr=await api._rpc('restore',{p_version_id:Number(b.dataset.restore),p_actor:actorName()});s.revision=rr.revision;s.name=rr.name;s.base=JSON.parse(JSON.stringify(rr.document));api._setRaw(s);state.notes=loadPrivate(s.id);api._apply(rr.document);upsertLibrary(s);document.querySelector('#modal').close();toast(t('restored'))})}
+ async function openHub(){const s=api._getRaw();upsertLibrary(s);const canOwner=s?.role==='owner',hasAlert=lastAlert.length;let html='<div class="v4Current"><span class="eyebrow">'+esc4(t('current'))+'</span><h3>'+esc4(s?.name||state.name||'Voyage')+'</h3><p>'+esc4(s?roleLabel(s.role):'Local')+(s?' Â· #'+(s.revision||0):'')+'</p></div><div class="v4HubGrid"><button class="secondary" id="v4Trips">'+esc4(t('hub'))+'</button>';if(canOwner)html+='<button class="secondary" id="v4Rename">'+esc4(t('rename'))+'</button><button class="secondary" id="v4Snapshot">'+esc4(t('saveVersion'))+'</button>';if(s)html+='<button class="secondary" id="v4Versions">'+esc4(t('versions'))+'</button>';if(canOwner)html+='<button class="secondary" id="v4Edit">'+esc4(t('shareEdit'))+'</button><button class="secondary" id="v4Read">'+esc4(t('shareRead'))+'</button>';if(hasAlert)html+='<button class="secondary" id="v4WhatsApp">'+esc4(t('whatsapp'))+'</button>';html+='<button class="textBtn" id="v4More">'+esc4(t('more'))+'</button></div>';dialog(t('hub'),html);document.querySelector('#v4Trips').onclick=openLibrary;document.querySelector('#v4Rename')?.addEventListener('click',()=>renameTrip().catch(()=>toast('Erreur')));document.querySelector('#v4Snapshot')?.addEventListener('click',()=>snapshot().catch(()=>toast('Erreur')));document.querySelector('#v4Versions')?.addEventListener('click',()=>versions().catch(()=>toast('Erreur')));document.querySelector('#v4Edit')?.addEventListener('click',async()=>{const x=await ensureInviteSecrets();shareUrl(tripLink(x.edit),x.name||state.name)});document.querySelector('#v4Read')?.addEventListener('click',async()=>{const x=await ensureInviteSecrets();shareUrl(tripLink(x.read),x.name||state.name)});document.querySelector('#v4WhatsApp')?.addEventListener('click',()=>{const lines=lastAlert.slice(-6).map(e=>'â€¢ '+e.actor+': '+e.action+(e.detail?' â€” '+e.detail:'')).join('\n');open('https://wa.me/?text='+encodeURIComponent((s?.name||state.name)+'\n'+lines),'_blank','noopener')});document.querySelector('#v4More').onclick=legacyOpen}
+ api.open=openHub;
+ const top=document.querySelector('.sharedBar');if(top){const trips=document.createElement('button');trips.type='button';trips.className='textBtn v4TripsShortcut';trips.textContent=t('hub');trips.onclick=openLibrary;top.append(trips)}
+ (async()=>{const s=api._getRaw();if(s){s.name=s.name||s.base?.name||state.name;api._setRaw(s);upsertLibrary(s);if(s.role==='owner')await attachOwner().catch(()=>{})}else await ensureWorkspace().catch(()=>{})})();
+})();
