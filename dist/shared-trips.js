@@ -106,7 +106,7 @@ async function tick(){
  }finally{busy=false}
 }
 function link(token){const url=new URL(location.href);url.hash='trip='+session.id+'&key='+token;url.search='';return url.href}
-async function copyLink(token){const url=link(token);try{await navigator.clipboard.writeText(url);toast(tr('copied'))}catch{const field=document.createElement('textarea');field.readOnly=true;field.value=url;field.rows=4;$('#modalBody').append(field);field.focus();field.select()}}
+async function copyLink(token){const url=link(token);try{await navigator.clipboard.writeText(url);toast(tr('copied'))}catch{const field=document.createElement('textarea');field.readOnly=true;field.value=url;field.rows=4;$('#modalBody').append(field);field.focus();field.select()}}\nasync function shareCapabilityLink(token,mode){const url=link(token);if(navigator.share){try{await navigator.share({title:tr('title'),text:tr(mode==='read'?'readHint':'editHint'),url});return}catch(e){if(e&&e.name==='AbortError')return}}await copyLink(token)}
 function button(id,label){return `<button type="button" class="secondary" id="${id}">${esc(tr(label))}</button>`}
 function open(){
  const choice=(id,label,hint)=>`<div class="shareChoice">${button(id,label)}<p>${esc(tr(hint))}</p></div>`;
@@ -140,7 +140,7 @@ function open(){
    const result=await rpc('create',{p_document:doc,p_edit:edit,p_read:read},{token});
    session={id:result.id,token,edit,read,role:'owner',revision:result.revision,base:doc};base=doc;persist();paint('synced');toast(tr('saved'));open();
  });
- on('sharedEdit',()=>copyLink(session.edit));on('sharedRead',()=>copyLink(session.read));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>copyLink(session.token));
+ on('sharedEdit',()=>shareCapabilityLink(session.edit,'edit'));on('sharedRead',()=>shareCapabilityLink(session.read,'read'));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>shareCapabilityLink(session.token,session.role==='read'?'read':'edit'));
  on('sharedRotate',async()=>{if(!confirm(tr('rotateAsk')))return;const edit=secret(),read=secret();await rpc('rotate',{p_edit:edit,p_read:read});session.edit=edit;session.read=read;persist();open()});
  on('sharedDelete',async()=>{if(!confirm(tr('removeAsk')))return;await rpc('delete');disconnect()});
  on('sharedLeave',()=>{if(confirm(tr('leaveAsk')))disconnect()});
