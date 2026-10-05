@@ -25,9 +25,9 @@ const T={
  dinner:['Dîner du groupe','Cena di gruppo','Group dinner','Cena del grupo'],private:['Note personnelle','Nota personale','Personal note','Nota personal'],groupnote:['Note pour le groupe','Nota per il gruppo','Group note','Nota del grupo'],
  invite:['Inviter mes amis','Invita gli amici','Invite my friends','Invitar a mis amigos'],
  basics:['Découvrir l’app','Scoprire l’app','Discover the app','Descubrir la app'],sharing:['Partager sans se tromper','Condividere con chiarezza','Sharing explained','Compartir con claridad'],
- q0:['Inviter à modifier','Invitare a modificare','Invite to edit','Invitar a editar'],
+ q0:['Partager pour modifier','Condividere per modificare','Share to edit','Compartir para editar'],
  a0:['C’est le lien à envoyer aux amis qui préparent le voyage avec vous. Ils peuvent modifier le programme, les dépenses et les notes du groupe.','È il link per gli amici che organizzano con voi. Possono modificare programma, spese e note del gruppo.','Send this link to friends planning with you. They can edit the plan, expenses and group notes.','Envía este enlace a quienes organizan contigo. Pueden modificar el programa, los gastos y las notas del grupo.'],
- q1:['Inviter en lecture seule','Invitare in sola lettura','Invite to view','Invitar a consultar'],
+ q1:['Partager en lecture seule','Condividere in sola lettura','Share view-only','Compartir en solo lectura'],
  a1:['Les invités voient la version à jour, sans pouvoir la modifier. Utile pour transmettre le programme final.','Gli invitati vedono la versione aggiornata senza poterla modificare. Utile per inviare il programma finale.','Guests see the up-to-date trip without editing it. Useful for sending the final plan.','Los invitados ven la versión actualizada sin modificarla. Útil para enviar el programa final.'],
  q2:['Envoyer une copie par WhatsApp','Inviare una copia via WhatsApp','Send a copy by WhatsApp','Enviar una copia por WhatsApp'],
  a2:['Envoie du texte : tout le programme ou une journée. Cette copie ne se met pas à jour et ne permet pas de modifier le voyage.','Invia un testo: tutto il programma o una giornata. La copia non si aggiorna e non consente modifiche al viaggio.','Sends text: the whole plan or one day. This copy does not update or grant editing access.','Envía un texto: todo el programa o un día. La copia no se actualiza ni permite modificar el viaje.'],
@@ -66,17 +66,50 @@ function demo(){const items=[
  `<div class="welcomePeople"><span>A</span><span>B</span><span>C</span></div><strong>↗ ${t('invite')}</strong>`
  ];return items[step]}
 function draw(){
- stop();welcome.innerHTML=`<div class="welcomeLayout"><div class="welcomePhoto"><div class="welcomePhotoLabel">PUGLIA <span>insieme.</span></div></div><div class="welcomeContent"><div class="welcomeTop"><span class="welcomeBrand">ARACNE<small>${t('presentation')}</small></span><div><select id="welcomeLanguage" aria-label="${t('lang')}">${$('#language').innerHTML}</select><button type="button" id="welcomeSkip">${t('skip')} ↗</button></div></div><div class="welcomeProgress" aria-label="${step+1} / 6">${Array.from({length:6},(_,i)=>`<span class="${i<step?'complete':i===step?'current':''}"><i style="animation-play-state:${playing?'running':'paused'}"></i></span>`).join('')}</div><div class="welcomeBody" data-frame="${step}"><span class="welcomeEyebrow">${t('eyebrow')} · 0${step+1}</span><h1 id="welcomeTitle">${t('t'+step)}</h1><p>${t('d'+step)}</p><div class="welcomeDemo" aria-hidden="true"><span class="welcomeDemoLabel">${t('preview')}</span>${demo()}<span class="demoPointer">↖</span></div><small>${t('automatic')}</small></div><div class="welcomeBottom"><button type="button" class="textBtn" id="welcomeBack" ${step===0?'disabled':''}>${t('back')}</button><button type="button" class="primary" id="welcomeEnter">${t('start')} →</button><button type="button" class="textBtn" id="welcomeNext" aria-label="${t('next')}">→</button><button type="button" class="textBtn" id="welcomePlay">${t(playing?'pause':'play')}</button></div></div></div>`;
+ stop();welcome.innerHTML=`<div class="welcomeLayout"><div class="welcomePhoto"><div class="welcomePhotoLabel">PUGLIA <span>insieme.</span></div></div><div class="welcomeContent"><div class="welcomeTop"><span class="welcomeBrand">ARACNE<small>${t('presentation')}</small></span><div><select id="welcomeLanguage" aria-label="${t('lang')}">${$('#language').innerHTML}</select><button type="button" id="welcomeSkip">${t('skip')} ↗</button></div></div><div class="welcomeProgress" aria-label="${step+1} / 6">${Array.from({length:6},(_,i)=>`<span class="${i<step?'complete':i===step?'current':''}"><i style="animation-play-state:${playing?'running':'paused'}"></i></span>`).join('')}</div><div class="welcomeBody" data-frame="${step}"><span class="welcomeEyebrow">${t('eyebrow')} · 0${step+1}</span><h1 id="welcomeTitle" tabindex="-1">${t('t'+step)}</h1><p>${t('d'+step)}</p><div class="welcomeDemo" aria-hidden="true"><span class="welcomeDemoLabel">${t('preview')}</span>${demo()}<span class="demoPointer">↖</span></div><small>${t('automatic')}</small></div><div class="welcomeBottom"><button type="button" class="textBtn" id="welcomeBack" ${step===0?'disabled':''}>${t('back')}</button><button type="button" class="primary" id="welcomeEnter">${t('start')} →</button><button type="button" class="textBtn" id="welcomeNext" aria-label="${t('next')}">→</button><button type="button" class="textBtn" id="welcomePlay">${t(playing?'pause':'play')}</button></div></div></div>`;
  $('#welcomeLanguage').value=document.documentElement.lang;
  $('#welcomeLanguage').onchange=()=>{try{sessionStorage.setItem('aracne-welcome-step',String(step))}catch{}$('#language').value=$('#welcomeLanguage').value;$('#language').onchange()};
  $('#welcomeSkip').onclick=finish;$('#welcomeEnter').onclick=finish;$('#welcomeBack').onclick=()=>{step--;draw()};$('#welcomeNext').onclick=()=>{if(step===5)finish();else{step++;draw()}};$('#welcomePlay').onclick=()=>{playing=!playing;draw()};
  welcome.classList.toggle('introPaused',!playing);
  if(playing&&!document.hidden)timer=setTimeout(()=>{if(step===5)finish();else{step++;draw()}},frameDuration);
 }
-function open(n=0){previousFocus=document.activeElement;$('#modal').close();$('#guideClose')?.click();step=Math.max(0,Math.min(5,Number(n)||0));playing=true;draw();welcome.showModal();document.body.classList.add('welcomeOpen');$('#welcomeSkip').focus({preventScroll:true})}
+function open(n=0){previousFocus=document.activeElement;$('#modal').close();$('#guideClose')?.click();step=Math.max(0,Math.min(5,Number(n)||0));playing=true;draw();welcome.showModal();document.body.classList.add('welcomeOpen');$('#welcomeTitle').focus({preventScroll:true})}
 welcome.addEventListener('cancel',e=>{e.preventDefault();finish()});welcome.addEventListener('close',()=>{stop();document.body.classList.remove('welcomeOpen')});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else if(welcome.open)draw()});
 introButton.onclick=()=>open();window.aracneIntro={open,close:finish,getSlide:()=>step};
 let initial=0;try{initial=Number(sessionStorage.getItem('aracne-welcome-step')||0);sessionStorage.removeItem('aracne-welcome-step')}catch{}
 open(initial);
+
+/* Cross-feature feedback: counters on programme, expenses and carnet. */
+const badgeViews={plan:()=>state.plan.reduce((n,d)=>n+d.length,0),budget:()=>state.expenses.length,notes:()=>state.notes.length};
+const badgeLast={};
+function refreshNavBadges(pulse=true){
+ Object.entries(badgeViews).forEach(([name,get])=>{
+   const button=document.querySelector('nav button[data-view="'+name+'"]');if(!button)return;
+   let badge=button.querySelector('.navBadge');if(!badge){badge=document.createElement('span');badge.className='navBadge';badge.setAttribute('aria-hidden','true');button.append(badge)}
+   const n=get(),old=badgeLast[name]??n;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;
+   if(pulse&&n>old){badge.classList.remove('pulse');void badge.offsetWidth;badge.classList.add('pulse');setTimeout(()=>badge.classList.remove('pulse'),800)}
+   badgeLast[name]=n;
+ });
+}
+refreshNavBadges(false);
+const badgeSave=save;
+save=function(){badgeSave();refreshNavBadges(true)};
+
+/* iOS/PWA dialog: scroll the dialog, never the page behind it. */
+let modalScrollY=0;
+function lockModalPage(){
+ if(document.body.classList.contains('modalLocked'))return;
+ modalScrollY=window.scrollY||document.documentElement.scrollTop||0;
+ document.body.classList.add('modalLocked');document.body.style.top='-'+modalScrollY+'px';
+}
+function unlockModalPage(){
+ if(!document.body.classList.contains('modalLocked'))return;
+ document.body.classList.remove('modalLocked');document.body.style.top='';
+ window.scrollTo(0,modalScrollY);
+}
+const touchSafeDialog=dialog;
+dialog=function(title,html){lockModalPage();touchSafeDialog(title,html)};
+document.querySelector('#modal')?.addEventListener('close',unlockModalPage);
+
 })();
