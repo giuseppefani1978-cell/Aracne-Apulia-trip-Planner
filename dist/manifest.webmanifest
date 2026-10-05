@@ -1,0 +1,14 @@
+{
+  "name": "Aracne · Ensemble dans les Pouilles",
+  "short_name": "Aracne",
+  "description": "Planificateur de voyage collaboratif pour les Pouilles.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f7efe4",
+  "theme_color": "#8A2387",
+  "icons": [
+    {"src":"icons/icon-192.png","sizes":"192x192","type":"image/png","purpose":"any"},
+    {"src":"icons/icon-512.png","sizes":"512x512","type":"image/png","purpose":"any"}
+  ]
+}
