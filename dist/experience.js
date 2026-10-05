@@ -79,4 +79,37 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else
 introButton.onclick=()=>open();window.aracneIntro={open,close:finish,getSlide:()=>step};
 let initial=0;try{initial=Number(sessionStorage.getItem('aracne-welcome-step')||0);sessionStorage.removeItem('aracne-welcome-step')}catch{}
 open(initial);
+
+/* Cross-feature feedback: counters on programme, expenses and carnet. */
+const badgeViews={plan:()=>state.plan.reduce((n,d)=>n+d.length,0),budget:()=>state.expenses.length,notes:()=>state.notes.length};
+const badgeLast={};
+function refreshNavBadges(pulse=true){
+ Object.entries(badgeViews).forEach(([name,get])=>{
+   const button=document.querySelector('nav button[data-view="'+name+'"]');if(!button)return;
+   let badge=button.querySelector('.navBadge');if(!badge){badge=document.createElement('span');badge.className='navBadge';badge.setAttribute('aria-hidden','true');button.append(badge)}
+   const n=get(),old=badgeLast[name]??n;badge.textContent=n>99?'99+':String(n);badge.hidden=n===0;
+   if(pulse&&n>old){badge.classList.remove('pulse');void badge.offsetWidth;badge.classList.add('pulse');setTimeout(()=>badge.classList.remove('pulse'),800)}
+   badgeLast[name]=n;
+ });
+}
+refreshNavBadges(false);
+const badgeSave=save;
+save=function(){badgeSave();refreshNavBadges(true)};
+
+/* iOS/PWA dialog: scroll the dialog, never the page behind it. */
+let modalScrollY=0;
+function lockModalPage(){
+ if(document.body.classList.contains('modalLocked'))return;
+ modalScrollY=window.scrollY||document.documentElement.scrollTop||0;
+ document.body.classList.add('modalLocked');document.body.style.top='-'+modalScrollY+'px';
+}
+function unlockModalPage(){
+ if(!document.body.classList.contains('modalLocked'))return;
+ document.body.classList.remove('modalLocked');document.body.style.top='';
+ window.scrollTo(0,modalScrollY);
+}
+const touchSafeDialog=dialog;
+dialog=function(title,html){lockModalPage();touchSafeDialog(title,html)};
+document.querySelector('#modal')?.addEventListener('close',unlockModalPage);
+
 })();
