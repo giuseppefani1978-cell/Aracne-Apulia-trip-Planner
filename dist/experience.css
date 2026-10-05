@@ -6,3 +6,66 @@ body.welcomeOpen{overflow:hidden}#welcome{position:fixed;inset:0;width:100vw;max
 @media(prefers-reduced-motion:no-preference){.welcomePhoto{animation:introPhoto 40s ease-in-out infinite alternate}.welcomeBody h1,.welcomeBody>p{animation:introReveal .8s ease both}.welcomeBody>p{animation-delay:.12s}.welcomeDemo{animation:introCard .9s cubic-bezier(.2,.7,.25,1) both}.welcomeChips span,.welcomeMap span,.welcomeSchedule span,.welcomeNotes span,.welcomePeople span{animation:introItem .65s ease both}.welcomeChips span:nth-child(2),.welcomeMap span:nth-child(2),.welcomeSchedule span:nth-child(2),.welcomeNotes span:nth-child(2),.welcomePeople span:nth-child(2){animation-delay:.8s}.welcomeChips span:nth-child(3),.welcomeMap span:nth-child(3),.welcomeSchedule span:nth-child(3),.welcomePeople span:nth-child(3){animation-delay:1.5s}.demoPointer{animation:introTap 3s ease-in-out infinite}.welcomeChips span:last-child{animation:introSelect 5s ease both}@keyframes introPhoto{to{transform:scale(1.12) translateY(-1%)}}@keyframes introReveal{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@keyframes introCard{from{opacity:0;transform:translateY(18px) rotate(-2deg) scale(.95)}to{opacity:1;transform:none}}@keyframes introItem{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}@keyframes introTap{0%,100%{transform:translate(10px,10px);opacity:0}30%,65%{opacity:1;transform:translate(0,0)}45%{transform:scale(.83)}}@keyframes introSelect{0%,30%{background:white}45%,100%{background:#8d398c;color:white}}}
 @media(max-width:740px){.welcomeContent{padding:22px 24px max(20px,env(safe-area-inset-bottom))}.welcomeTop>div{gap:16px}.welcomeBrand{font-size:14px}.welcomeBrand small{font-size:8px}.welcomeProgress{margin:22px 0 12px}.welcomeBody{padding:18px 0}.welcomeBody h1{font-size:clamp(34px,9.5vw,46px);margin:16px 0}.welcomeBody>p{font-size:16px;line-height:1.5;margin-bottom:22px}.welcomeDemo{min-height:190px;padding:36px 20px 22px}.welcomeDemo strong{font-size:20px}.welcomeBottom{gap:14px;grid-template-columns:auto minmax(0,1fr) auto}.welcomeBottom .primary{font-size:14px;padding:14px 12px}#welcomeNext{display:none}.welcomeBottom .textBtn{font-size:12px}.welcomeBody>small{font-size:10px}.welcomeEyebrow{font-size:9px}.welcomeChips span{padding:8px 11px;font-size:13px}}
 @media(max-height:700px){.welcomeContent{padding-top:16px;padding-bottom:16px}.welcomeBody{padding:8px 0}.welcomeProgress{margin:15px 0 8px}.welcomeBody h1{font-size:34px;margin:12px 0}.welcomeBody>p{font-size:14px;line-height:1.45;margin-bottom:15px}.welcomeDemo{min-height:150px;padding:32px 20px 14px;gap:10px}.welcomeSymbol{font-size:28px}.welcomeBody>small{margin:12px 0 0}.welcomeBottom{padding-top:8px}.welcomeSchedule span{padding:6px 12px}.welcomePeople span{width:42px;height:42px}}@media(max-width:360px){.welcomeContent{padding-left:17px;padding-right:17px}.welcomeTop>div{gap:12px}#welcomeLanguage{width:92px}.welcomeBody h1{font-size:32px}.welcomeBottom{gap:10px}}
+
+/* V2.3.2 — installed-app safe areas and narrow-tablet resilience. */
+.welcomeBody h1[tabindex="-1"]:focus{outline:none}
+@supports (padding: env(safe-area-inset-top)){
+  header{
+    height:calc(90px + env(safe-area-inset-top));
+    padding-top:env(safe-area-inset-top);
+    padding-left:max(4vw,env(safe-area-inset-left));
+    padding-right:max(4vw,env(safe-area-inset-right));
+  }
+  #welcome .welcomeContent{
+    padding-top:max(30px,env(safe-area-inset-top));
+    padding-right:max(48px,env(safe-area-inset-right));
+    padding-bottom:max(24px,env(safe-area-inset-bottom));
+    padding-left:max(48px,env(safe-area-inset-left));
+  }
+  @media(max-width:740px){
+    header{
+      height:calc(75px + env(safe-area-inset-top));
+      padding-top:env(safe-area-inset-top);
+      padding-left:max(14px,env(safe-area-inset-left));
+      padding-right:max(14px,env(safe-area-inset-right));
+    }
+    #welcome .welcomeContent{
+      padding-top:max(22px,env(safe-area-inset-top));
+      padding-right:max(24px,env(safe-area-inset-right));
+      padding-bottom:max(20px,env(safe-area-inset-bottom));
+      padding-left:max(24px,env(safe-area-inset-left));
+    }
+  }
+  @media(max-width:360px){
+    #welcome .welcomeContent{
+      padding-left:max(17px,env(safe-area-inset-left));
+      padding-right:max(17px,env(safe-area-inset-right));
+    }
+  }
+}
+@media (min-width:741px) and (max-width:860px){
+  .app{grid-template-columns:180px minmax(0,1fr);gap:20px;padding:24px 20px}
+  aside{min-width:0}
+  nav button{padding:12px 10px;gap:10px}
+  nav span{font-size:14px}
+  .rightRail .photoCard{height:170px}
+}
+
+/* V2.4 — cross-feature feedback and touch-safe modal behaviour. */
+body.modalLocked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+#modal[open]{display:flex;flex-direction:column;overflow:hidden}
+#modal .dialogHead{flex:0 0 auto}
+#modalBody{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:max(4px,env(safe-area-inset-bottom))}
+nav button{position:relative}
+.navBadge{position:absolute;top:5px;right:7px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#8a2387;color:#fff!important;font-size:11px!important;font-weight:800!important;line-height:1;box-shadow:0 2px 8px #8a238744}
+.navBadge[hidden]{display:none!important}
+.navBadge.pulse{animation:navBadgePulse .7s ease}
+@keyframes navBadgePulse{0%{transform:scale(.75)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
+@media(max-width:740px){
+  #modal{max-height:calc(100dvh - max(20px,env(safe-area-inset-top)) - max(20px,env(safe-area-inset-bottom)));width:calc(100% - 24px);padding:21px 18px}
+  #modalBody{padding-right:2px}
+  .navBadge{top:3px;right:5px;min-width:18px;height:18px;padding:0 5px;font-size:10px!important}
+}
+
+#modal::backdrop{touch-action:none}
+#modalBody button,#modalBody a,#modalBody summary,#closeModal{pointer-events:auto;touch-action:manipulation}
