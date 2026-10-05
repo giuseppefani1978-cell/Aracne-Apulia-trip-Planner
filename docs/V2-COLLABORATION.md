@@ -1,3 +1,5 @@
+> Historical V2 design. V2.2 now connects Supabase; see [SHARED-TRIPS.md](SHARED-TRIPS.md) for current behavior.
+
 # V2 — collaboration: service not yet connected
 
 This branch keeps the existing device-local saves. It does **not** synchronize phones.

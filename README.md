@@ -104,3 +104,10 @@ Source : https://commons.wikimedia.org/wiki/File:Panorama_Polignano-a-Mare.jpg
 Cartographie : Leaflet et © OpenStreetMap contributors. Météo : Open-Meteo. Police : Outfit via Google Fonts.
 
 © 2026 Il Volo d’Aracne · HIRUNDU. Aucune licence open source n’est accordée au code original par ce dépôt. Les composants et médias tiers conservent leurs licences respectives.
+
+
+## V2.2 — shared trips
+
+Supabase collaboration without participant accounts: separate editing/viewing links,
+owner-only revocation/deletion, personal notes kept local, revision conflict protection
+and offline retry. See [shared-trip setup and limitations](docs/SHARED-TRIPS.md).
