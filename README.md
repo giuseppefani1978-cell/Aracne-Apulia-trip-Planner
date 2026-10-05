@@ -124,3 +124,11 @@ private notes, backups, revocation and deletion. Supabase schema is unchanged.
 DOM regression: `JSDOM_PATH=/tmp/aracne-shared-tests/node_modules/jsdom node tests/experience.dom.cjs`.
 Native mobile rendering still requires an iPhone check; Chromium download failed
 in this environment, so no new browser screenshot verification is claimed.
+
+### V2.3.1 — automatic cinematic introduction
+
+Distinct photographic presentation with a labeled demo, six timed scenes (36 seconds),
+animated examples, progress bars, pause/resume and immediate entry. Completion opens
+the existing trip automatically. Hidden tabs pause progression; reduced-motion mode
+removes decorative motion while keeping automatic scene progression. DOM checks cover
+automatic completion, pause/resume and early entry in all four languages.

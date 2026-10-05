@@ -3,7 +3,7 @@
 'use strict';
 const c=Math.max(0,['fr','it','en','es'].indexOf(document.documentElement.lang));
 const T={
- skip:['Passer','Salta','Skip','Saltar'],next:['Suivant','Avanti','Next','Siguiente'],back:['Retour','Indietro','Back','Atrás'],start:['Créer mon voyage','Crea il mio viaggio','Start planning','Crear mi viaje'],
+ skip:['Passer','Salta','Skip','Saltar'],next:['Suivant','Avanti','Next','Siguiente'],back:['Retour','Indietro','Back','Atrás'],start:['Entrer dans l’app','Entra nell’app','Enter the app','Entrar en la app'],presentation:['PRÉSENTATION','PRESENTAZIONE','INTRODUCTION','PRESENTACIÓN'],automatic:['Défilement automatique · 36 secondes','Presentazione automatica · 36 secondi','Automatic introduction · 36 seconds','Presentación automática · 36 segundos'],preview:['DÉMONSTRATION','DIMOSTRAZIONE','DEMONSTRATION','DEMOSTRACIÓN'],
  pause:['Pause','Pausa','Pause','Pausa'],play:['Lecture auto','Riproduci','Auto-play','Reproducir'],help:['Aide','Aiuto','Help','Ayuda'],lang:['Langue','Lingua','Language','Idioma'],
  eyebrow:['LES POUILLES, À VOTRE FAÇON','LA PUGLIA, A MODO VOSTRO','PUGLIA, YOUR WAY','PUGLIA, A TU MANERA'],
  demo:['Un aperçu, sans modifier votre voyage','Un esempio, senza modificare il viaggio','A preview, without changing your trip','Un ejemplo, sin modificar tu viaje'],
@@ -54,6 +54,7 @@ window.aracneHelp=(section)=>{
 helpButton.onclick=()=>window.aracneHelp();
 const welcome=document.createElement('dialog');welcome.id='welcome';welcome.setAttribute('aria-labelledby','welcomeTitle');document.body.append(welcome);
 let step=0,timer=null,playing=true,previousFocus;
+const frameDuration=6000;
 const stop=()=>{clearTimeout(timer);timer=null};
 function finish(){stop();welcome.close();document.body.classList.remove('welcomeOpen');try{localStorage.setItem('aracne-welcome-v23','seen')}catch{}previousFocus?.focus?.()}
 function demo(){const items=[
@@ -65,13 +66,14 @@ function demo(){const items=[
  `<div class="welcomePeople"><span>A</span><span>B</span><span>C</span></div><strong>↗ ${t('invite')}</strong>`
  ];return items[step]}
 function draw(){
- stop();welcome.innerHTML=`<div class="welcomeLayout"><div class="welcomePhoto"><div class="welcomePhotoLabel">PUGLIA <span>insieme.</span></div></div><div class="welcomeContent"><div class="welcomeTop"><span class="welcomeBrand">ARACNE</span><div><select id="welcomeLanguage" aria-label="${t('lang')}">${$('#language').innerHTML}</select><button type="button" id="welcomeSkip">${t('skip')} ↗</button></div></div><div class="welcomeProgress" aria-label="${step+1} / 6">${Array.from({length:6},(_,i)=>`<span class="${i<=step?'active':''}"></span>`).join('')}</div><div class="welcomeBody"><span class="welcomeEyebrow">${t('eyebrow')} · 0${step+1}</span><h1 id="welcomeTitle">${t('t'+step)}</h1><p>${t('d'+step)}</p><div class="welcomeDemo" aria-hidden="true">${demo()}</div><small>${t('demo')}</small></div><div class="welcomeBottom"><button type="button" class="textBtn" id="welcomeBack" ${step===0?'disabled':''}>${t('back')}</button><button type="button" class="primary" id="welcomeNext">${t(step===5?'start':'next')} →</button><button type="button" class="textBtn" id="welcomePlay">${t(playing?'pause':'play')}</button></div></div></div>`;
+ stop();welcome.innerHTML=`<div class="welcomeLayout"><div class="welcomePhoto"><div class="welcomePhotoLabel">PUGLIA <span>insieme.</span></div></div><div class="welcomeContent"><div class="welcomeTop"><span class="welcomeBrand">ARACNE<small>${t('presentation')}</small></span><div><select id="welcomeLanguage" aria-label="${t('lang')}">${$('#language').innerHTML}</select><button type="button" id="welcomeSkip">${t('skip')} ↗</button></div></div><div class="welcomeProgress" aria-label="${step+1} / 6">${Array.from({length:6},(_,i)=>`<span class="${i<step?'complete':i===step?'current':''}"><i style="animation-play-state:${playing?'running':'paused'}"></i></span>`).join('')}</div><div class="welcomeBody" data-frame="${step}"><span class="welcomeEyebrow">${t('eyebrow')} · 0${step+1}</span><h1 id="welcomeTitle">${t('t'+step)}</h1><p>${t('d'+step)}</p><div class="welcomeDemo" aria-hidden="true"><span class="welcomeDemoLabel">${t('preview')}</span>${demo()}<span class="demoPointer">↖</span></div><small>${t('automatic')}</small></div><div class="welcomeBottom"><button type="button" class="textBtn" id="welcomeBack" ${step===0?'disabled':''}>${t('back')}</button><button type="button" class="primary" id="welcomeEnter">${t('start')} →</button><button type="button" class="textBtn" id="welcomeNext" aria-label="${t('next')}">→</button><button type="button" class="textBtn" id="welcomePlay">${t(playing?'pause':'play')}</button></div></div></div>`;
  $('#welcomeLanguage').value=document.documentElement.lang;
  $('#welcomeLanguage').onchange=()=>{try{sessionStorage.setItem('aracne-welcome-step',String(step))}catch{}$('#language').value=$('#welcomeLanguage').value;$('#language').onchange()};
- $('#welcomeSkip').onclick=finish;$('#welcomeBack').onclick=()=>{playing=false;step--;draw()};$('#welcomeNext').onclick=()=>{playing=false;if(step===5)finish();else{step++;draw()}};$('#welcomePlay').onclick=()=>{playing=!playing;draw()};
- if(playing&&step<5&&!document.hidden)timer=setTimeout(()=>{step++;draw()},6500);
+ $('#welcomeSkip').onclick=finish;$('#welcomeEnter').onclick=finish;$('#welcomeBack').onclick=()=>{step--;draw()};$('#welcomeNext').onclick=()=>{if(step===5)finish();else{step++;draw()}};$('#welcomePlay').onclick=()=>{playing=!playing;draw()};
+ welcome.classList.toggle('introPaused',!playing);
+ if(playing&&!document.hidden)timer=setTimeout(()=>{if(step===5)finish();else{step++;draw()}},frameDuration);
 }
-function open(n=0){previousFocus=document.activeElement;$('#modal').close();$('#guideClose')?.click();step=Math.max(0,Math.min(5,Number(n)||0));playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;draw();welcome.showModal();document.body.classList.add('welcomeOpen');$('#welcomeSkip').focus({preventScroll:true})}
+function open(n=0){previousFocus=document.activeElement;$('#modal').close();$('#guideClose')?.click();step=Math.max(0,Math.min(5,Number(n)||0));playing=true;draw();welcome.showModal();document.body.classList.add('welcomeOpen');$('#welcomeSkip').focus({preventScroll:true})}
 welcome.addEventListener('cancel',e=>{e.preventDefault();finish()});welcome.addEventListener('close',()=>{stop();document.body.classList.remove('welcomeOpen')});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else if(welcome.open)draw()});
 introButton.onclick=()=>open();window.aracneIntro={open,close:finish,getSlide:()=>step};
