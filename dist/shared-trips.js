@@ -1,7 +1,7 @@
 /* Shared trips: capability links + revision-checked RPC. No user accounts. */
 (()=>{
 'use strict';
-const endpoint='https://cpnjdyhsepytphwlenbg.supabase.co/rest/v1/rpc/aracne_trip_v2';
+const endpoint='https://cpnjdyhsepytphwlenbg.supabase.co/rest/v1/rpc/aracne_trip_v5';
 const key='sb_publishable_heDZcO0ymf5N0SbnaYBT4w_v-ItZm8S';
 const lang=Math.max(0,['fr','it','en','es'].indexOf(document.documentElement.lang));
 const texts={
@@ -58,8 +58,9 @@ Object.assign(texts,{
 const tr=k=>texts[k][lang],clone=x=>JSON.parse(JSON.stringify(x));
 const SESSION='aracne-shared-v1',BACKUP='aracne-shared-backup-v1';
 let session=null,base=null,busy=false,dirtyForm=false,status='local',timer;
+let conflictRemote=null;
 try{session=JSON.parse(localStorage.getItem(SESSION));if(session)base=session.base}catch{}
-function shared(){const s=clone(state);s.notes=s.notes.filter(n=>n.privacy==='group');return s}
+function shared(){const s=clone(state);delete s.localTripId;s.notes=s.notes.filter(n=>n.privacy==='group');return s}
 function canonical(x){if(Array.isArray(x))return x.map(canonical);if(x&&typeof x==='object')return Object.fromEntries(Object.keys(x).sort().map(k=>[k,canonical(x[k])]));return x}
 function same(a,b){return JSON.stringify(canonical(a))===JSON.stringify(canonical(b))}
 function pending(){return session&&base&&!same(shared(),base)}
@@ -76,7 +77,7 @@ function mergeValue(baseValue,localValue,remoteValue){
  if(same(localValue,remoteValue))return cp(localValue);
  if(same(localValue,baseValue))return cp(remoteValue);
  if(same(remoteValue,baseValue))return cp(localValue);
- return cp(remoteValue);
+ throw Error('merge_conflict');
 }
 function mergeObject(baseObj={},localObj={},remoteObj={}){
  const out=clone(remoteObj||{}),keys=new Set([...Object.keys(baseObj||{}),...Object.keys(localObj||{}),...Object.keys(remoteObj||{})]);
@@ -88,8 +89,8 @@ function mergeById(baseArr=[],localArr=[],remoteArr=[],key='id'){
  const order=remoteArr.map(x=>x?.[key]).filter(Boolean),out=new Map(remoteArr.map(x=>[x?.[key],clone(x)]).filter(x=>x[0]));
  for(const [id,b] of bm){
   const l=lm.get(id),r=rm.get(id);
-  if(!l){if(r&&same(r,b))out.delete(id);continue}
-  if(!r){if(!same(l,b)){out.set(id,clone(l));order.push(id)}continue}
+  if(!l){if(r&&!same(r,b))throw Error('merge_conflict');out.delete(id);continue}
+  if(!r){if(!same(l,b))throw Error('merge_conflict');continue}
   out.set(id,mergeObject(b,l,r));
  }
  for(const [id,l] of lm)if(!bm.has(id)){if(rm.has(id))out.set(id,mergeObject({},l,rm.get(id)));else{out.set(id,clone(l));order.push(id)}}
@@ -103,6 +104,8 @@ function mergePlan(basePlan=[],localPlan=[],remotePlan=[]){
  return days.map(arr=>arr.map(({__day,__index,...p})=>p));
 }
 function mergeDocs(baseDoc={},localDoc={},remoteDoc={}){
+ if(!same(baseDoc.resetEpoch,localDoc.resetEpoch)&&!same(baseDoc,remoteDoc))throw Error('merge_conflict');
+ if(!same(baseDoc.resetEpoch,remoteDoc.resetEpoch)&&!same(baseDoc,localDoc))throw Error('merge_conflict');
  const out=clone(remoteDoc),special=new Set(['plan','notes','expenses','journal']);
  for(const k of new Set([...Object.keys(baseDoc),...Object.keys(localDoc),...Object.keys(remoteDoc)]))if(!special.has(k))out[k]=mergeValue(baseDoc[k],localDoc[k],remoteDoc[k]);
  out.plan=mergePlan(baseDoc.plan||[],localDoc.plan||[],remoteDoc.plan||[]);
@@ -123,7 +126,7 @@ function receiveEvents(reply){
 const banner=document.createElement('div');banner.className='sharedBar';banner.innerHTML='<span role="status" id="sharedStatus"></span><button type="button" class="secondary" id="sharedOpen"></button>';
 $('main').prepend(banner);$('#sharedOpen').textContent=tr('open');$('#sharedOpen').onclick=open;
 const oldSave=save;
-function paint(next){if(next)status=next;$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.3 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
+function paint(next){if(next)status=next;window.dispatchEvent(new CustomEvent('aracne:sync-status',{detail:{status}}));$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.3 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
 function apply(doc){const privateNotes=state.notes.filter(n=>n.privacy==='private').map(n=>({...n,day:n.day>=doc.days?-1:n.day}));state=validate({...clone(doc),notes:[...doc.notes,...privateNotes]});day=Math.min(day,state.days-1);oldSave();fillForm();if(view==='plan')renderPlan();if(view==='budget')renderBudget();if(view==='notes')renderNotes();if(view==='map')drawMap();dirtyForm=false;window.dispatchEvent(new CustomEvent('aracne:shared-applied',{detail:{revision:session?.revision||0,role:session?.role||null}}))}
 save=function(){
  if(session?.role==='read'&&base&&!same(shared(),base)){apply(base);toast(tr('readonly'));return}
@@ -141,17 +144,18 @@ async function tick(){
      if(session!==current)return;base=sent;session.base=base;session.revision=reply.revision;if(Number.isFinite(Number(reply.last_event)))session.lastEvent=Number(reply.last_event);persist();paint(pending()?'pending':'synced');
    }else{
      const reply=await rpc('read',{p_since_event:session.lastEvent||0});if(session!==current)return;
-     receiveEvents(reply);session.role=reply.role;session.name=reply.name||reply.document?.name||session.name;
+     session.role=reply.role;session.name=reply.name||reply.document?.name||session.name;
      if(reply.revision!==session.revision){
        if(dirtyForm||$('#modal').open||pending()){paint('newer');return}
        validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();
      }
-     paint(pending()?'pending':'synced');
+     receiveEvents(reply);persist();paint(pending()?'pending':'synced');
    }
  }catch(e){
    if(e.message==='conflict'){
      try{
-       const reply=await rpc('read',{p_since_event:session.lastEvent||0});receiveEvents(reply);
+       const reply=await rpc('read',{p_since_event:session.lastEvent||0});if(session!==current)return;conflictRemote=reply;
+       if(dirtyForm||$('#modal').open){paint('conflict');return}
        const local=shared();
        if(same(reply.document,local)){base=clone(reply.document);session.base=base;session.revision=reply.revision;persist();paint('synced')}
        else{
@@ -160,11 +164,11 @@ async function tick(){
          base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(merged);persist();paint('pending');
          try{
            const wr=await rpc('write',{p_document:merged,p_revision:reply.revision,p_actor:window.aracneSharedActor?.()||null,p_events:events});
-           base=clone(merged);session.base=base;session.revision=wr.revision;if(Number.isFinite(Number(wr.last_event)))session.lastEvent=Number(wr.last_event);persist();paint('synced');
-         }catch(err){paint(err.message==='denied'?'denied':'newer')}
+           if(session!==current)return;base=clone(merged);session.base=base;session.revision=wr.revision;if(Number.isFinite(Number(wr.last_event)))session.lastEvent=Number(wr.last_event);persist();paint(pending()?'pending':'synced');
+         }catch(err){if(session!==current)return;paint(err.message==='denied'?'denied':'newer')}
        }
-     }catch{paint('offline')}
-   }else paint(e.message==='denied'?'denied':'offline');
+     }catch(err){if(session!==current)return;paint(err.message==='merge_conflict'?'conflict':'offline')}
+   }else if(session===current)paint(e.message==='denied'?'denied':'offline');
  }finally{busy=false}
 }
 function link(token){const url=new URL(location.href);url.hash='trip='+session.id+'&key='+token;url.search='';return url.href}
@@ -201,12 +205,12 @@ function open(){
    const doc=shared();validate(doc);backup();
    const token=secret(),edit=secret(),read=secret();
    const result=await rpc('create',{p_document:doc,p_edit:edit,p_read:read,p_name:doc.name,p_actor:window.aracneSharedActor?.()||'Organisateur'},{token,workspaceId:window.aracneWorkspaceV4?.id||null,workspaceToken:window.aracneWorkspaceV4?.token||null});
-   session={id:result.id,token,edit,read,role:'owner',revision:result.revision,lastEvent:Number(result.last_event)||0,name:result.name||doc.name,base:doc,workspaceId:window.aracneWorkspaceV4?.id||null,workspaceToken:window.aracneWorkspaceV4?.token||null};base=doc;persist();paint('synced');toast(tr('saved'));open();
+   session={id:result.id,token,edit,read,role:'owner',revision:result.revision,lastEvent:Number(result.last_event)||0,name:result.name||doc.name,base:doc,workspaceId:window.aracneWorkspaceV4?.id||null,workspaceToken:window.aracneWorkspaceV4?.token||null};base=doc;persist();window.dispatchEvent(new CustomEvent('aracne:shared-created',{detail:{id:session.id}}));paint('synced');toast(tr('saved'));open();
  });
  on('sharedEdit',()=>shareCapabilityLink(session.edit,'edit'));on('sharedRead',()=>shareCapabilityLink(session.read,'read'));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>shareCapabilityLink(session.token,session.role==='read'?'read':'edit'));
  on('sharedRotate',async()=>{if(!confirm(tr('rotateAsk')))return;const edit=secret(),read=secret();await rpc('rotate',{p_edit:edit,p_read:read});session.edit=edit;session.read=read;persist();open()});
- on('sharedDelete',async()=>{if(!confirm(tr('removeAsk')))return;await rpc('delete');disconnect()});
- on('sharedLeave',()=>{if(confirm(tr('leaveAsk')))disconnect()});
+ on('sharedDelete',async()=>{if(window.aracneV5){await window.aracneV5.remove();return;}if(!confirm(tr('removeAsk')))return;await rpc('delete');disconnect()});
+ on('sharedLeave',()=>{if(window.aracneV5){window.aracneV5.detach();return;}if(confirm(tr('leaveAsk')))disconnect()});
  on('sharedRetry',async()=>{paint('pending');await tick();open()});
  on('sharedLoad',async()=>{backup();const r=await rpc('read',{p_since_event:session.lastEvent||0});receiveEvents(r);validate(r.document);base=clone(r.document);session.base=base;session.revision=r.revision;session.role=r.role;session.name=r.name||r.document.name;apply(base);persist();paint('synced');open()});
  on('sharedBackup',()=>{const b=JSON.parse(localStorage.getItem(BACKUP));download(new Blob([JSON.stringify(b.state,null,2)],{type:'application/json'}),'voyage-copie-secours.json')});
@@ -218,14 +222,14 @@ shareDialog=function(){
  dialog(tr('choose'),`<div class="shareChoice">${button('shareTogether','together')}<p>${esc(tr('togetherHint'))}</p></div><div class="shareChoice">${button('shareSnapshot','snapshot')}<p>${esc(tr('snapshotHint'))}</p></div><button type="button" class="textBtn" id="shareExplain">? ${esc(tr('help'))}</button>`);
  $('#shareTogether').onclick=open;$('#shareSnapshot').onclick=()=>{oldShare();$('.v2Group')?.remove()};$('#shareExplain').onclick=()=>window.aracneHelp?.('sharing');
 };
-window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision,name:session.name||state.name}:null,_getRaw:()=>session,_setRaw:(next)=>{session=next;base=next?.base||null;if(next)localStorage.setItem(SESSION,JSON.stringify(next));else localStorage.removeItem(SESSION);paint(next?'synced':'local')},_rpc:rpc,_apply:apply,_tick:tick,_shared:shared,_backup:backup,_paint:paint,_secret:secret,_mergeDocs:mergeDocs};
+window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision,name:session.name||state.name}:null,_getRaw:()=>session,_setRaw:(next)=>{session=next;base=next?.base||null;if(next)localStorage.setItem(SESSION,JSON.stringify(next));else localStorage.removeItem(SESSION);paint(next?'synced':'local')},_status:()=>status,_pending:pending,_busy:()=>busy,_resolve:async()=>{if(!session)return;backup();const current=session;const reply=await rpc('read');if(session!==current)return;validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();paint('synced');conflictRemote=null},_rpc:rpc,_apply:apply,_tick:tick,_shared:shared,_backup:backup,_paint:paint,_secret:secret,_mergeDocs:mergeDocs};
 $('#shareTop').onclick=()=>shareDialog();$('#sharePlan').onclick=()=>shareDialog();
 async function init(){
  const args=new URLSearchParams(location.hash.slice(1));const id=args.get('trip'),token=args.get('key');
  if(id&&token&&/^[a-f0-9-]{36}$/.test(id)&&/^[a-f0-9]{64}$/.test(token)){
    if(session?.id!==id||session?.token!==token){
      if(!confirm(tr('join'))){history.replaceState(null,'',location.pathname+location.search);paint();return}
-     try{const candidate={id,token};const r=await rpc('read',{p_since_event:0},candidate);validate(r.document);backup();state.notes=[];session={...candidate,role:r.role,revision:r.revision,lastEvent:Number(r.last_event)||0,name:r.name||r.document.name,base:clone(r.document)};base=session.base;receiveEvents(r);apply(base);persist();paint('synced')}
+     try{const candidate={id,token};const r=await rpc('read',{p_since_event:0},candidate);validate(r.document);window.aracneV5?.checkpoint();backup();state.notes=[];session={...candidate,role:r.role,revision:r.revision,lastEvent:Number(r.last_event)||0,name:r.name||r.document.name,base:clone(r.document)};base=session.base;receiveEvents(r);apply(base);persist();paint('synced')}
      catch{paint('denied');return}
    }
    history.replaceState(null,'',location.pathname+location.search);

@@ -1,0 +1,11 @@
+{
+  "name": "aracne-trip-planner",
+  "private": true,
+  "scripts": {
+    "test": "node tests/v5.dom.cjs && node tests/v5.sync.cjs",
+    "build": "python3 build-locales.py"
+  },
+  "dependencies": {
+    "jsdom": "26.1.0"
+  }
+}
