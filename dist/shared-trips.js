@@ -74,7 +74,7 @@ const banner=document.createElement('div');banner.className='sharedBar';banner.i
 $('main').prepend(banner);$('#sharedOpen').textContent=tr('open');$('#sharedOpen').onclick=open;
 const oldSave=save;
 function paint(next){if(next)status=next;$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.3 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
-function apply(doc){const privateNotes=state.notes.filter(n=>n.privacy==='private').map(n=>({...n,day:n.day>=doc.days?-1:n.day}));state=validate({...clone(doc),notes:[...doc.notes,...privateNotes]});day=Math.min(day,state.days-1);oldSave();fillForm();if(view==='plan')renderPlan();if(view==='budget')renderBudget();if(view==='notes')renderNotes();if(view==='map')drawMap();dirtyForm=false}
+function apply(doc){const privateNotes=state.notes.filter(n=>n.privacy==='private').map(n=>({...n,day:n.day>=doc.days?-1:n.day}));state=validate({...clone(doc),notes:[...doc.notes,...privateNotes]});day=Math.min(day,state.days-1);oldSave();fillForm();if(view==='plan')renderPlan();if(view==='budget')renderBudget();if(view==='notes')renderNotes();if(view==='map')drawMap();dirtyForm=false;window.dispatchEvent(new CustomEvent('aracne:shared-applied',{detail:{revision:session?.revision||0,role:session?.role||null}}))}
 save=function(){
  if(session?.role==='read'&&base&&!same(shared(),base)){apply(base);toast(tr('readonly'));return}
  oldSave();dirtyForm=false;
@@ -156,7 +156,7 @@ shareDialog=function(){
  dialog(tr('choose'),`<div class="shareChoice">${button('shareTogether','together')}<p>${esc(tr('togetherHint'))}</p></div><div class="shareChoice">${button('shareSnapshot','snapshot')}<p>${esc(tr('snapshotHint'))}</p></div><button type="button" class="textBtn" id="shareExplain">? ${esc(tr('help'))}</button>`);
  $('#shareTogether').onclick=open;$('#shareSnapshot').onclick=()=>{oldShare();$('.v2Group')?.remove()};$('#shareExplain').onclick=()=>window.aracneHelp?.('sharing');
 };
-window.aracneShared={open};
+window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision}:null};
 $('#shareTop').onclick=()=>shareDialog();$('#sharePlan').onclick=()=>shareDialog();
 async function init(){
  const args=new URLSearchParams(location.hash.slice(1));const id=args.get('trip'),token=args.get('key');
