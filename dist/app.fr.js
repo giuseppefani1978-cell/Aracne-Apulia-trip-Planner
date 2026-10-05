@@ -89,5 +89,5 @@ $('#language').onchange=()=>{
  try{sessionStorage.setItem('aracne-language-draft',JSON.stringify({fields,view,day}));localStorage.setItem('aracne-language',lang)}catch{}
  location.assign(lang==='fr'?'index.html':'index.'+lang+'.html');
 };
-try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
+try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=id==='tripName'&&Object.prototype.hasOwnProperty.call(defaultNames,v.value)?defaultNames[v.value]:v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
 catch{}

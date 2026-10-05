@@ -49,13 +49,13 @@ $('#language').onchange=()=>{
  try{sessionStorage.setItem('aracne-language-draft',JSON.stringify({fields,view,day}));localStorage.setItem('aracne-language',lang)}catch{}
  location.assign(lang==='fr'?'index.html':'index.'+lang+'.html');
 };
-try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
+try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=id==='tripName'&&Object.prototype.hasOwnProperty.call(defaultNames,v.value)?defaultNames[v.value]:v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
 catch{}
 """.replace('LANG',json.dumps(lang))
     out+=extra
     (root/f'dist/app.{lang}.js').write_text(out)
     page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
-    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"></head>')
-    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script></body>')
+    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"></head>')
+    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script><script src="v21.js"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')

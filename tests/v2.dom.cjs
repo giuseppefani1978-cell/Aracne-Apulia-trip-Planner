@@ -8,9 +8,17 @@ for(const lang of ['fr','it','en','es']){
  w.matchMedia=()=>({matches:true});w.scrollTo=()=>{};w.HTMLElement.prototype.scrollIntoView=()=>{};
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true};w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
  w.confirm=()=>true;
- for(const f of [`app.${lang}.js`,'catalog-v2.js','v2.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',f),'utf8'),c);
+ for(const f of [`app.${lang}.js`,'catalog-v2.js','v2.js','v21.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',f),'utf8'),c);
  const run=s=>vm.runInContext(s,c);
- assert.equal(w.document.querySelector('#modal').open,true);w.document.querySelector('#tourSkip').click();
+ assert.equal(w.document.querySelector('#modal').open,true);
+ assert.equal(w.document.querySelector('#introLanguage').value,lang);
+ w.document.querySelector('#tourNext').click();assert.equal(w.document.querySelectorAll('#introLanguage').length,1);
+ w.document.querySelector('#tourSkip').click();
+ w.document.querySelector('#tripName').value='Unfinished draft';
+ const before=run('JSON.stringify(state)');w.document.querySelector('#v21StartGuide').click();
+ for(const tab of ['prepare','map','plan','budget','notes']){assert.equal(run('view'),tab);w.document.querySelector('#guideNext').click()}
+ assert.equal(run('view'),'prepare');assert.equal(run('JSON.stringify(state)'),before);assert.equal(w.document.querySelector('#tripName').value,'Unfinished draft');
+ w.document.querySelector('#v21StartGuide').click();w.document.querySelector('#guideFold').click();assert.equal(w.document.querySelector('#v21Walkthrough').classList.contains('minimised'),true);w.document.querySelector('#guideClose').click();
  run('drawMap()');assert.equal(w.document.querySelectorAll('#places .place').length,53);
  w.document.querySelector('[data-category="spa"]').click();assert.equal(w.document.querySelectorAll('#places .place').length,5);
  run("choosePlace('spa-vair')");w.document.querySelector('#confirmAdd').click();run("choosePlace('spa-coccaro')");w.document.querySelector('#confirmAdd').click();run("show('plan')");

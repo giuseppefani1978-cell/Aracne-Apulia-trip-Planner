@@ -1,5 +1,16 @@
 # Aracne-Apulia-trip-Planner
 
+## V2.1 — mobile & guide
+
+- Grid columns can shrink on iPhone; date inputs are constrained to their column.
+- Language selector inside every introduction frame, preserving the current frame when switching.
+- Separate collapsible Help menu: short intro and guided walkthrough of the five actual tabs.
+- Automatic walkthrough with pause, next/previous, minimise and close. Reduced-motion preference respected.
+- No demo data written into the trip; unfinished form fields restored when closing the guide.
+- Default trip titles translate when switching languages; personal titles remain unchanged.
+- DOM interaction tests pass in FR / IT / EN / ES. Native Safari date rendering still needs an iPhone check.
+- Shared online storage is unchanged and not activated by this UI release.
+
 ## V2 de test — experience-planner
 
 - Introduction animée courte, rejouable, avec pause et prise en compte de la réduction des animations.

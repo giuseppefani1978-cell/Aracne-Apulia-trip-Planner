@@ -104,10 +104,12 @@
   stop();const icons=['✧','◎','◷','↗'];
   dialog(t('guide'),`<div class="v2Tour"><div class="v2TourDots">${icons.map((_,i)=>`<span class="${i===slide?'on':''}"></span>`).join('')}</div><div class="v2Demo" aria-hidden="true"><span class="v2DemoIcon">${icons[slide]}</span><div class="v2DemoCard">${['EVJF · 6 · PUGLIA','SPA → + → DAY 1','2 h + 30 min + 1 h','WHATSAPP → ♡'][slide]}</div><small>${t('demo')}</small></div><h3>${t('tour'+(slide+1))}</h3><p>${t('tour'+(slide+1)+'text')}</p><div class="actions"><button class="textBtn" id="tourSkip">${t('skip')}</button><button class="secondary" id="tourBack" ${slide===0?'disabled':''}>${t('back')}</button><button class="primary" id="tourNext">${slide===3?t('start'):t('next')}</button><button class="round" id="tourPause" aria-label="${playing?'Pause':'Play'}">${playing?'Ⅱ':'▶'}</button></div></div>`);
   $('#tourSkip').onclick=finish;$('#tourBack').onclick=()=>{slide--;tour()};$('#tourNext').onclick=()=>{if(slide===3)finish();else{slide++;tour()}};$('#tourPause').onclick=()=>{playing=!playing;tour()};
+  window.dispatchEvent(new CustomEvent('aracne:intro-frame',{detail:{slide}}));
   if(playing&&slide<3)timer=setTimeout(()=>{slide++;tour()},5500);
  }
  $('#modal').addEventListener('close',()=>{stop();try{localStorage.setItem('aracne-v2-intro','seen')}catch{}});
  $('#v2Guide').onclick=()=>{slide=0;playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;tour()};
+ window.aracneIntro={open:(step=0)=>{slide=Math.max(0,Math.min(3,Number(step)||0));playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;tour()},close:finish,getSlide:()=>slide};
  try{if(!localStorage.getItem('aracne-v2-intro'))$('#v2Guide').click()}catch{}
  if(view==='plan')renderPlan();if(view==='map')drawMap();
  // Pure helpers exposed for regression checks only; no user data is exported.
