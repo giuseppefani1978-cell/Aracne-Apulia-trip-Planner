@@ -50,3 +50,19 @@ body.welcomeOpen{overflow:hidden}#welcome{position:fixed;inset:0;width:100vw;max
   nav span{font-size:14px}
   .rightRail .photoCard{height:170px}
 }
+
+/* V2.4 — cross-feature feedback and touch-safe modal behaviour. */
+body.modalLocked{position:fixed;left:0;right:0;width:100%;overflow:hidden}
+#modal[open]{display:flex;flex-direction:column;overflow:hidden}
+#modal .dialogHead{flex:0 0 auto}
+#modalBody{min-height:0;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;padding-bottom:max(4px,env(safe-area-inset-bottom))}
+nav button{position:relative}
+.navBadge{position:absolute;top:5px;right:7px;min-width:20px;height:20px;padding:0 6px;border-radius:999px;display:grid;place-items:center;background:#8a2387;color:#fff!important;font-size:11px!important;font-weight:800!important;line-height:1;box-shadow:0 2px 8px #8a238744}
+.navBadge[hidden]{display:none!important}
+.navBadge.pulse{animation:navBadgePulse .7s ease}
+@keyframes navBadgePulse{0%{transform:scale(.75)}45%{transform:scale(1.3)}100%{transform:scale(1)}}
+@media(max-width:740px){
+  #modal{max-height:calc(100dvh - max(20px,env(safe-area-inset-top)) - max(20px,env(safe-area-inset-bottom)));width:calc(100% - 24px);padding:21px 18px}
+  #modalBody{padding-right:2px}
+  .navBadge{top:3px;right:5px;min-width:18px;height:18px;padding:0 5px;font-size:10px!important}
+}
