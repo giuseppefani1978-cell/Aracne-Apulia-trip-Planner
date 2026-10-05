@@ -66,3 +66,6 @@ nav button{position:relative}
   #modalBody{padding-right:2px}
   .navBadge{top:3px;right:5px;min-width:18px;height:18px;padding:0 5px;font-size:10px!important}
 }
+
+#modal::backdrop{touch-action:none}
+#modalBody button,#modalBody a,#modalBody summary,#closeModal{pointer-events:auto;touch-action:manipulation}
