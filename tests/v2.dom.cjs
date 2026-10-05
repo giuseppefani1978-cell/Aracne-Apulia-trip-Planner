@@ -10,6 +10,8 @@ for(const lang of ['fr','it','en','es']){
  w.confirm=()=>true;
  for(const f of [`app.${lang}.js`,'catalog-v2.js','v2.js','v21.js'])vm.runInContext(fs.readFileSync(path.join(root,'dist',f),'utf8'),c);
  const run=s=>vm.runInContext(s,c);
+ // Legacy intro remains manually callable; V2.3 owns startup.
+ run('aracneIntro.open()');
  assert.equal(w.document.querySelector('#modal').open,true);
  assert.equal(w.document.querySelector('#introLanguage').value,lang);
  w.document.querySelector('#tourNext').click();assert.equal(w.document.querySelectorAll('#introLanguage').length,1);

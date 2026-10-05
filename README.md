@@ -111,3 +111,16 @@ Cartographie : Leaflet et © OpenStreetMap contributors. Météo : Open-Meteo. P
 Supabase collaboration without participant accounts: separate editing/viewing links,
 owner-only revocation/deletion, personal notes kept local, revision conflict protection
 and offline retry. See [shared-trip setup and limitations](docs/SHARED-TRIPS.md).
+
+## V2.3 — welcome and help
+
+Full-page six-step introduction (four languages), visible Skip, replay from a single
+header `?` button, and the existing five-tab walkthrough. Sharing starts with two
+choices: collaborate on the same trip or send a text snapshot. Invitation buttons
+explain editing vs viewing; administrator tools are folded under management.
+Recovery controls appear only when needed. Seven help topics explain access,
+private notes, backups, revocation and deletion. Supabase schema is unchanged.
+
+DOM regression: `JSDOM_PATH=/tmp/aracne-shared-tests/node_modules/jsdom node tests/experience.dom.cjs`.
+Native mobile rendering still requires an iPhone check; Chromium download failed
+in this environment, so no new browser screenshot verification is claimed.

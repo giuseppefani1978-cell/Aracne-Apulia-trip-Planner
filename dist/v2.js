@@ -110,7 +110,7 @@
  $('#modal').addEventListener('close',()=>{stop();try{localStorage.setItem('aracne-v2-intro','seen')}catch{}});
  $('#v2Guide').onclick=()=>{slide=0;playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;tour()};
  window.aracneIntro={open:(step=0)=>{slide=Math.max(0,Math.min(3,Number(step)||0));playing=!matchMedia('(prefers-reduced-motion: reduce)').matches;tour()},close:finish,getSlide:()=>slide};
- try{if(!localStorage.getItem('aracne-v2-intro'))$('#v2Guide').click()}catch{}
+ // Startup introduction is handled by experience.js.
  if(view==='plan')renderPlan();if(view==='map')drawMap();
  // Pure helpers exposed for regression checks only; no user data is exported.
  window.aracneV2Test={totals,leg,defaultDuration};

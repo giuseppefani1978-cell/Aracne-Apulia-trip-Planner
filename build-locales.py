@@ -55,7 +55,7 @@ catch{}
     out+=extra
     (root/f'dist/app.{lang}.js').write_text(out)
     page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
-    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"></head>')
-    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js"></script></body>')
+    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css"></head>')
+    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js"></script><script src="experience.js"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')

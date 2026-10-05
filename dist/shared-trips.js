@@ -37,6 +37,24 @@ const texts={
  saved:['Voyage partagé activé','Viaggio condiviso attivato','Shared trip enabled','Viaje compartido activado'],
  expense:['Dépenses incluses dans le voyage partagé. Aucun paiement bancaire.','Spese incluse nel viaggio condiviso. Nessun pagamento bancario.','Expenses included in the shared trip. No bank payments.','Gastos incluidos en el viaje compartido. Sin pagos bancarios.']
 };
+Object.assign(texts,{
+ editShort:['Inviter à modifier','Invita a modificare','Invite to edit','Invitar a editar'],
+ readShort:['Inviter en lecture seule','Invita in sola lettura','Invite to view','Invitar a consultar'],
+ editHint:['Pour préparer ensemble : chacun peut ajuster le voyage.','Per organizzare insieme: tutti possono modificare il viaggio.','Plan together: everyone invited can update the trip.','Para organizar juntos: cada invitado puede modificar el viaje.'],
+ readHint:['Pour consulter le programme sans le modifier.','Per consultare il programma senza modificarlo.','See the plan without changing it.','Para consultar el programa sin modificarlo.'],
+ advanced:['Gestion du voyage','Gestione del viaggio','Manage trip','Gestionar el viaje'],
+ repair:['Résoudre un problème','Risolvere un problema','Fix a problem','Resolver un problema'],
+ help:['Comprendre le partage','Capire la condivisione','Understand sharing','Entender cómo compartir'],
+ choose:['Comment souhaitez-vous partager ?','Come volete condividere?','How would you like to share?','¿Cómo quieres compartir?'],
+ together:['Préparer ensemble','Organizzare insieme','Plan together','Organizar juntos'],
+ togetherHint:['Un lien privé pour retrouver le même voyage à plusieurs.','Un link privato per lavorare sullo stesso viaggio.','A private link to the same shared trip.','Un enlace privado para trabajar en el mismo viaje.'],
+ snapshot:['Envoyer une copie du programme','Inviare una copia del programma','Send a copy of the plan','Enviar una copia del programa'],
+ snapshotHint:['Par WhatsApp ou message. La copie ne se met pas à jour.','Via WhatsApp o messaggio. La copia non si aggiorna.','By WhatsApp or message. The copy does not update.','Por WhatsApp o mensaje. La copia no se actualiza.'],
+ rotateHint:['Les anciens invités perdent leur accès. Envoyez ensuite les nouveaux liens.','I vecchi invitati perdono accesso. Inviate poi i nuovi link.','Old invitations stop working. Send the new links afterward.','Las invitaciones antiguas dejan de funcionar. Envía los nuevos enlaces.'],
+ removeHint:['Retire le voyage partagé pour tout le groupe. Les copies locales restent.','Elimina il viaggio condiviso per tutti. Restano le copie locali.','Removes the shared trip for everyone. Local copies remain.','Elimina el viaje compartido para todos. Las copias locales permanecen.'],
+ leaveHint:['Seul ce téléphone quitte le partage et garde une copie individuelle.','Solo questo telefono esce dalla condivisione e conserva una copia.','Only this phone leaves the shared trip and keeps a local copy.','Solo este teléfono abandona el viaje compartido y conserva una copia.'],
+ loadHint:['Conserve vos changements dans une copie de secours avant de charger la version du groupe.','Conserva le modifiche in una copia di sicurezza prima di caricare la versione del gruppo.','Backs up your changes before loading the group version.','Guarda tus cambios en una copia antes de cargar la versión del grupo.']
+});
 const tr=k=>texts[k][lang],clone=x=>JSON.parse(JSON.stringify(x));
 const SESSION='aracne-shared-v1',BACKUP='aracne-shared-backup-v1';
 let session=null,base=null,busy=false,dirtyForm=false,status='local',timer;
@@ -55,7 +73,7 @@ async function rpc(action,extra={},credentials=session){
 const banner=document.createElement('div');banner.className='sharedBar';banner.innerHTML='<span role="status" id="sharedStatus"></span><button type="button" class="secondary" id="sharedOpen"></button>';
 $('main').prepend(banner);$('#sharedOpen').textContent=tr('open');$('#sharedOpen').onclick=open;
 const oldSave=save;
-function paint(next){if(next)status=next;$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.2 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
+function paint(next){if(next)status=next;$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.3 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
 function apply(doc){const privateNotes=state.notes.filter(n=>n.privacy==='private').map(n=>({...n,day:n.day>=doc.days?-1:n.day}));state=validate({...clone(doc),notes:[...doc.notes,...privateNotes]});day=Math.min(day,state.days-1);oldSave();fillForm();if(view==='plan')renderPlan();if(view==='budget')renderBudget();if(view==='notes')renderNotes();if(view==='map')drawMap();dirtyForm=false}
 save=function(){
  if(session?.role==='read'&&base&&!same(shared(),base)){apply(base);toast(tr('readonly'));return}
@@ -91,18 +109,29 @@ function link(token){const url=new URL(location.href);url.hash='trip='+session.i
 async function copyLink(token){const url=link(token);try{await navigator.clipboard.writeText(url);toast(tr('copied'))}catch{const field=document.createElement('textarea');field.readOnly=true;field.value=url;field.rows=4;$('#modalBody').append(field);field.focus();field.select()}}
 function button(id,label){return `<button type="button" class="secondary" id="${id}">${esc(tr(label))}</button>`}
 function open(){
- let html=`<p>${esc(tr('intro'))}</p><p class="notice">${esc(tr(status))}</p><div class="actions">`;
+ const choice=(id,label,hint)=>`<div class="shareChoice">${button(id,label)}<p>${esc(tr(hint))}</p></div>`;
+ let html=`<p class="shareIntro">${esc(tr('intro'))}</p><p class="notice">${esc(tr(status))}</p><div class="shareMain">`;
  if(!session)html+=button('sharedCreate','create');
- else{
-   if(session.role==='owner'){
-     if(session.edit)html+=button('sharedEdit','edit')+button('sharedRead','read');
-     html+=button('sharedOwner','owner')+button('sharedRotate','rotate')+button('sharedDelete','remove');
-   }else html+=button('sharedLink',session.role==='read'?'read':'edit');
-   html+=button('sharedRetry','retry')+button('sharedLoad','load')+button('sharedLeave','leave');
+ else if(session.role==='owner'&&session.edit)html+=choice('sharedEdit','editShort','editHint')+choice('sharedRead','readShort','readHint');
+ else if(session.role!=='owner')html+=choice('sharedLink',session.role==='read'?'readShort':'editShort',session.role==='read'?'readHint':'editHint');
+ html+='</div>';
+ if(session){
+   if(['offline','pending','conflict','newer','denied'].includes(status)){
+     html+=`<details class="shareDetails" open><summary>${esc(tr('repair'))}</summary>`;
+     if(status!=='denied')html+=button('sharedRetry','retry');
+     if(['conflict','newer'].includes(status))html+=choice('sharedLoad','load','loadHint');
+     html+='</details>';
+   }
+   html+=`<details class="shareDetails"><summary>${esc(tr('advanced'))}</summary>`;
+   if(session.role==='owner')html+=choice('sharedOwner','owner','ownerInfo')+choice('sharedRotate','rotate','rotateHint');
+   html+=choice('sharedLeave','leave','leaveHint');
+   if(localStorage.getItem(BACKUP))html+=button('sharedBackup','backup');
+   if(session.role==='owner')html+=choice('sharedDelete','remove','removeHint');
+   html+='</details>';
  }
- if(localStorage.getItem(BACKUP))html+=button('sharedBackup','backup');
- html+='</div>';if(session?.role==='owner')html+=`<p class="small">${esc(tr('ownerInfo'))}</p>`;
+ html+=`<button type="button" class="textBtn" id="sharedHelp">? ${esc(tr('help'))}</button>`;
  dialog(tr('title'),html);
+ $('#sharedHelp').onclick=()=>window.aracneHelp?.('sharing');
  const on=(id,fn)=>{const b=$('#'+id);if(b)b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){toast(tr(e.message==='quota'?'quota':'fail'))}finally{b.disabled=false}}};
  on('sharedCreate',async()=>{
    if(view==='prepare'&&!syncForm())return;
@@ -122,7 +151,11 @@ function open(){
 function disconnect(){session=null;base=null;localStorage.removeItem(SESSION);paint('local');$('#modal').close();location.reload()}
 // Keep plain-text sharing separate; its existing WhatsApp buttons still send a snapshot.
 const oldShare=shareDialog;
-shareDialog=function(){oldShare();$('.v2Group')?.remove();const b=document.createElement('button');b.className='secondary';b.textContent=tr('open');b.onclick=open;$('#modalBody').prepend(b)};
+shareDialog=function(){
+ dialog(tr('choose'),`<div class="shareChoice">${button('shareTogether','together')}<p>${esc(tr('togetherHint'))}</p></div><div class="shareChoice">${button('shareSnapshot','snapshot')}<p>${esc(tr('snapshotHint'))}</p></div><button type="button" class="textBtn" id="shareExplain">? ${esc(tr('help'))}</button>`);
+ $('#shareTogether').onclick=open;$('#shareSnapshot').onclick=()=>{oldShare();$('.v2Group')?.remove()};$('#shareExplain').onclick=()=>window.aracneHelp?.('sharing');
+};
+window.aracneShared={open};
 $('#shareTop').onclick=()=>shareDialog();$('#sharePlan').onclick=()=>shareDialog();
 async function init(){
  const args=new URLSearchParams(location.hash.slice(1));const id=args.get('trip'),token=args.get('key');
