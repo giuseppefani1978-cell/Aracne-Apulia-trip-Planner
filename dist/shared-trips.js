@@ -72,10 +72,11 @@ async function rpc(action,extra={},credentials=session){
  try{const r=await fetch(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_action:action,p_id:credentials?.id||null,p_token:credentials?.token||null,...workspace,...extra}),signal:abort.signal});if(!r.ok)throw Error('offline');const data=await r.json();if(data.error){const e=Error(data.error);e.revision=data.revision;throw e}return data}finally{clearTimeout(deadline)}
 }
 function mergeValue(baseValue,localValue,remoteValue){
- if(same(localValue,remoteValue))return clone(localValue);
- if(same(localValue,baseValue))return clone(remoteValue);
- if(same(remoteValue,baseValue))return clone(localValue);
- return clone(remoteValue);
+ const cp=x=>x===undefined?undefined:clone(x);
+ if(same(localValue,remoteValue))return cp(localValue);
+ if(same(localValue,baseValue))return cp(remoteValue);
+ if(same(remoteValue,baseValue))return cp(localValue);
+ return cp(remoteValue);
 }
 function mergeObject(baseObj={},localObj={},remoteObj={}){
  const out=clone(remoteObj||{}),keys=new Set([...Object.keys(baseObj||{}),...Object.keys(localObj||{}),...Object.keys(remoteObj||{})]);
