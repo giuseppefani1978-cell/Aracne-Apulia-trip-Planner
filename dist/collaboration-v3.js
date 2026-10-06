@@ -18,7 +18,7 @@
     resetHint:['Efface le programme, les validations, les notes et les dépenses pour repartir de zéro. Le lien partagé reste le même.','Cancella programma, convalide, note e spese per ricominciare da zero. Il link condiviso resta lo stesso.','Clears the plan, validations, notes and expenses so you can start again. The shared link stays the same.','Borra el programa, las validaciones, las notas y los gastos para empezar de cero. El enlace compartido sigue siendo el mismo.'],
     resetAsk:['Réinitialiser ce voyage pour tout le groupe ?','Reimpostare questo viaggio per tutto il gruppo?','Reset this trip for the whole group?','¿Reiniciar este viaje para todo el grupo?'],
     resetConfirm:['Cette action repart de zéro. Confirmer ?','Questa azione ricomincia da zero. Confermare?','This starts the trip over from zero. Confirm?','Esta acción reinicia el viaje desde cero. ¿Confirmar?'],
-    ownerOnly:['Seul le créateur peut réinitialiser le voyage.','Solo il creatore può reimpostare il viaggio.','Only the creator can reset the trip.','Solo el creador puede reiniciar el viaje.'],
+    ownerOnly:['Action réservée à l’organisateur.','Azione riservata all’organizzatore.','Organiser only.','Acción reservada al organizador.'],
     who:['Votre nom dans le journal','Il tuo nome nel diario','Your name in the journal','Tu nombre en el diario'],
     organiser:['Organisateur','Organizzatore','Organiser','Organizador'],
     participant:['Participant','Partecipante','Participant','Participante'],
@@ -78,7 +78,7 @@
     delete x.journal;
     return x;
   };
-  const planFingerprint=()=>JSON.stringify((state.plan||[]).map(day=>day.map(p=>({uid:p.uid,name:p.name,desc:p.desc,time:p.time,lat:p.lat,lon:p.lon,status:p.status||'proposed'}))));
+  const planFingerprint=()=>JSON.stringify({start:state.start,days:state.days,plan:(state.plan||[]).map(day=>day.map(p=>({uid:p.uid,name:p.name,desc:p.desc,time:p.time,lat:p.lat,lon:p.lon,duration:p.duration,travelMinutes:p.travelMinutes,status:p.status||'proposed'})))});
   const allSteps=()=>Array.isArray(state.plan)?state.plan.flat():[];
   const locked=()=>Boolean(state.frameworkLocked||state.zone||(state.plan||[]).some(d=>d?.length));
   const statusOf=p=>p.status==='validated'?'validated':p.status==='modified'?'modified':'proposed';
@@ -93,7 +93,7 @@
   }
   function pushEvent(action,detail='',who=actor()){
     ensureMeta();
-    state.journal.push({id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),at:now(),actor:who,action,detail:String(detail||'').slice(0,220)});
+    state.journal.push({actorId:localStorage.getItem('aracne-v5-device')||null,id:crypto.randomUUID?crypto.randomUUID():String(Date.now())+Math.random(),at:now(),actor:who,action,detail:String(detail||'').slice(0,220)});
     if(state.journal.length>500)state.journal=state.journal.slice(-500);
   }
   function stepMap(s){
@@ -108,7 +108,7 @@
       const old=a.get(id);
       if(!old){
         item.p.status=item.p.status||'proposed';item.p.createdBy=item.p.createdBy||who;item.p.createdAt=item.p.createdAt||stamp;
-      }else if(coreStep(old.p)!==coreStep(item.p)){
+      }else if(coreStep(old.p)!==coreStep(item.p)||old.di!==item.di||old.pi!==item.pi||before.start!==current.start){
         if(old.p.status==='validated')item.p.status='modified'; else item.p.status=item.p.status||old.p.status||'proposed';
         item.p.updatedBy=who;item.p.updatedAt=stamp;
       }
@@ -211,6 +211,7 @@
     const reset=document.querySelector('#menuReset');if(reset)reset.onclick=resetTrip;
   }
   function resetTrip(){
+    if(window.aracneV5){window.aracneV5.clearPlan();return;}
     if(!isCreator()){toast(t('ownerOnly'));return}
     if(!confirm(t('resetAsk'))||!confirm(t('resetConfirm')))return;
     const who=actor();
@@ -223,7 +224,7 @@
 
   function applyFrameworkLock(){
     const form=document.querySelector('#tripForm'),themesBox=document.querySelector('#themes'),recommend=document.querySelector('#recommendations');
-    const shouldLock=locked();
+    const shouldLock=!isCreator();
     document.querySelector('#prepare')?.classList.toggle('frameworkLocked',shouldLock);
     if(form){form.querySelectorAll('input,select,button').forEach(el=>{if(el.type!=='button'||!el.closest('#themes,#interests'))el.disabled=shouldLock});}
     themesBox?.querySelectorAll('button').forEach(b=>b.disabled=shouldLock);
@@ -250,21 +251,25 @@
       meta.innerHTML=`<div><span class="stepCode">J${day+1} · ${String(i+1).padStart(2,'0')}</span><span class="status status-${status}">${esc2(statusLabel(status))}</span></div><small>${esc2(status==='validated'?t('validatedBy'):status==='modified'?t('modifiedBy'):t('addedBy'))} ${esc2(owner)}</small><button type="button" class="mini validateStep" data-validate-step="${esc2(p.uid)}">${esc2(status==='validated'?t('validated'):status==='modified'?t('revalidate'):t('validate'))}</button>`;
       el.querySelector('.stepContent')?.prepend(meta);
     });
-    document.querySelectorAll('[data-validate-step]').forEach(b=>b.onclick=()=>validateStep(b.dataset.validateStep));
+    document.querySelectorAll('[data-validate-step]').forEach(b=>{b.disabled=!isCreator();b.onclick=()=>validateStep(b.dataset.validateStep)});
     const total=allSteps().length,validated=allSteps().filter(p=>statusOf(p)==='validated').length;
     let panel=document.querySelector('#collabPlanStatus');if(!panel){panel=document.createElement('div');panel.id='collabPlanStatus';document.querySelector('#planSummary')?.after(panel)}
     const changed=Boolean(state.carnetVersion&&state.finalizedFingerprint&&state.finalizedFingerprint!==planFingerprint());
     const label=state.carnetVersion?(changed?t('updateBook'):t('current')):t('finalize');
     panel.innerHTML=`<div class="collabProgress"><div><strong>${validated}/${total}</strong><span>${esc2(t('progress'))}</span></div><div class="progressTrack"><i style="width:${total?Math.round(validated/total*100):0}%"></i></div></div>${total&&validated===total?`<button type="button" class="primary" id="finalizePlan">${esc2(label)}</button>`:`<p class="small">${esc2(t('allRequired'))}</p>`}`;
-    const f=document.querySelector('#finalizePlan');if(f)f.onclick=finalizePlan;
+    const f=document.querySelector('#finalizePlan');if(f){f.disabled=!isCreator();f.onclick=finalizePlan;}
   }
   function validateStep(id){
+    if(!isCreator()){toast(t('ownerOnly'));return}
     const p=allSteps().find(x=>x.uid===id);if(!p)return;
     p.status='validated';p.validatedBy=actor();p.validatedAt=now();p.updatedBy=actor();p.updatedAt=now();save();renderPlan();
   }
   function finalizePlan(){
+    if(!isCreator()){toast(t('ownerOnly'));return}
+    if(window.aracneShared?._pending()){toast(t('allRequired'));return}
+    if(state.finalizedFingerprint===planFingerprint()&&state.publishedBook)return;
     const total=allSteps().length;if(!total||allSteps().some(p=>statusOf(p)!=='validated'))return;
-    state.carnetVersion=(state.carnetVersion||0)+1;state.finalizedAt=now();state.finalizedBy=actor();state.finalizedFingerprint=planFingerprint();save();renderPlan();toast(`${t('carnetReady')} · v${state.carnetVersion}`);
+    state.carnetVersion=(state.carnetVersion||0)+1;state.finalizedAt=now();state.finalizedBy=actor();state.finalizedFingerprint=planFingerprint();state.publishedBook={plan:clone(state.plan),start:state.start,days:state.days,name:state.name,version:state.carnetVersion,at:state.finalizedAt,by:state.finalizedBy};save();renderPlan();toast(`${t('carnetReady')} · v${state.carnetVersion}`);
   }
 
   function renderJournal(){
@@ -291,7 +296,7 @@
     section.querySelector('.sectionHead h2').textContent=t('carnetReady');
     let host=document.querySelector('#carnetOverview');if(!host){host=document.createElement('div');host.id='carnetOverview';section.querySelector('.sectionHead')?.after(host)}
     if(bookMap){try{bookMap.remove()}catch{}bookMap=null}
-    const days=(state.plan||[]).map((d,di)=>({di,steps:(d||[]).filter(p=>statusOf(p)==='validated')})).filter(x=>x.steps.length);
+    const days=(state.publishedBook?.plan||[]).map((d,di)=>({di,steps:(d||[]).filter(p=>statusOf(p)==='validated')})).filter(x=>x.steps.length);
     const validated=days.flatMap(x=>x.steps);
     const changed=Boolean(state.carnetVersion&&state.finalizedFingerprint&&state.finalizedFingerprint!==planFingerprint());
     host.innerHTML=`<div class="carnetHero"><div><span class="eyebrow">${esc2(state.carnetVersion?`${t('current')} · v${state.carnetVersion}`:t('notFinal'))}</span><h3>${esc2(state.name||t('carnetReady'))}</h3><p>${esc2(state.finalizedAt?new Date(state.finalizedAt).toLocaleString(document.documentElement.lang,{dateStyle:'medium',timeStyle:'short'}):t('carnetEmpty'))}</p>${changed?`<p class="notice">${esc2(t('newChanges'))}</p>`:''}</div></div>${validated.length?`<div class="carnetMapTitle"><b>${esc2(t('route'))}</b><span>${validated.length} étapes</span></div><div id="carnetMap"></div>${days.map(dayBookHtml).join('')}`:`<div class="empty">${esc2(t('carnetEmpty'))}</div>`}`;
@@ -309,7 +314,7 @@
   }
   function dayBookHtml(d){
     const groupNotes=(state.notes||[]).filter(n=>n.privacy==='group'&&(n.day===d.di||n.day===-1));
-    return `<section class="carnetDay"><div class="carnetDayHead"><span>${esc2(dayLabel(d.di))}</span><b>${d.steps.length} étapes</b></div>${d.steps.map((p,i)=>`<article class="carnetStep"><span>${String(i+1).padStart(2,'0')}</span><div><time>${esc2(p.time||'—')}</time><h4>${esc2(p.name)}</h4><p>${esc2(p.desc||'')}</p>${p.validatedBy?`<small>✓ ${esc2(t('validatedBy'))} ${esc2(p.validatedBy)}</small>`:''}</div></article>`).join('')}${groupNotes.length?`<div class="carnetNotes"><b>${esc2(t('notes'))}</b>${groupNotes.map(n=>`<p>${esc2(n.text)}</p>`).join('')}</div>`:''}</section>`;
+    return `<section class="carnetDay"><div class="carnetDayHead"><span>${esc2(state.publishedBook?.start?new Date(state.publishedBook.start+'T12:00:00').toLocaleDateString(document.documentElement.lang)+' · J'+(d.di+1):'J'+(d.di+1))}</span><b>${d.steps.length} étapes</b></div>${d.steps.map((p,i)=>`<article class="carnetStep"><span>${String(i+1).padStart(2,'0')}</span><div><time>${esc2(p.time||'—')}</time><h4>${esc2(p.name)}</h4><p>${esc2(p.desc||'')}</p>${p.validatedBy?`<small>✓ ${esc2(t('validatedBy'))} ${esc2(p.validatedBy)}</small>`:''}</div></article>`).join('')}${groupNotes.length?`<div class="carnetNotes"><b>${esc2(t('notes'))}</b>${groupNotes.map(n=>`<p>${esc2(n.text)}</p>`).join('')}</div>`:''}</section>`;
   }
 
   function refreshChrome(){

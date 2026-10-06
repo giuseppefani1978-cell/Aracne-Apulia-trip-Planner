@@ -1,3 +1,8 @@
+# V5 — candidate de validation
+
+La nouvelle version est documentée dans [docs/V5-RELEASE.md](docs/V5-RELEASE.md).
+Elle nécessite le RPC V5 avant publication. Les sections ci-dessous décrivent les versions historiques.
+
 # Aracne-Apulia-trip-Planner
 
 ## V2.1 — mobile & guide
