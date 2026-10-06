@@ -1,0 +1,6 @@
+/* Match the approved palette and leave all backgrounds/layouts intact. */
+.betaBanner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px max(14px,4vw);border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
+.betaBanner strong{color:var(--purple);letter-spacing:.06em;white-space:nowrap}.betaBanner .textBtn{margin-left:auto;padding:6px 0;min-height:32px;font-size:12px}.betaActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.betaActions button{min-width:0;overflow-wrap:anywhere}#betaResetFilters{white-space:nowrap;font-size:12px}#betaFeedback{width:100%;box-sizing:border-box}
+@media(max-width:380px){.betaBanner{gap:5px}.betaBanner>span{font-size:10px}.betaActions{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:no-preference){.view.active{animation:betaAppear .18s ease-out}@keyframes betaAppear{from{opacity:.8;transform:translateY(3px)}to{opacity:1;transform:translateY(0)}}}
+@media(prefers-reduced-motion:reduce){.view.active{animation:none}}

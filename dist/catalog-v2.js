@@ -79,3 +79,167 @@ window.aracneCatalogV2 = [
  ['Plage sableuse dans le parc des Dunes Costières, avec environnement dunaire protégé.','Spiaggia sabbiosa nel Parco Dune Costiere, con ambiente dunale protetto.','Sandy beach within the Coastal Dunes Park, surrounded by a protected dune environment.','Playa de arena dentro del Parque de Dunas Costeras, rodeada de dunas protegidas.']]
 
 ];
+// Beta 1 additions, official operator/park sources checked 2026-10-06.
+// Coordinates except Cesine are approximate area pins, never promised entrances.
+window.aracneCatalogV2.push(...[
+  [
+    "spa-basiliani",
+    "Il Melograno · Basiliani · Otranto",
+    "salento",
+    40.139,
+    18.49,
+    "spa",
+    150,
+    "https://cdshotels.it/spa-centro-benessere-basiliani/",
+    [
+      "Spa à Otranto avec trois piscines intérieures chauffées, sauna et hammam. Accès dès 16 ans ; réserver et confirmer les conditions.",
+      "Spa a Otranto con tre piscine interne riscaldate, sauna e hammam. Accesso dai 16 anni; prenotare e confermare le condizioni.",
+      "Otranto spa with three heated indoor pools, sauna and hammam. Ages 16 and over; book and confirm access conditions.",
+      "Spa en Otranto con tres piscinas interiores climatizadas, sauna y hammam. Desde 16 años; reservar y confirmar condiciones."
+    ]
+  ],
+  [
+    "spa-borgo-santi",
+    "L’Essenza SPA · Borgo de li Santi · Otranto",
+    "salento",
+    40.141,
+    18.483,
+    "spa",
+    90,
+    "https://borgodelisanti.it/spa-wellness",
+    [
+      "Spa à Otranto : sauna, bain turc et bain à remous ; formules pour couples et groupes à réserver.",
+      "Spa a Otranto: sauna, bagno turco e idromassaggio; pacchetti per coppie e gruppi su prenotazione.",
+      "Otranto spa with sauna, steam bath and hot tub; book packages for couples and groups.",
+      "Spa en Otranto con sauna, baño turco e hidromasaje; reservar paquetes para parejas y grupos."
+    ]
+  ],
+  [
+    "spa-acaya",
+    "Acaya Golf Resort & Spa",
+    "salento",
+    40.347,
+    18.306,
+    "spa",
+    150,
+    "https://acayagolf-resort.it/",
+    [
+      "Spa et piscines près d’Acaya. Demander les conditions pour visiteurs extérieurs et les limites d’âge propres aux espaces.",
+      "Spa e piscine vicino ad Acaya. Chiedere condizioni per ospiti esterni e limiti di età delle diverse aree.",
+      "Spa and pools near Acaya. Ask about day-guest access and age limits for each area.",
+      "Spa y piscinas cerca de Acaya. Consultar acceso sin alojamiento y límites de edad de cada zona."
+    ]
+  ],
+  [
+    "spa-pietrablu",
+    "Pietrablu Resort & SPA · Polignano",
+    "bari",
+    41.029,
+    17.184,
+    "spa,beach",
+    150,
+    "https://cdshotels.it/en/pietrablu-resort-spa/",
+    [
+      "Resort avec spa et piscines sur la côte de Polignano. Vérifier ouverture saisonnière et accès sans hébergement.",
+      "Resort con spa e piscine sulla costa di Polignano. Verificare apertura stagionale e accesso senza pernottamento.",
+      "Resort with spa and pools on the Polignano coast. Check seasonal opening and access without an overnight stay.",
+      "Resort con spa y piscinas en la costa de Polignano. Consultar apertura estacional y acceso sin alojamiento."
+    ]
+  ],
+  [
+    "nature-cesine",
+    "Le Cesine · Oasi WWF",
+    "salento",
+    40.350098,
+    18.336225,
+    "nature",
+    150,
+    "https://www.wwf.it/dove-interveniamo/il-nostro-lavoro-in-italia/oasi/le-cesine/",
+    [
+      "Réserve de zones humides et bois à Vernole. Visite uniquement accompagnée des guides de la réserve, sur réservation obligatoire.",
+      "Riserva di zone umide e boschi a Vernole. Visita solo con le guide della riserva e prenotazione obbligatoria.",
+      "Wetland and woodland reserve in Vernole. Visits only with reserve guides; booking required.",
+      "Reserva de humedales y bosques en Vernole. Visitas solo con guías de la reserva y reserva obligatoria."
+    ]
+  ],
+  [
+    "nature-rauccio",
+    "Bosco e Paludi di Rauccio · Lecce",
+    "salento",
+    40.456,
+    18.187,
+    "nature",
+    150,
+    "https://parcorauccio.it/",
+    [
+      "Parc près de Lecce avec sentiers et activités d’éducation à la nature. Consulter les accès et alertes avant la visite.",
+      "Parco vicino Lecce con sentieri e attività di educazione ambientale. Consultare accessi e avvisi prima della visita.",
+      "Park near Lecce with trails and nature education activities. Check access and alerts before visiting.",
+      "Parque cerca de Lecce con senderos y educación ambiental. Consultar accesos y avisos antes de ir."
+    ]
+  ],
+  [
+    "nature-ugento",
+    "Parco Naturale Litorale di Ugento",
+    "salento",
+    39.864,
+    18.139,
+    "nature,beach",
+    180,
+    "https://www.parcolitoralediugento.it/parco/",
+    [
+      "Dunes, bassins et maquis sur le littoral d’Ugento. Choisir un parcours et vérifier les conditions d’accès sur le site du parc.",
+      "Dune, bacini e macchia sul litorale di Ugento. Scegliere un percorso e verificare gli accessi sul sito del parco.",
+      "Dunes, lagoons and Mediterranean scrub on the Ugento coast. Choose a route and check access on the park website.",
+      "Dunas, lagunas y matorral en la costa de Ugento. Elegir ruta y consultar accesos en la web del parque."
+    ]
+  ],
+  [
+    "nature-otranto-leuca",
+    "Parco Costa Otranto–Leuca e Bosco di Tricase",
+    "salento",
+    39.944,
+    18.384,
+    "nature",
+    180,
+    "https://www.parcootrantoleuca.it/pagina191361_piano-del-parco.html",
+    [
+      "Parc côtier entre Otranto et Leuca. Repère indicatif vers Tricase : choisir un sentier et son point de départ auprès du parc.",
+      "Parco costiero tra Otranto e Leuca. Punto indicativo verso Tricase: scegliere sentiero e partenza con le informazioni del parco.",
+      "Coastal park between Otranto and Leuca. Approximate pin near Tricase: choose a trail and starting point using park information.",
+      "Parque costero entre Otranto y Leuca. Punto orientativo cerca de Tricase: elegir sendero e inicio con información del parque."
+    ]
+  ],
+  [
+    "nature-cerano",
+    "Riserva Bosco di Cerano",
+    "salento",
+    40.547,
+    18.045,
+    "nature",
+    120,
+    "https://pugliacon.regione.puglia.it/web/sit-puglia-sit/pianificazione-aree-naturali-protette",
+    [
+      "Réserve naturelle régionale au sud de Brindisi. Préparer le parcours et vérifier les accès locaux avant de partir.",
+      "Riserva naturale regionale a sud di Brindisi. Preparare il percorso e verificare gli accessi locali prima di partire.",
+      "Regional nature reserve south of Brindisi. Plan your route and check local access before setting off.",
+      "Reserva natural regional al sur de Brindisi. Preparar la ruta y consultar accesos locales antes de salir."
+    ]
+  ],
+  [
+    "nature-lama-balice",
+    "Parco Naturale Lama Balice · Bari",
+    "bari",
+    41.133,
+    16.778,
+    "nature",
+    120,
+    "https://pugliacon.regione.puglia.it/web/sit-puglia-sit/pianificazione-aree-naturali-protette",
+    [
+      "Parc naturel régional dans la zone de Bari. Repère indicatif : confirmer le sentier et le point d’entrée avant la visite.",
+      "Parco naturale regionale nell’area di Bari. Punto indicativo: confermare sentiero e ingresso prima della visita.",
+      "Regional nature park in the Bari area. Approximate pin: confirm your trail and entrance before visiting.",
+      "Parque natural regional en la zona de Bari. Punto orientativo: confirmar sendero y entrada antes de visitar."
+    ]
+  ]
+]);
