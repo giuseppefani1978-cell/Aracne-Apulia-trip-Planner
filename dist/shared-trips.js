@@ -55,6 +55,7 @@ Object.assign(texts,{
  leaveHint:['Seul ce téléphone quitte le partage et garde une copie individuelle.','Solo questo telefono esce dalla condivisione e conserva una copia.','Only this phone leaves the shared trip and keeps a local copy.','Solo este teléfono abandona el viaje compartido y conserva una copia.'],
  loadHint:['Conserve vos changements dans une copie de secours avant de charger la version du groupe.','Conserva le modifiche in una copia di sicurezza prima di caricare la versione del gruppo.','Backs up your changes before loading the group version.','Guarda tus cambios en una copia antes de cargar la versión del grupo.']
 });
+texts.setup_required=['Le partage est indisponible : le service V5 doit être installé. Votre voyage reste enregistré sur cet appareil.','Condivisione non disponibile: il servizio V5 deve essere installato. Il viaggio resta salvato su questo dispositivo.','Sharing unavailable: the V5 service must be installed. Your trip stays saved on this device.','Compartir no está disponible: falta instalar el servicio V5. El viaje sigue guardado en este dispositivo.'];
 const tr=k=>texts[k][lang],clone=x=>JSON.parse(JSON.stringify(x));
 const SESSION='aracne-shared-v1',BACKUP='aracne-shared-backup-v1';
 let session=null,base=null,busy=false,dirtyForm=false,status='local',timer;
@@ -70,7 +71,7 @@ function backup(){localStorage.setItem(BACKUP,JSON.stringify({date:new Date().to
 async function rpc(action,extra={},credentials=session){
  const abort=new AbortController(),deadline=setTimeout(()=>abort.abort(),15000);
  const workspace=credentials?.workspaceId&&credentials?.workspaceToken?{p_workspace_id:credentials.workspaceId,p_workspace_token:credentials.workspaceToken}:{};
- try{const r=await fetch(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_action:action,p_id:credentials?.id||null,p_token:credentials?.token||null,...workspace,...extra}),signal:abort.signal});if(!r.ok)throw Error('offline');const data=await r.json();if(data.error){const e=Error(data.error);e.revision=data.revision;throw e}return data}finally{clearTimeout(deadline)}
+ try{const r=await fetch(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_action:action,p_id:credentials?.id||null,p_token:credentials?.token||null,...workspace,...extra}),signal:abort.signal});if(!r.ok){let problem={};try{problem=await r.json()}catch{}throw Error(problem.code==='PGRST202'||r.status===404?'setup_required':'offline')}const data=await r.json();if(data.error){const e=Error(data.error);e.revision=data.revision;throw e}return data}finally{clearTimeout(deadline)}
 }
 function mergeValue(baseValue,localValue,remoteValue){
  const cp=x=>x===undefined?undefined:clone(x);
@@ -126,7 +127,7 @@ function receiveEvents(reply){
 const banner=document.createElement('div');banner.className='sharedBar';banner.innerHTML='<span role="status" id="sharedStatus"></span><button type="button" class="secondary" id="sharedOpen"></button>';
 $('main').prepend(banner);$('#sharedOpen').textContent=tr('open');$('#sharedOpen').onclick=open;
 const oldSave=save;
-function paint(next){if(next)status=next;window.dispatchEvent(new CustomEvent('aracne:sync-status',{detail:{status}}));$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V2.3 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
+function paint(next){if(next)status=next;window.dispatchEvent(new CustomEvent('aracne:sync-status',{detail:{status}}));$('#sharedStatus').textContent=tr(status)+(session?.role==='read'?' · '+tr('readonly'):'');const old=$('.v2Topbar > span');if(old)old.textContent='V5.1 · '+tr(session?'title':'local');const notice=$('#budget .notice');if(session&&notice)notice.textContent=tr('expense')}
 function apply(doc){const privateNotes=state.notes.filter(n=>n.privacy==='private').map(n=>({...n,day:n.day>=doc.days?-1:n.day}));state=validate({...clone(doc),notes:[...doc.notes,...privateNotes]});day=Math.min(day,state.days-1);oldSave();fillForm();if(view==='plan')renderPlan();if(view==='budget')renderBudget();if(view==='notes')renderNotes();if(view==='map')drawMap();dirtyForm=false;window.dispatchEvent(new CustomEvent('aracne:shared-applied',{detail:{revision:session?.revision||0,role:session?.role||null}}))}
 save=function(){
  if(session?.role==='read'&&base&&!same(shared(),base)){apply(base);toast(tr('readonly'));return}
@@ -134,7 +135,7 @@ save=function(){
  if(session){paint(pending()?'pending':'synced');clearTimeout(timer);timer=setTimeout(tick,650)}
 };
 // Editing inputs can precede save(), so never replace a form while it is in use.
-document.addEventListener('input',e=>{if(e.target.closest('main')||e.target.closest('#stepForm,#editNoteForm'))dirtyForm=true});
+document.addEventListener('input',e=>{if(e.target.closest('#tripForm,#stepForm,#editNoteForm,#noteForm,#expenseForm'))dirtyForm=true});
 async function tick(){
  if(!session||busy||document.hidden||status==='conflict'||status==='denied')return;
  busy=true;const current=session;
@@ -146,7 +147,7 @@ async function tick(){
      const reply=await rpc('read',{p_since_event:session.lastEvent||0});if(session!==current)return;
      session.role=reply.role;session.name=reply.name||reply.document?.name||session.name;
      if(reply.revision!==session.revision){
-       if(dirtyForm||$('#modal').open||pending()){paint('newer');return}
+       if(dirtyForm||($('#modal').open&&($('#stepForm')||$('#editNoteForm')))||pending()){paint('newer');return}
        validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();
      }
      receiveEvents(reply);persist();paint(pending()?'pending':'synced');
@@ -155,7 +156,7 @@ async function tick(){
    if(e.message==='conflict'){
      try{
        const reply=await rpc('read',{p_since_event:session.lastEvent||0});if(session!==current)return;conflictRemote=reply;
-       if(dirtyForm||$('#modal').open){paint('conflict');return}
+       if(dirtyForm||($('#modal').open&&($('#stepForm')||$('#editNoteForm')))){paint('conflict');return}
        const local=shared();
        if(same(reply.document,local)){base=clone(reply.document);session.base=base;session.revision=reply.revision;persist();paint('synced')}
        else{
@@ -168,12 +169,27 @@ async function tick(){
          }catch(err){if(session!==current)return;paint(err.message==='denied'?'denied':'newer')}
        }
      }catch(err){if(session!==current)return;paint(err.message==='merge_conflict'?'conflict':'offline')}
-   }else if(session===current)paint(e.message==='denied'?'denied':'offline');
+   }else if(session===current)paint(e.message==='denied'?'denied':e.message==='setup_required'?'setup_required':'offline');
  }finally{busy=false}
+}
+let enabling=null;
+async function enable(){
+ if(session)return session;
+ if(enabling)return enabling;
+ enabling=(async()=>{
+  if(view==='prepare'&&!syncForm())throw Error('invalid');
+  const sourceId=localStorage.getItem('aracne-v5-active');const doc=shared();validate(doc);if(!doc.name.trim())throw Error('name_required');backup();
+  const token=secret(),edit=secret(),read=secret();
+  const result=await rpc('create',{p_document:doc,p_edit:edit,p_read:read,p_name:doc.name,p_actor:window.aracneSharedActor?.()||'Organisateur'},{token});
+  // Persist credentials immediately, even if the subsequent read loses connection.
+  const created={id:result.id,token,edit,read,role:'owner',revision:result.revision,lastEvent:0,name:doc.name,base:doc};if(sourceId!==localStorage.getItem('aracne-v5-active')){window.aracneV5?.registerShared(sourceId,created,doc);throw Error('trip_changed')}session=created;base=doc;persist();
+  window.dispatchEvent(new CustomEvent('aracne:shared-created',{detail:{id:session.id}}));
+  const r=await rpc('read');base=clone(r.document);session.base=base;session.revision=r.revision;apply(base);persist();paint('synced');return session;
+ })();try{return await enabling}finally{enabling=null}
 }
 function link(token){const url=new URL(location.href);url.hash='trip='+session.id+'&key='+token;url.search='';return url.href}
 async function copyLink(token){const url=link(token);try{await navigator.clipboard.writeText(url);toast(tr('copied'))}catch{const field=document.createElement('textarea');field.readOnly=true;field.value=url;field.rows=4;$('#modalBody').append(field);field.focus();field.select()}}
-async function shareCapabilityLink(token,mode){const url=link(token),payload={title:tr('title'),text:tr(mode==='read'?'readHint':'editHint'),url};if(typeof navigator.share==='function'){try{await navigator.share(payload);return}catch(e){if(e&&e.name==='AbortError')return}}await copyLink(token)}
+async function shareCapabilityLink(token,mode){const url=link(token),payload={title:state.name,text:state.name+'\n'+tr(mode==='read'?'readHint':'editHint'),url};if(typeof navigator.share==='function'){try{await navigator.share(payload);return}catch(e){if(e&&e.name==='AbortError')return}}await copyLink(token)}
 function button(id,label){return `<button type="button" class="secondary" id="${id}">${esc(tr(label))}</button>`}
 function open(){
  const choice=(id,label,hint)=>`<div class="shareChoice">${button(id,label)}<p>${esc(tr(hint))}</p></div>`;
@@ -200,13 +216,7 @@ function open(){
  dialog(tr('title'),html);
  $('#sharedHelp').onclick=()=>window.aracneHelp?.('sharing');
  const on=(id,fn)=>{const b=$('#'+id);if(b)b.onclick=async()=>{b.disabled=true;try{await fn()}catch(e){toast(tr(e.message==='quota'?'quota':'fail'))}finally{b.disabled=false}}};
- on('sharedCreate',async()=>{
-   if(view==='prepare'&&!syncForm())return;
-   const doc=shared();validate(doc);backup();
-   const token=secret(),edit=secret(),read=secret();
-   const result=await rpc('create',{p_document:doc,p_edit:edit,p_read:read,p_name:doc.name,p_actor:window.aracneSharedActor?.()||'Organisateur'},{token,workspaceId:window.aracneWorkspaceV4?.id||null,workspaceToken:window.aracneWorkspaceV4?.token||null});
-   session={id:result.id,token,edit,read,role:'owner',revision:result.revision,lastEvent:Number(result.last_event)||0,name:result.name||doc.name,base:doc,workspaceId:window.aracneWorkspaceV4?.id||null,workspaceToken:window.aracneWorkspaceV4?.token||null};base=doc;persist();window.dispatchEvent(new CustomEvent('aracne:shared-created',{detail:{id:session.id}}));paint('synced');toast(tr('saved'));open();
- });
+ on('sharedCreate',async()=>{await enable();open()});
  on('sharedEdit',()=>shareCapabilityLink(session.edit,'edit'));on('sharedRead',()=>shareCapabilityLink(session.read,'read'));on('sharedOwner',()=>copyLink(session.token));on('sharedLink',()=>shareCapabilityLink(session.token,session.role==='read'?'read':'edit'));
  on('sharedRotate',async()=>{if(!confirm(tr('rotateAsk')))return;const edit=secret(),read=secret();await rpc('rotate',{p_edit:edit,p_read:read});session.edit=edit;session.read=read;persist();open()});
  on('sharedDelete',async()=>{if(window.aracneV5){await window.aracneV5.remove();return;}if(!confirm(tr('removeAsk')))return;await rpc('delete');disconnect()});
@@ -222,7 +232,7 @@ shareDialog=function(){
  dialog(tr('choose'),`<div class="shareChoice">${button('shareTogether','together')}<p>${esc(tr('togetherHint'))}</p></div><div class="shareChoice">${button('shareSnapshot','snapshot')}<p>${esc(tr('snapshotHint'))}</p></div><button type="button" class="textBtn" id="shareExplain">? ${esc(tr('help'))}</button>`);
  $('#shareTogether').onclick=open;$('#shareSnapshot').onclick=()=>{oldShare();$('.v2Group')?.remove()};$('#shareExplain').onclick=()=>window.aracneHelp?.('sharing');
 };
-window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision,name:session.name||state.name}:null,_getRaw:()=>session,_setRaw:(next)=>{session=next;base=next?.base||null;if(next)localStorage.setItem(SESSION,JSON.stringify(next));else localStorage.removeItem(SESSION);paint(next?'synced':'local')},_status:()=>status,_pending:pending,_busy:()=>busy,_resolve:async()=>{if(!session)return;backup();const current=session;const reply=await rpc('read');if(session!==current)return;validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();paint('synced');conflictRemote=null},_rpc:rpc,_apply:apply,_tick:tick,_shared:shared,_backup:backup,_paint:paint,_secret:secret,_mergeDocs:mergeDocs};
+window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision,name:session.name||state.name}:null,_getRaw:()=>session,_setRaw:(next)=>{session=next;base=next?.base||null;if(next)localStorage.setItem(SESSION,JSON.stringify(next));else localStorage.removeItem(SESSION);paint(next?'synced':'local')},_enable:enable,_shareLink:shareCapabilityLink,_link:link,_status:()=>status,_pending:pending,_busy:()=>busy,_resolve:async()=>{if(!session)return;backup();const current=session;const reply=await rpc('read');if(session!==current)return;validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();paint('synced');conflictRemote=null},_rpc:rpc,_apply:apply,_tick:tick,_shared:shared,_backup:backup,_paint:paint,_secret:secret,_mergeDocs:mergeDocs};
 $('#shareTop').onclick=()=>shareDialog();$('#sharePlan').onclick=()=>shareDialog();
 async function init(){
  const args=new URLSearchParams(location.hash.slice(1));const id=args.get('trip'),token=args.get('key');
@@ -239,5 +249,6 @@ async function init(){
 // Locale scripts translate display defaults before this module runs. Restore the
 // canonical saved trip to avoid broadcasting translations as collaborator edits.
 if(session){try{const cached=localStorage.getItem('aracne-puglia-v1');if(cached){state=validate(JSON.parse(cached));fillForm()}}catch{}}
+document.addEventListener('close',()=>{dirtyForm=false;tick()},true);
 paint();init();setInterval(tick,5000);window.addEventListener('online',tick);document.addEventListener('visibilitychange',()=>{if(!document.hidden)tick()});
 })();
