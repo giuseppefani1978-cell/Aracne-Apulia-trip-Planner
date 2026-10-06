@@ -46,6 +46,7 @@ async function activate(){
 }
 async function boot(){
  var root=showGate();
+ var pre=document.querySelector('#aracneBetaPrelock');if(pre)pre.remove();
  var st=root.querySelector('#betaAccessStatus');
  if(st)st.textContent='Vérification de votre accès…';
  try{
