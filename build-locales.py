@@ -55,7 +55,7 @@ catch{}
     out+=extra
     (root/f'dist/app.{lang}.js').write_text(out)
     page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
-    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=2.3.1"></head>')
-    page=page.replace('</body>', '<script src="catalog-v2.js"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js"></script><script src="experience.js?v=2.3.1"></script></body>')
+    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=5.0.0"><link rel="stylesheet" href="collaboration-v3.css"><link rel="stylesheet" href="v5.css?v=5.1.0"><link rel="stylesheet" href="beta.css?v=1.0.0-beta.1"></head>')
+    page=page.replace('</body>', '<script src="catalog-v2.js?v=1.0.0-beta.1"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js?v=5.1.0"></script><script src="experience.js?v=5.1.0"></script><script src="collaboration-v3.js"></script><script src="v5.js?v=5.1.0"></script><script src="invitations-v51.js?v=5.1.0"></script><script src="beta.js?v=1.0.0-beta.1"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')
