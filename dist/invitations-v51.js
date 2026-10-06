@@ -32,5 +32,6 @@ async function invites(){
 }
 shareDialog=invites;document.querySelector('#sharedOpen').onclick=invites;document.querySelector('#v51Invite').onclick=invites;document.querySelector('#v51Trips').onclick=()=>window.aracneV5.openTrips();document.querySelector('#shareTop').onclick=invites;document.querySelector('#sharePlan').onclick=invites;
 const map=document.querySelector('#topMap');map.innerHTML='⌖ <span>'+t('map')+'</span>';map.setAttribute('aria-label',t('map'));
+const options=document.querySelector('#tripMenu');const optionsLabel=['Options','Opzioni','Options','Opciones'][c];options.textContent=optionsLabel;options.setAttribute('aria-label',optionsLabel);
 window.aracneInvitations={open:invites,refresh};refresh();
 })();
