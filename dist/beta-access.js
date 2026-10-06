@@ -1,4 +1,4 @@
-/* Aracne Beta 1 · private access gate. */
+/* Aracne Beta 1 · private access gate v2 · fail closed. */
 (function(){
 'use strict';
 var SUPABASE='https://cpnjdyhsepytphwlenbg.supabase.co';
@@ -45,10 +45,32 @@ async function activate(){
  var m={invalid_code:'Code invalide ou révoqué.',used_code:'Ce code a déjà été utilisé sur un autre navigateur.',session_exists:'Ce navigateur possède déjà un accès bêta.'};st.textContent=m[r&&r.error]||'Impossible d’activer ce code.'}catch(e){st.textContent='Connexion impossible.'}finally{b.disabled=false}
 }
 async function boot(){
- var known=false;try{known=localStorage.getItem(MODE_KEY)==='on'}catch(e){}
- try{var enabled=await detectMode();if(!enabled){window.aracneBetaAccess={enabled:false,token:token,betaRpc:betaRpc};return}known=true}catch(e){if(!known){return}}
- try{var s=await session();if(s&&s.ok){window.aracneBetaAccess={enabled:true,active:true,admin:!!s.admin,nickname:s.nickname||'',token:token,betaRpc:betaRpc};return}}catch(e){}
- showGate();window.aracneBetaAccess={enabled:true,active:false,token:token,betaRpc:betaRpc};
+ var root=showGate();
+ var st=root.querySelector('#betaAccessStatus');
+ if(st)st.textContent='Vérification de votre accès…';
+ try{
+  var enabled=await detectMode();
+  try{localStorage.setItem(MODE_KEY,enabled?'on':'off')}catch(e){}
+  if(!enabled){
+   root.remove();
+   window.aracneBetaAccess={enabled:false,token:token,betaRpc:betaRpc};
+   return;
+  }
+ }catch(e){
+  if(st)st.textContent='Impossible de vérifier l’accès pour le moment. Réessayez dans quelques secondes.';
+  window.aracneBetaAccess={enabled:true,active:false,token:token,betaRpc:betaRpc};
+  return;
+ }
+ try{
+  var s=await session();
+  if(s&&s.ok){
+   root.remove();
+   window.aracneBetaAccess={enabled:true,active:true,admin:!!s.admin,nickname:s.nickname||'',token:token,betaRpc:betaRpc};
+   return;
+  }
+ }catch(e){}
+ if(st)st.textContent='Entrez votre code Beta 1 pour continuer.';
+ window.aracneBetaAccess={enabled:true,active:false,token:token,betaRpc:betaRpc};
 }
 window.aracneBetaAccess={enabled:null,token:token,betaRpc:betaRpc};
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
