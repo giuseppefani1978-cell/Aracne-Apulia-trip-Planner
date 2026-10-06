@@ -71,7 +71,7 @@ function backup(){localStorage.setItem(BACKUP,JSON.stringify({date:new Date().to
 async function rpc(action,extra={},credentials=session){
  const abort=new AbortController(),deadline=setTimeout(()=>abort.abort(),15000);
  const workspace=credentials?.workspaceId&&credentials?.workspaceToken?{p_workspace_id:credentials.workspaceId,p_workspace_token:credentials.workspaceToken}:{};
- try{const r=await fetch(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json'},body:JSON.stringify({p_action:action,p_id:credentials?.id||null,p_token:credentials?.token||null,...workspace,...extra}),signal:abort.signal});if(!r.ok){let problem={};try{problem=await r.json()}catch{}throw Error(problem.code==='PGRST202'||r.status===404?'setup_required':'offline')}const data=await r.json();if(data.error){const e=Error(data.error);e.revision=data.revision;throw e}return data}finally{clearTimeout(deadline)}
+ try{const r=await fetch(endpoint,{method:'POST',headers:{apikey:key,'Content-Type':'application/json','x-aracne-beta':(()=>{try{return localStorage.getItem('aracne-beta-token-v1')||''}catch{return ''}})()},body:JSON.stringify({p_action:action,p_id:credentials?.id||null,p_token:credentials?.token||null,...workspace,...extra}),signal:abort.signal});if(!r.ok){let problem={};try{problem=await r.json()}catch{}throw Error(problem.code==='PGRST202'||r.status===404?'setup_required':'offline')}const data=await r.json();if(data.error){const e=Error(data.error);e.revision=data.revision;throw e}return data}finally{clearTimeout(deadline)}
 }
 function mergeValue(baseValue,localValue,remoteValue){
  const cp=x=>x===undefined?undefined:clone(x);
