@@ -269,7 +269,7 @@
     if(window.aracneShared?._pending()){toast(t('allRequired'));return}
     if(state.finalizedFingerprint===planFingerprint()&&state.publishedBook)return;
     const total=allSteps().length;if(!total||allSteps().some(p=>statusOf(p)!=='validated'))return;
-    state.carnetVersion=(state.carnetVersion||0)+1;state.finalizedAt=now();state.finalizedBy=actor();state.finalizedFingerprint=planFingerprint();state.publishedBook={plan:clone(state.plan),start:state.start,days:state.days,name:state.name,version:state.carnetVersion,at:state.finalizedAt,by:state.finalizedBy};save();renderPlan();toast(`${t('carnetReady')} · v${state.carnetVersion}`);
+    state.carnetVersion=(state.carnetVersion||0)+1;state.finalizedAt=now();state.finalizedBy=actor();state.finalizedFingerprint=planFingerprint();state.publishedBook={transport:state.transport,plan:clone(state.plan),start:state.start,days:state.days,name:state.name,version:state.carnetVersion,at:state.finalizedAt,by:state.finalizedBy};save();renderPlan();toast(`${t('carnetReady')} · v${state.carnetVersion}`);
   }
 
   function renderJournal(){
@@ -299,7 +299,46 @@
     const days=(state.publishedBook?.plan||[]).map((d,di)=>({di,steps:(d||[]).filter(p=>statusOf(p)==='validated')})).filter(x=>x.steps.length);
     const validated=days.flatMap(x=>x.steps);
     const changed=Boolean(state.carnetVersion&&state.finalizedFingerprint&&state.finalizedFingerprint!==planFingerprint());
-    host.innerHTML=`<div class="carnetHero"><div><span class="eyebrow">${esc2(state.carnetVersion?`${t('current')} · v${state.carnetVersion}`:t('notFinal'))}</span><h3>${esc2(state.name||t('carnetReady'))}</h3><p>${esc2(state.finalizedAt?new Date(state.finalizedAt).toLocaleString(document.documentElement.lang,{dateStyle:'medium',timeStyle:'short'}):t('carnetEmpty'))}</p>${changed?`<p class="notice">${esc2(t('newChanges'))}</p>`:''}</div></div>${validated.length?`<div class="carnetMapTitle"><b>${esc2(t('route'))}</b><span>${validated.length} étapes</span></div><div id="carnetMap"></div>${days.map(dayBookHtml).join('')}`:`<div class="empty">${esc2(t('carnetEmpty'))}</div>`}`;
+    host.innerHTML=`<div class="carnetHero"><div><span class="eyebrow">${esc2(state.carnetVersion?`${t('current')} · v${state.carnetVersion}`:t('notFinal'))}</span><h3>${esc2(state.publishedBook?.name||state.name||t('carnetReady'))}</h3><p>${esc2(state.finalizedAt?new Date(state.finalizedAt).toLocaleString(document.documentElement.lang,{dateStyle:'medium',timeStyle:'short'}):t('carnetEmpty'))}</p>${changed?`<p class="notice">${esc2(t('newChanges'))}</p>`:''}</div></div>${validated.length?`<div class="carnetMapTitle"><b>${esc2(t('route'))}</b><span>${validated.length} étapes</span></div><div id="carnetMap"></div>${days.map(dayBookHtml).join('')}`:`<div class="empty">${esc2(t('carnetEmpty'))}</div>`}`;
+    if(validated.length){
+      const title=state.publishedBook.name||t('carnetReady');
+      const mode=state.publishedBook.transport||state.transport||'driving';
+      const lang=document.documentElement.lang;
+      const labels=({fr:['Jour','Partager…','Parcours copié.','Partage indisponible. Utilisez WhatsApp.'],it:['Giorno','Condividi…','Percorso copiato.','Condivisione non disponibile. Usa WhatsApp.'],en:['Day','Share…','Route copied.','Sharing unavailable. Use WhatsApp.'],es:['Día','Compartir…','Ruta copiada.','No se puede compartir. Usa WhatsApp.']})[lang]||['Day','Share…','Route copied.','Sharing unavailable. Use WhatsApp.'];
+      const lines=[title], links=[];
+      days.forEach(d=>{
+        lines.push('',`${labels[0]} ${d.di+1}`);
+        d.steps.forEach((p,i)=>{
+          lines.push(`${i+1}. ${p.time?p.time+' · ':''}${p.name}`);
+          if(Number.isFinite(p.lat)&&Number.isFinite(p.lon)&&mode==='driving'){
+            const url=`https://www.waze.com/ul?ll=${encodeURIComponent(p.lat+','+p.lon)}&navigate=yes`;
+            lines.push(`Waze: ${url}`);
+            links.push({label:`Waze · ${labels[0]} ${d.di+1} · ${p.name}`,url});
+          }
+        });
+        const geo=d.steps.filter(p=>Number.isFinite(p.lat)&&Number.isFinite(p.lon));
+        // Consecutive pairs also work for transit and avoid mobile waypoint limits.
+        const legs=geo.length===1?[[null,geo[0]]]:geo.slice(1).map((p,i)=>[geo[i],p]);
+        legs.forEach(([from,to],i)=>{
+          const params=new URLSearchParams({api:'1',destination:to.lat+','+to.lon,travelmode:mode});
+          if(from)params.set('origin',from.lat+','+from.lon);
+          const url='https://www.google.com/maps/dir/?'+params;
+          const label=`Google Maps · ${labels[0]} ${d.di+1} · ${from?from.name+' → ':''}${to.name}`;
+          lines.push(`${label}: ${url}`);links.push({label,url});
+        });
+      });
+      const text=lines.join('\n');
+      const actions=document.createElement('div');actions.className='carnetShareActions';
+      actions.innerHTML=`<a class="primary" target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent(text)}">WhatsApp</a><button type="button" class="secondary" id="carnetNativeShare">${esc2(labels[1])}</button>`;
+      host.querySelector('.carnetHero')?.append(actions);
+      if(links.length){const routes=document.createElement('details');routes.className='carnetRoutes';routes.innerHTML=`<summary>Google Maps${mode==='driving'?' · Waze':''}</summary><div class="carnetShareActions">${links.map(l=>`<a class="secondary" target="_blank" rel="noopener" href="${esc2(l.url)}">${esc2(l.label)}</a>`).join('')}</div>`;actions.after(routes)}
+      actions.querySelector('#carnetNativeShare').addEventListener('click',async()=>{try{
+        if(navigator.share)await navigator.share({title,text});
+        else if(navigator.clipboard?.writeText){await navigator.clipboard.writeText(text);toast(labels[2])}
+        else toast(labels[3]);
+      }catch(e){if(e.name!=='AbortError')toast(labels[3])}});
+    }
+
     if(validated.length&&window.L){
       setTimeout(()=>{
         const el=document.querySelector('#carnetMap');if(!el||!el.offsetParent)return;

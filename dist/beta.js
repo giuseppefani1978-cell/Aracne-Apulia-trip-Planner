@@ -18,17 +18,21 @@ const texts={
  reset:['Effacer les filtres','Azzera i filtri','Clear filters','Borrar filtros'],
  catalog:['Spas et nature : sélection enrichie. Vérifiez accès, réservation et conditions sur la fiche du lieu.','Spa e natura: selezione ampliata. Verifica accesso, prenotazioni e condizioni nella scheda.','More spas and nature spots. Check access, booking and conditions on each place’s page.','Más spas y naturaleza. Consulta acceso, reservas y condiciones en cada ficha.']
 };
+texts.testSound=['Tester le son','Prova il suono','Test sound','Probar sonido'];
+texts.enableSound=['Activer le son','Attiva il suono','Enable sound','Activar sonido'];
+texts.soundBlocked=['Le son n’a pas pu démarrer. Touchez à nouveau « Tester le son ».','Il suono non è partito. Tocca di nuovo « Prova il suono ».','Audio could not start. Tap Test sound again.','El sonido no pudo iniciarse. Pulsa Probar sonido de nuevo.'];
 const t=k=>texts[k][col];let sounds=false,context;
 try{sounds=localStorage.getItem('aracne-beta-sounds')==='on'}catch{}
-function tone(kind='tap'){
+function tone(kind='tap',report=false){
+ const failed=()=>{if(report)toast(t('soundBlocked'))};
  if(!sounds||document.hidden)return;
- try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;context=context||new Audio();
- const play=()=>{if(!sounds||document.hidden)return;const notes={tap:[520],add:[523,659,784],ready:[523,659,784,1047],done:[523,659,784,1047,784,1047]}[kind]||[520];
- notes.forEach((hz,i)=>{const o=context.createOscillator(),g=context.createGain(),now=context.currentTime+i*.105,d=kind==='tap'?.07:.23;o.type='sine';o.frequency.setValueAtTime(hz,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(kind==='tap'?.022:.045,now+.012);g.gain.exponentialRampToValueAtTime(.0001,now+d);o.connect(g);g.connect(context.destination);o.onended=()=>{o.disconnect();g.disconnect()};o.start(now);o.stop(now+d+.02)})};
- if(context.state==='suspended')context.resume().then(play).catch(()=>{});else play();
- }catch{}
+ try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio){failed();return}if(!context||context.state==='closed')context=new Audio();
+ const play=()=>{if(!sounds||document.hidden)return;if(context.state!=='running'){failed();return}const notes={tap:[520],add:[523,659,784],ready:[523,659,784,1047],done:[523,659,784,1047,784,1047]}[kind]||[520];
+ notes.forEach((hz,i)=>{const o=context.createOscillator(),g=context.createGain(),now=context.currentTime+.015+i*.16,d=kind==='tap'?.11:.34;o.type='triangle';o.frequency.setValueAtTime(hz,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(kind==='tap'?.065:.16,now+.015);g.gain.setValueAtTime(kind==='tap'?.045:.12,now+(kind==='tap'?.04:.14));g.gain.exponentialRampToValueAtTime(.0001,now+d);o.connect(g);g.connect(context.destination);o.onended=()=>{o.disconnect();g.disconnect()};o.start(now);o.stop(now+d+.02)})};
+ if(context.state!=='running')context.resume().then(play).catch(failed);else play();
+ }catch{failed()}
 }
-function soundLabel(button){button.textContent=(sounds?'🔊 ':'🔇 ')+t('sound')+' · '+t(sounds?'on':'off');button.setAttribute('aria-pressed',String(sounds))}
+function soundLabel(button){button.textContent=sounds?'🔊 '+t('sound')+' · '+t('on'):'🔇 '+t('enableSound');button.setAttribute('aria-pressed',String(sounds))}
 function toggleSound(){sounds=!sounds;try{localStorage.setItem('aracne-beta-sounds',sounds?'on':'off')}catch{}document.querySelectorAll('#betaSound,#betaSoundQuick').forEach(soundLabel);if(sounds)tone('add')}
 function bindSound(){const b=document.querySelector('#betaSound');if(!b)return;soundLabel(b);b.onclick=toggleSound}
 function feedback(){dialog(t('feedback'),`<p>${t('hint')}</p><label>${t('feedback')}<textarea id="betaFeedback" rows="8" maxlength="4000"></textarea></label><button class="primary" id="betaCopy">${t('copy')}</button><p class="small" id="betaCopyStatus" role="status"></p>`);const input=document.querySelector('#betaFeedback');input.value='Aracne · Beta 1 · '+document.documentElement.lang+'\n\n'+t('placeholder');document.querySelector('#betaCopy').onclick=async()=>{try{if(!navigator.clipboard?.writeText)throw Error('clipboard');await navigator.clipboard.writeText(input.value);document.querySelector('#betaCopyStatus').textContent=t('copied')}catch{input.focus();input.select();document.querySelector('#betaCopyStatus').textContent=t('manual')}}}
@@ -37,6 +41,7 @@ const banner=document.createElement('div');banner.className='betaBanner';banner.
 const originalHelp=window.aracneHelp;window.aracneHelp=()=>{originalHelp();const box=document.createElement('div');box.className='betaActions';box.innerHTML=`<button class="secondary" id="betaSound"></button><button class="secondary" id="betaFeedbackOpen">${t('feedback')}</button>`;document.querySelector('#modalBody').append(box);bindSound();document.querySelector('#betaFeedbackOpen').onclick=feedback};document.querySelector('#helpButton').onclick=window.aracneHelp;
 const reset=document.createElement('button');reset.type='button';reset.className='textBtn';reset.id='betaResetFilters';reset.textContent=t('reset');document.querySelector('.v2Filters').append(reset);reset.onclick=()=>{document.querySelector('#search').value='';document.querySelector('#zoneFilter').value='all';document.querySelector('[data-category="all"]').click()};
 const quick=document.createElement('button');quick.type='button';quick.id='betaSoundQuick';quick.className='textBtn';soundLabel(quick);quick.onclick=toggleSound;banner.append(quick);
+const soundTest=document.createElement('button');soundTest.type='button';soundTest.id='betaSoundTest';soundTest.className='textBtn';soundTest.textContent='♫ '+t('testSound');soundTest.onclick=()=>{sounds=true;try{localStorage.setItem('aracne-beta-sounds','on')}catch{}document.querySelectorAll('#betaSound,#betaSoundQuick').forEach(soundLabel);tone('ready',true)};banner.append(soundTest);
 const cheers={add:['Youpi, une étape de plus !','Evviva, una tappa in più!','Yay, another stop!','¡Una etapa más!'],ready:['Votre proposition est prête !','La tua proposta è pronta!','Your draft is ready!','¡Tu propuesta está lista!'],done:['Hourra, votre programme est finalisé !','Evviva, il programma è finalizzato!','Hooray, your plan is finalized!','¡Hurra, tu programa está finalizado!']};
 const cheer=document.createElement('div');cheer.className='betaCheer';cheer.setAttribute('role','status');cheer.setAttribute('aria-live','polite');document.body.append(cheer);let cheerTimer;
 function reduced(){return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches)}
@@ -60,7 +65,7 @@ function finishAction(event){const before=pendingActions.get(event);if(!before)r
 document.addEventListener('click',watchAction,true);document.addEventListener('submit',watchAction,true);
 window.addEventListener('click',finishAction);window.addEventListener('submit',finishAction);
 document.addEventListener('click',event=>{const b=event.target.closest?.('button');if(!b||b.disabled||b.getAttribute('aria-disabled')==='true')return;
- if(!b.matches('#betaSound,#betaSoundQuick,#confirmAdd,#finalizePlan,[data-zone],#stepForm button'))tone();
+ if(!b.matches('#betaSound,#betaSoundQuick,#betaSoundTest,#confirmAdd,#finalizePlan,[data-zone],#stepForm button'))tone();
  if(!reduced()&&b.animate)b.animate([{transform:'scale(.94)',filter:'brightness(1.16)',boxShadow:'0 0 0 0 rgba(233,64,87,.28)'},{transform:'scale(1.035)',filter:'brightness(1.07)',boxShadow:'0 0 0 8px rgba(233,64,87,0)'},{transform:'scale(1)',filter:'brightness(1)',boxShadow:'0 0 0 0 rgba(233,64,87,0)'}],{duration:320,easing:'ease-out'});
 });
 window.aracneBeta={open,version:'1.0.0-beta.1'};
