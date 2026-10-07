@@ -1,0 +1,51 @@
+begin;
+-- All credentials below are random transaction-local fixtures, never returned or persisted.
+do $$
+declare
+ admin_token text:=encode(extensions.gen_random_bytes(32),'hex');
+ owner_token text:=encode(extensions.gen_random_bytes(32),'hex');
+ guest_token text:=encode(extensions.gen_random_bytes(32),'hex');
+ other_token text:=encode(extensions.gen_random_bytes(32),'hex');
+ admin_id uuid;bid uuid;owner_id uuid;slot_id uuid;slot_two uuid;r jsonb;code text;replacement text;
+begin
+ insert into aracne_private.beta_batches(label) values('Transactional invitation tests') returning id into bid;
+ insert into aracne_private.beta_invites(batch_id,code_hash,suffix,is_admin,used_at) values(bid,sha256(extensions.gen_random_bytes(32)),'TEST00',true,now()) returning id into admin_id;
+ insert into aracne_private.beta_sessions(invite_id,token_hash,nickname) values(admin_id,sha256(convert_to(admin_token,'UTF8')),'Test admin');
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',admin_token)::text,true);
+ r:=public.aracne_beta('invites_create_group','{"label":"Temporary test group","count":2,"reserve":1}');
+ assert r->>'ok'='true','Admin group creation';
+ code:=replace(r->'codes'->>0,'-','');
+ select id into owner_id from aracne_private.beta_invites where batch_id=(r->>'batch_id')::uuid;
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',owner_token)::text,true);
+ r:=public.aracne_beta('activate',jsonb_build_object('code',code,'nickname','Test owner'));
+ assert r->>'ok'='true','Existing code activation';
+ r:=public.aracne_beta('invites_list');assert jsonb_array_length(r->'slots')=3,'Quota plus reserve';
+ slot_id:=(r->'slots'->0->>'id')::uuid;slot_two:=(r->'slots'->1->>'id')::uuid;
+ r:=public.aracne_beta('invites_create_group','{"label":"Forbidden","count":1,"reserve":0}');assert r->>'error'='denied','Non-admin cannot mint organizers';
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_id,'trip_name','Trip one'));assert r->>'ok'='true','Issue first invitation';code:=r->>'code';
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_id));assert r->>'code'=code,'Reopen same link without consuming another place';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',other_token)::text,true);
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_id));assert r->>'error'='beta_required','Unknown browser cannot issue';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',guest_token)::text,true);
+ r:=public.aracne_beta('activate',jsonb_build_object('code',code,'nickname','Guest'));assert r->>'ok'='true','Guest activates';
+ r:=public.aracne_beta('invites_list');assert jsonb_array_length(r->'slots')=0 and r->>'organizer'='false','Guest gets no quota';
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_two));assert r->>'error'='denied','Guest cannot use parent slots';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',other_token)::text,true);
+ r:=public.aracne_beta('activate',jsonb_build_object('code',code,'nickname','Duplicate'));assert r->>'error'='used_code','Code cannot activate a second browser';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',owner_token)::text,true);
+ r:=public.aracne_beta('invites_cancel',jsonb_build_object('id',slot_id));assert r->>'error'='used_code','Activated places cannot be recycled';
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_two));code:=r->>'code';
+ r:=public.aracne_beta('invites_cancel',jsonb_build_object('id',slot_two));assert r->>'ok'='true','Cancel unused';
+ r:=public.aracne_beta('invites_issue',jsonb_build_object('id',slot_two));replacement:=r->>'code';assert replacement<>code,'Replacement invalidates previous link';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',other_token)::text,true);
+ r:=public.aracne_beta('activate',jsonb_build_object('code',code,'nickname','Cancelled'));assert r->>'error'='invalid_code','Cancelled code blocked';
+ update aracne_private.beta_invitation_slots set expires_at=now()-interval '1 second' where id=slot_two;
+ r:=public.aracne_beta('activate',jsonb_build_object('code',replacement,'nickname','Expired'));assert r->>'error'='invalid_code','Expiry enforced by legacy activation endpoint';
+ perform set_config('request.headers',jsonb_build_object('x-aracne-beta',admin_token)::text,true);
+ r:=public.aracne_beta('invites_quota',jsonb_build_object('id',owner_id,'count',0,'reserve',0));assert r->>'error'='slots_in_use','Cannot remove allocated slots';
+ r:=public.aracne_beta('invites_dashboard');assert r->>'ok'='true','Admin sees provenance';
+ assert not has_function_privilege('anon','aracne_private.beta_invitation_api(text,jsonb)','execute'),'Private helper inaccessible to anon';
+ assert not has_table_privilege('anon','aracne_private.beta_invitation_slots','select'),'Slots not publicly readable';
+end $$;
+rollback;
+select 'PASS: quotas, provenance, existing codes, guest restrictions, expiry, replacement, permissions. Test data rolled back.' as result;

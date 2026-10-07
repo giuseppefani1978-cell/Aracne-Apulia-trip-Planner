@@ -35,13 +35,15 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{text-align:left;p
 <section id="dashboard" class="hidden">
 <div class="hero"><div><span class="pill">ARACNE V5.1 / BETA 1</span><h1>Piloter les bêta-testeurs</h1></div><p>Créez des lots de codes à envoyer par WhatsApp, suivez leur activation, révoquez un accès et centralisez les retours.</p></div>
 <section class="card">
-<h2>Nouveau lot de codes</h2>
+<h2>Nouvel organisateur et ses invitations</h2>
+<p class="small">Un seul code pour l’organisateur. Ses places d’invitation apparaîtront dans l’app. Les invités ne pourront pas autoriser de nouveaux testeurs.</p>
 <div class="grid">
 <label>Nom du lot<input id="batchLabel" maxlength="80" placeholder="Anaïs · premier groupe"></label>
-<label>Nombre de codes<input id="batchCount" type="number" min="1" max="50" value="5"></label>
-<div style="display:flex;align-items:end"><button class="primary" id="createBatch" style="width:100%">Créer les codes</button></div>
+<label>Invitations<input id="batchCount" type="number" min="0" max="50" value="4"></label>
+<label>Places de réserve<input id="reserveCount" type="number" min="0" max="10" value="2"></label>
+<div style="display:flex;align-items:end"><button class="primary" id="createBatch" style="width:100%">Créer l’accès organisateur</button></div>
 </div>
-<div class="actions" style="margin-top:12px"><button id="copyAll" class="hidden">Copier tous les codes</button><span id="batchStatus" class="status"></span></div>
+<div class="actions" style="margin-top:12px"><button id="copyAll" class="hidden">Copier le code organisateur</button><span id="batchStatus" class="status"></span></div>
 <div id="codes" class="codes"></div>
 </section>
 <section class="card">
@@ -83,11 +85,15 @@ async function enter(){
 }
 async function load(){
  var r=await rpc('dashboard');if(r&&r.error==='denied'){location.reload();return}
+ var q=await rpc('invites_dashboard');if(!q||!q.ok)throw Error('quota_service');
+ var details=new Map((q.testers||[]).map(function(x){return [x.id,x]}));
  var batches=new Map((r.batches||[]).map(function(x){return [x.id,x.label]}));
  document.querySelector('#testers').innerHTML=(r.testers||[]).map(function(x){
-  var state=x.revoked?'Révoqué':x.used_at?'Activé':'Disponible';
+  var info=details.get(x.id)||{},state=x.revoked?'Révoqué':x.used_at?'Activé':info.expires_at&&new Date(info.expires_at)<new Date()?'Expiré':'Disponible';
+  x.nickname=(x.nickname||'—')+(info.parent_invite_id?' · Invité de '+(info.organizer||'organisateur'): ' · '+(info.invitation_count||0)+' invitations + '+(info.reserve_count||0)+' réserve');
   return '<tr><td>'+esc(batches.get(x.batch_id)||'—')+'</td><td>••••••-'+esc(x.suffix||'')+'</td><td>'+esc(x.nickname||'—')+'</td><td><span class="pill '+(x.revoked?'bad':x.used_at?'ok':'')+'">'+state+'</span></td><td>'+esc(new Date(x.created_at).toLocaleString('fr-FR'))+'</td><td>'+(x.is_admin?'Admin':x.revoked?'':'<button class="danger" data-revoke="'+esc(x.id)+'">Révoquer</button>')+'</td></tr>';
  }).join('')||'<tr><td colspan="6">Aucun code.</td></tr>';
+ Array.from(document.querySelector('#testers').rows).forEach(function(row,index){var x=(r.testers||[])[index],info=x&&details.get(x.id);if(!x||x.revoked||info&&info.parent_invite_id)return;var b=document.createElement('button');b.textContent='Régler les invitations';b.onclick=async function(){var count=prompt('Nombre d’invitations (hors réserve) :',String(info&&info.invitation_count||0));if(count===null)return;var reserve=prompt('Places de réserve :',String(info&&info.reserve_count||0));if(reserve===null)return;b.disabled=true;try{var reply=await rpc('invites_quota',{id:x.id,count:Number(count),reserve:Number(reserve)});if(!reply.ok){alert(reply.error==='slots_in_use'?'Des invitations sont déjà utilisées : impossible de réduire autant le quota.':'Quota invalide ou accès refusé.');return}await load()}catch(e){alert('Connexion impossible.')}finally{b.disabled=false}};row.lastElementChild.append(b)});
  document.querySelectorAll('[data-revoke]').forEach(function(b){b.onclick=async function(){if(!confirm('Révoquer ce code et son accès ?'))return;await rpc('revoke',{id:b.dataset.revoke});load()}});
  document.querySelector('#feedback').innerHTML=(r.feedback||[]).map(function(f){
   return '<tr><td>'+esc(new Date(f.created_at).toLocaleString('fr-FR'))+'</td><td>'+esc(f.nickname||'—')+'</td><td>'+esc(f.category||'')+'</td><td class="feedbackMsg">'+esc(f.message||'')+'</td><td><select data-status="'+esc(f.id)+'"><option value="new" '+(f.status==='new'?'selected':'')+'>Nouveau</option><option value="progress" '+(f.status==='progress'?'selected':'')+'>En cours</option><option value="resolved" '+(f.status==='resolved'?'selected':'')+'>Résolu</option></select></td><td>'+(f.has_image?'<button data-image="'+esc(f.id)+'">Voir</button>':'—')+'</td></tr>';
@@ -96,16 +102,17 @@ async function load(){
  document.querySelectorAll('[data-image]').forEach(function(b){b.onclick=async function(){var x=await rpc('feedback_image',{id:b.dataset.image});var w=window.open('','_blank');if(w&&x.image)w.document.write('<title>Capture Beta</title><img style="max-width:100%" src="'+x.image+'">')}});
 }
 async function createBatch(){
- var label=document.querySelector('#batchLabel').value.trim(),count=Number(document.querySelector('#batchCount').value),st=document.querySelector('#batchStatus'),b=document.querySelector('#createBatch');
- if(!label||count<1||count>50){st.textContent='Nom du lot et quantité de 1 à 50 requis.';return}
+ var label=document.querySelector('#batchLabel').value.trim(),count=Number(document.querySelector('#batchCount').value),reserve=Number(document.querySelector('#reserveCount').value),st=document.querySelector('#batchStatus'),b=document.querySelector('#createBatch');
+ if(!label||!Number.isInteger(count)||!Number.isInteger(reserve)||count<0||reserve<0||reserve>10||count+reserve>50){st.textContent='Nom requis, maximum 50 places dont 10 de réserve.';return}
  b.disabled=true;st.textContent='Création…';
  try{
-  var r=await rpc('create_batch',{label:label,count:count});if(!r||!r.ok){st.textContent='Création impossible.';return}
+  var r=await rpc('invites_create_group',{label:label,count:count,reserve:reserve});if(!r||!r.ok){st.textContent='Création impossible.';return}
   lastCodes=r.codes||[];
   document.querySelector('#codes').innerHTML=lastCodes.map(function(code){return '<div class="code"><code>'+esc(code)+'</code><button data-copy="'+esc(code)+'">Copier</button></div>'}).join('');
   document.querySelectorAll('[data-copy]').forEach(function(x){x.onclick=function(){navigator.clipboard.writeText(x.dataset.copy)}});
   document.querySelector('#copyAll').classList.toggle('hidden',!lastCodes.length);
-  st.textContent=lastCodes.length+' code(s) créé(s).';await load();
+  lastCodes.forEach(function(code){var a=document.createElement('a'),url=new URL('./index.html',location.href);url.hash='beta='+rawCode(code);a.textContent='Envoyer l’accès organisateur par WhatsApp';a.href='https://wa.me/?text='+encodeURIComponent(label+'\nVotre accès organisateur Aracne :\n'+url.href);a.target='_blank';a.rel='noopener noreferrer';document.querySelector('#codes').append(a)});
+  st.textContent='1 accès organisateur créé avec '+count+' invitations et '+reserve+' places de réserve.';await load();
  }catch(e){st.textContent='Connexion impossible.'}finally{b.disabled=false}
 }
 document.querySelector('#enter').onclick=enter;

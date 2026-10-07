@@ -235,6 +235,7 @@ shareDialog=function(){
 window.aracneShared={open,getSession:()=>session?{id:session.id,role:session.role,revision:session.revision,name:session.name||state.name}:null,_getRaw:()=>session,_setRaw:(next)=>{session=next;base=next?.base||null;if(next)localStorage.setItem(SESSION,JSON.stringify(next));else localStorage.removeItem(SESSION);paint(next?'synced':'local')},_enable:enable,_shareLink:shareCapabilityLink,_link:link,_status:()=>status,_pending:pending,_busy:()=>busy,_resolve:async()=>{if(!session)return;backup();const current=session;const reply=await rpc('read');if(session!==current)return;validate(reply.document);base=clone(reply.document);session.base=base;session.revision=reply.revision;apply(base);persist();paint('synced');conflictRemote=null},_rpc:rpc,_apply:apply,_tick:tick,_shared:shared,_backup:backup,_paint:paint,_secret:secret,_mergeDocs:mergeDocs};
 $('#shareTop').onclick=()=>shareDialog();$('#sharePlan').onclick=()=>shareDialog();
 async function init(){
+ if(window.aracneBetaAccess?.ready){await window.aracneBetaAccess.ready;if(window.aracneBetaAccess.active===false)return}
  const args=new URLSearchParams(location.hash.slice(1));const id=args.get('trip'),token=args.get('key');
  if(id&&token&&/^[a-f0-9-]{36}$/.test(id)&&/^[a-f0-9]{64}$/.test(token)){
    if(session?.id!==id||session?.token!==token){

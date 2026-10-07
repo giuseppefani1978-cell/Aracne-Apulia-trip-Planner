@@ -18,7 +18,7 @@ js=(root/'src/app.fr.js').read_text()
 js=js.replace("${i+1} jour${i?'s':''}","${i+1} ${i?'jours':'jour'}")
 selector='<select id="language" aria-label="Language / Lingua / Langue / Idioma"><option value="fr">FR · Français</option><option value="it">IT · Italiano</option><option value="en">EN · English</option><option value="es">ES · Español</option></select>'
 html=html.replace('<span class="test">ÉDITION TEST · FR</span>',selector)
-html=html.replace('<link rel="stylesheet" href="style.css">','<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="mobile-photo.css"><script src="language-start.js"></script>')
+html=html.replace('<link rel="stylesheet" href="style.css">','<link rel="stylesheet" href="style.css"><link rel="stylesheet" href="mobile-photo.css"><script src="language-start.js?v=5.2.2"></script>')
 # The source fields of curated stop descriptions; never translate personal notes.
 raw_section=js[js.index('const raw=['):js.index('const places=')]
 catalog=re.findall(r",'([^']+)'\]",raw_section)
@@ -55,7 +55,7 @@ catch{}
     out+=extra
     (root/f'dist/app.{lang}.js').write_text(out)
     page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
-    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=5.0.0"><link rel="stylesheet" href="collaboration-v3.css?v=5.2.0"><link rel="stylesheet" href="v5.css?v=5.1.0"><link rel="stylesheet" href="beta.css?v=1.0.0-beta.7"></head>')
-    page=page.replace('</body>', '<script src="catalog-v2.js?v=1.0.0-beta.1"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js?v=5.1.0"></script><script src="experience.js?v=5.1.0"></script><script src="collaboration-v3.js?v=5.2.1"></script><script src="v5.js?v=5.1.0"></script><script src="invitations-v51.js?v=5.1.0"></script><script src="beta.js?v=1.0.0-beta.8"></script></body>')
+    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=5.0.0"><link rel="stylesheet" href="collaboration-v3.css?v=5.2.0"><link rel="stylesheet" href="v5.css?v=5.1.0"><link rel="stylesheet" href="beta.css?v=1.0.0-beta.9"></head>')
+    page=page.replace('</body>', '<script src="catalog-v2.js?v=1.0.0-beta.1"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js?v=5.2.2"></script><script src="experience.js?v=5.1.0"></script><script src="collaboration-v3.js?v=5.2.1"></script><script src="v5.js?v=5.1.0"></script><script src="invitations-v51.js?v=5.2.2"></script><script src="beta-invitations.js?v=1.0.0-beta.9"></script><script src="beta.js?v=1.0.0-beta.8"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')

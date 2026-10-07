@@ -1,1 +1,1 @@
-(()=>{try{const explicit=/index\.(it|en|es)\.html$/.test(location.pathname);if(explicit)return;const saved=localStorage.getItem('aracne-language');if(['it','en','es'].includes(saved))location.replace('index.'+saved+'.html')}catch{}})();
+(()=>{try{const explicit=/index\.(it|en|es)\.html$/.test(location.pathname);if(explicit)return;const saved=localStorage.getItem('aracne-language');if(['it','en','es'].includes(saved))location.replace('index.'+saved+'.html'+location.search+location.hash)}catch{}})();

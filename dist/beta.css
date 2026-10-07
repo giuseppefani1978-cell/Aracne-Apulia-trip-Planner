@@ -1,4 +1,5 @@
 /* Match the approved palette and leave all backgrounds/layouts intact. */
+.betaInviteSlots{display:grid;gap:12px;margin:16px 0}.betaInviteSlot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid #dfd1e2;border-radius:16px;padding:14px}.betaInviteSlot strong{min-width:110px}.betaInviteSlot span{flex:1;min-width:110px}#betaInviteLink{width:100%;box-sizing:border-box;margin-top:16px;overflow-wrap:anywhere}
 .betaBanner{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:6px max(14px,4vw);border-bottom:1px solid var(--line);font-size:11px;color:var(--muted)}
 .betaBanner strong{color:var(--purple);letter-spacing:.06em;white-space:nowrap}.betaBanner .textBtn{margin-left:auto;padding:6px 0;min-height:32px;font-size:12px}.betaActions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0}.betaActions button{min-width:0;overflow-wrap:anywhere}#betaResetFilters{white-space:nowrap;font-size:12px}#betaFeedback{width:100%;box-sizing:border-box}
 @media(max-width:380px){.betaBanner{gap:5px}.betaBanner>span{font-size:10px}.betaActions{grid-template-columns:1fr}}

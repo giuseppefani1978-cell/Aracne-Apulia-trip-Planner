@@ -6,6 +6,10 @@ var KEY='sb_publishable_heDZcO0ymf5N0SbnaYBT4w_v-ItZm8S';
 var TOKEN_KEY='aracne-beta-token-v1';
 var MODE_KEY='aracne-beta-mode-v1';
 var PROFILE_KEY='aracne-beta-profile-v1';
+var resolveReady,accessReady=new Promise(function(resolve){resolveReady=resolve});
+var invitationCode=new URLSearchParams(location.hash.slice(1)).get('beta')||'';
+if(!/^[A-Fa-f0-9]{24}$/.test(invitationCode))invitationCode='';
+function clearInvitationCode(){var args=new URLSearchParams(location.hash.slice(1));args.delete('beta');history.replaceState(null,'',location.pathname+location.search+(args.toString()?'#'+args.toString():''))}
 
 function hex(bytes){bytes=bytes||32;var a=new Uint8Array(bytes);crypto.getRandomValues(a);return Array.from(a).map(function(x){return x.toString(16).padStart(2,'0')}).join('')}
 function uuid(){if(crypto.randomUUID)return crypto.randomUUID();var s=hex(16);return s.slice(0,8)+'-'+s.slice(8,12)+'-4'+s.slice(13,16)+'-8'+s.slice(17,20)+'-'+s.slice(20,32)}
@@ -35,13 +39,14 @@ function showGate(){
  document.body.appendChild(root);
  root.querySelector('#betaAccessCode').oninput=function(e){e.target.value=fmt(e.target.value)};
  root.querySelector('#betaAccessSubmit').onclick=activate;
+ if(invitationCode){root.querySelector('#betaAccessCode').value=fmt(invitationCode);root.querySelector('#betaAccessCode').closest('label').hidden=true;root.querySelector('.betaAccessCard>p').textContent='Votre invitation inclut l’accès à la bêta. Indiquez votre prénom ou pseudo pour l’activer sur ce navigateur.'}
  return root;
 }
 async function activate(){
  var root=showGate(),nickname=root.querySelector('#betaAccessNickname').value.trim(),code=rawCode(root.querySelector('#betaAccessCode').value),st=root.querySelector('#betaAccessStatus'),b=root.querySelector('#betaAccessSubmit');
  if(!nickname){st.textContent='Indiquez votre prénom ou pseudo.';return}if(code.length!==24){st.textContent='Le code doit contenir 24 caractères.';return}
  b.disabled=true;st.textContent='Vérification du code…';
- try{var r=await betaRpc('activate',{code:code,nickname:nickname});if(r&&r.ok){try{localStorage.setItem(MODE_KEY,'on');localStorage.setItem(PROFILE_KEY,JSON.stringify({nickname:r.nickname||nickname,admin:!!r.admin}))}catch(e){}st.textContent='Accès activé. Ouverture d’Aracne…';setTimeout(function(){location.reload()},150);return}
+ try{var r=await betaRpc('activate',{code:code,nickname:nickname});if(r&&r.ok){try{localStorage.setItem(MODE_KEY,'on');localStorage.setItem(PROFILE_KEY,JSON.stringify({nickname:r.nickname||nickname,admin:!!r.admin}))}catch(e){}clearInvitationCode();st.textContent='Accès activé. Ouverture d’Aracne…';setTimeout(function(){location.reload()},150);return}
  var m={invalid_code:'Code invalide ou révoqué.',used_code:'Ce code a déjà été utilisé sur un autre navigateur.',session_exists:'Ce navigateur possède déjà un accès bêta.'};st.textContent=m[r&&r.error]||'Impossible d’activer ce code.'}catch(e){st.textContent='Connexion impossible.'}finally{b.disabled=false}
 }
 async function boot(){
@@ -50,6 +55,8 @@ async function boot(){
  var st=root.querySelector('#betaAccessStatus');
  if(st)st.textContent='Vérification de votre accès…';
  try{
+  var current=await session();
+  if(current&&current.ok){root.remove();clearInvitationCode();window.aracneBetaAccess={enabled:true,active:true,admin:!!current.admin,nickname:current.nickname||'',token:token,betaRpc:betaRpc,ready:accessReady};return}
   var enabled=await detectMode();
   try{localStorage.setItem(MODE_KEY,enabled?'on':'off')}catch(e){}
   if(!enabled){
@@ -70,9 +77,10 @@ async function boot(){
    return;
   }
  }catch(e){}
- if(st)st.textContent='Entrez votre code Beta 1 pour continuer.';
+ if(st)st.textContent=invitationCode?'Indiquez votre prénom ou pseudo pour accepter cette invitation.':'Entrez votre code Beta 1 pour continuer.';
  window.aracneBetaAccess={enabled:true,active:false,token:token,betaRpc:betaRpc};
 }
-window.aracneBetaAccess={enabled:null,token:token,betaRpc:betaRpc};
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',boot,{once:true});else boot();
+window.aracneBetaAccess={enabled:null,token:token,betaRpc:betaRpc,ready:accessReady};
+function start(){boot().finally(function(){window.aracneBetaAccess.ready=accessReady;resolveReady()})}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',start,{once:true});else start();
 })();

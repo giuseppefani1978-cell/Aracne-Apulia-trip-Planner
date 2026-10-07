@@ -21,6 +21,7 @@ async function invites(){
   }
   if(current!==request)return;
   const canEdit=session.role!=='read';
+  if(window.aracneBetaInvitations){await window.aracneBetaAccess?.ready;if(current!==request||!document.querySelector('#modal').open)return;if(window.aracneBetaAccess?.enabled&&window.aracneBetaAccess.active){await window.aracneBetaInvitations.open(session);refresh();return}}
   dialog(t('title'),'<h3>'+esc(state.name)+'</h3><p>'+t('hint')+'</p><p class="small">'+esc(state.members.join(' · '))+'</p><div class="v51InviteChoices">'+(canEdit?'<button class="primary" id="v51Edit">'+t('edit')+'</button><p>'+t('editHint')+'</p>':'')+(session.role!=='edit'?'<button class="secondary" id="v51Read">'+t('read')+'</button><p>'+t('readHint')+'</p>':'')+'</div>'+(session.role==='owner'?'<button class="textBtn" id="v51Members">'+t('members')+'</button>':'')+'<details><summary>'+t('manage')+'</summary><button class="textBtn" id="v51Manage">'+t('manage')+'</button></details>');
   const share=mode=>{const token=session.role==='owner'?session[mode]:session.token;api._shareLink(token,mode).catch(()=>toast(t('error')))};
   document.querySelector('#v51Edit')?.addEventListener('click',()=>share('edit'));
