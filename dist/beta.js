@@ -94,5 +94,14 @@ document.addEventListener('click',event=>{const b=event.target.closest?.('button
  if(!reduced()&&b.animate)b.animate([{transform:'scale(.94)',filter:'brightness(1.16)',boxShadow:'0 0 0 0 rgba(233,64,87,.28)'},{transform:'scale(1.035)',filter:'brightness(1.07)',boxShadow:'0 0 0 8px rgba(233,64,87,0)'},{transform:'scale(1)',filter:'brightness(1)',boxShadow:'0 0 0 0 rgba(233,64,87,0)'}],{duration:320,easing:'ease-out'});
 });
 document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const audio of mediaSounds.values())audio.pause();if(context?.state==='running')context.suspend().catch(()=>{})}});
-window.aracneBeta={open,version:'1.0.0-beta.8'};
+// Wait for the server-validated session; never trust the cached profile for admin UI.
+Promise.resolve(window.aracneBetaAccess?.ready).then(()=>{
+ const access=window.aracneBetaAccess;
+ if(!access?.active||!access.admin)return;
+ const admin=document.createElement('button');admin.id='betaAdmin';admin.type='button';admin.className='secondary';
+ admin.textContent=['Administration','Amministrazione','Administration','Administración'][col];
+ admin.onclick=()=>location.assign(new URL('beta-admin.html',location.href).href);
+ banner.append(admin);
+}).catch(()=>{});
+window.aracneBeta={open,version:'1.0.0-beta.10'};
 })();
