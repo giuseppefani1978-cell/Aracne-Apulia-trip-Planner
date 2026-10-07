@@ -43,13 +43,22 @@ function reduced(){return Boolean(window.matchMedia?.('(prefers-reduced-motion: 
 function celebrate(kind){clearTimeout(cheerTimer);cheer.textContent=(kind==='done'?'🎉 ':'✨ ')+cheers[kind][col];cheer.classList.add('visible');tone(kind);if(!reduced()&&cheer.animate)cheer.animate([{transform:'translateY(16px) scale(.9)',opacity:0},{transform:'translateY(-4px) scale(1.04)',opacity:1},{transform:'translateY(0) scale(1)',opacity:1}],{duration:440});cheerTimer=setTimeout(()=>cheer.classList.remove('visible'),2800);
  if(kind==='done'&&!reduced()){document.querySelector('.betaConfetti')?.remove();const burst=document.createElement('div');burst.className='betaConfetti';burst.setAttribute('aria-hidden','true');for(let i=0;i<24;i++){const bit=document.createElement('i');bit.style.cssText=`--x:${(i/23)*100}vw;--drift:${(i%5-2)*28}px;--delay:${(i%4)*.07}s;background:${['#8a2387','#e94057','#f5b544','#29a890'][i%4]}`;burst.append(bit)}document.body.append(burst);setTimeout(()=>burst.remove(),1900)}
 }
+// Capture the before-state, then inspect synchronously at the END of propagation.
+// Native browser clicks can run microtasks between capture and target listeners.
+const pendingActions=new WeakMap();
+const previousChoosePlace=choosePlace;
+choosePlace=function(id){previousChoosePlace(id);const modal=document.querySelector('#modal');if(!reduced()&&modal?.animate)modal.animate([{opacity:.5,transform:'translateY(18px) scale(.94)'},{opacity:1,transform:'translateY(-3px) scale(1.015)'},{opacity:1,transform:'translateY(0) scale(1)'}],{duration:360,easing:'ease-out'})};
 // Only successful local user actions celebrate: never initial load, imports or remote sync.
 function watchAction(event){const el=event.target.closest?.('#confirmAdd,#stepForm,#finalizePlan,[data-zone]');if(!el||el.disabled)return;
  if(event.type==='click'&&el.id==='stepForm')return;
  const ids=new Set(state.plan.flat().map(p=>p.uid)),version=state.carnetVersion||0;
- queueMicrotask(()=>{if((state.carnetVersion||0)>version&&el.id==='finalizePlan')celebrate('done');else if(state.plan.flat().some(p=>!ids.has(p.uid)))celebrate(el.hasAttribute('data-zone')?'ready':'add')});
+ pendingActions.set(event,{el,ids,version});
+}
+function finishAction(event){const before=pendingActions.get(event);if(!before)return;pendingActions.delete(event);const {el,ids,version}=before;
+ if((state.carnetVersion||0)>version&&el.id==='finalizePlan')celebrate('done');else if(state.plan.flat().some(p=>!ids.has(p.uid)))celebrate(el.hasAttribute('data-zone')?'ready':'add');
 }
 document.addEventListener('click',watchAction,true);document.addEventListener('submit',watchAction,true);
+window.addEventListener('click',finishAction);window.addEventListener('submit',finishAction);
 document.addEventListener('click',event=>{const b=event.target.closest?.('button');if(!b||b.disabled||b.getAttribute('aria-disabled')==='true')return;
  if(!b.matches('#betaSound,#betaSoundQuick,#confirmAdd,#finalizePlan,[data-zone],#stepForm button'))tone();
  if(!reduced()&&b.animate)b.animate([{transform:'scale(.94)',filter:'brightness(1.16)',boxShadow:'0 0 0 0 rgba(233,64,87,.28)'},{transform:'scale(1.035)',filter:'brightness(1.07)',boxShadow:'0 0 0 8px rgba(233,64,87,0)'},{transform:'scale(1)',filter:'brightness(1)',boxShadow:'0 0 0 0 rgba(233,64,87,0)'}],{duration:320,easing:'ease-out'});
