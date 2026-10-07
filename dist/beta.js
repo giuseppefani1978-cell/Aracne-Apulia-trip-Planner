@@ -23,17 +23,42 @@ texts.enableSound=['Activer le son','Attiva il suono','Enable sound','Activar so
 texts.soundBlocked=['Le son n’a pas pu démarrer. Touchez à nouveau « Tester le son ».','Il suono non è partito. Tocca di nuovo « Prova il suono ».','Audio could not start. Tap Test sound again.','El sonido no pudo iniciarse. Pulsa Probar sonido de nuevo.'];
 const t=k=>texts[k][col];let sounds=false,context;
 try{sounds=localStorage.getItem('aracne-beta-sounds')==='on'}catch{}
+// iOS treats the default Web Audio session as ambient (silent-switch muted).
+// Request media playback only after the user explicitly enables sound.
+const melodies={tap:[520],add:[523,659,784],ready:[523,659,784,1047],done:[523,659,784,1047,784,1047]};
+const mediaSounds=new Map();
+function playbackSession(){try{if(navigator.audioSession){navigator.audioSession.type='playback';return navigator.audioSession.type==='playback'}}catch{}return false}
+function mediaTone(kind,failed){
+ // Native media is also used on older iOS without the Audio Session API.
+ // Generate a short PCM WAV locally: no network request or silent audio loop.
+ try{
+  let audio=mediaSounds.get(kind);
+  if(!audio){
+   const notes=melodies[kind]||melodies.tap,rate=22050,d=kind==='tap'?.11:.34;
+   const count=Math.ceil(((notes.length-1)*.16+d)*rate),bytes=new Uint8Array(44+count*2),v=new DataView(bytes.buffer);
+   const ascii=(offset,text)=>{for(let i=0;i<text.length;i++)bytes[offset+i]=text.charCodeAt(i)};
+   ascii(0,'RIFF');v.setUint32(4,36+count*2,true);ascii(8,'WAVE');ascii(12,'fmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);v.setUint32(24,rate,true);v.setUint32(28,rate*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);ascii(36,'data');v.setUint32(40,count*2,true);
+   for(let n=0;n<count;n++){let sample=0;notes.forEach((hz,i)=>{const t=n/rate-i*.16;if(t>=0&&t<d){const envelope=Math.min(t/.015,1)*Math.pow(1-t/d,2);sample+=Math.sin(2*Math.PI*hz*t)*envelope*(kind==='tap'?.18:.4)}});v.setInt16(44+n*2,Math.round(Math.max(-1,Math.min(1,sample))*32767),true)}
+   let binary='';for(const byte of bytes)binary+=String.fromCharCode(byte);
+   audio=new window.Audio('data:audio/wav;base64,'+btoa(binary));audio.preload='auto';mediaSounds.set(kind,audio);
+  }
+  for(const other of mediaSounds.values())if(other!==audio)other.pause();
+  audio.pause();audio.currentTime=0;audio.muted=false;audio.volume=1;
+  // play() runs inside the original click, before any async boundary.
+  const result=audio.play();if(result?.catch)result.catch(failed);
+ }catch{failed()}
+}
 function tone(kind='tap',report=false){
  const failed=()=>{if(report)toast(t('soundBlocked'))};
  if(!sounds||document.hidden)return;
- try{const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio){failed();return}if(!context||context.state==='closed')context=new Audio();
- const play=()=>{if(!sounds||document.hidden)return;if(context.state!=='running'){failed();return}const notes={tap:[520],add:[523,659,784],ready:[523,659,784,1047],done:[523,659,784,1047,784,1047]}[kind]||[520];
+ try{const playback=playbackSession(),Audio=window.AudioContext||window.webkitAudioContext;if(!playback||!Audio){mediaTone(kind,failed);return}if(!context||context.state==='closed')context=new Audio();
+ const play=()=>{if(!sounds||document.hidden)return;if(context.state!=='running'){failed();return}const notes=melodies[kind]||melodies.tap;
  notes.forEach((hz,i)=>{const o=context.createOscillator(),g=context.createGain(),now=context.currentTime+.015+i*.16,d=kind==='tap'?.11:.34;o.type='triangle';o.frequency.setValueAtTime(hz,now);g.gain.setValueAtTime(.0001,now);g.gain.exponentialRampToValueAtTime(kind==='tap'?.065:.16,now+.015);g.gain.setValueAtTime(kind==='tap'?.045:.12,now+(kind==='tap'?.04:.14));g.gain.exponentialRampToValueAtTime(.0001,now+d);o.connect(g);g.connect(context.destination);o.onended=()=>{o.disconnect();g.disconnect()};o.start(now);o.stop(now+d+.02)})};
  if(context.state!=='running')context.resume().then(play).catch(failed);else play();
  }catch{failed()}
 }
 function soundLabel(button){button.textContent=sounds?'🔊 '+t('sound')+' · '+t('on'):'🔇 '+t('enableSound');button.setAttribute('aria-pressed',String(sounds))}
-function toggleSound(){sounds=!sounds;try{localStorage.setItem('aracne-beta-sounds',sounds?'on':'off')}catch{}document.querySelectorAll('#betaSound,#betaSoundQuick').forEach(soundLabel);if(sounds)tone('add')}
+function toggleSound(){sounds=!sounds;try{localStorage.setItem('aracne-beta-sounds',sounds?'on':'off')}catch{}document.querySelectorAll('#betaSound,#betaSoundQuick').forEach(soundLabel);if(sounds)tone('add');else{for(const audio of mediaSounds.values())audio.pause();if(context?.state==='running')context.suspend().catch(()=>{})}}
 function bindSound(){const b=document.querySelector('#betaSound');if(!b)return;soundLabel(b);b.onclick=toggleSound}
 function feedback(){dialog(t('feedback'),`<p>${t('hint')}</p><label>${t('feedback')}<textarea id="betaFeedback" rows="8" maxlength="4000"></textarea></label><button class="primary" id="betaCopy">${t('copy')}</button><p class="small" id="betaCopyStatus" role="status"></p>`);const input=document.querySelector('#betaFeedback');input.value='Aracne · Beta 1 · '+document.documentElement.lang+'\n\n'+t('placeholder');document.querySelector('#betaCopy').onclick=async()=>{try{if(!navigator.clipboard?.writeText)throw Error('clipboard');await navigator.clipboard.writeText(input.value);document.querySelector('#betaCopyStatus').textContent=t('copied')}catch{input.focus();input.select();document.querySelector('#betaCopyStatus').textContent=t('manual')}}}
 function open(){dialog(t('beta')+' · '+t('start'),`<p>${t('intro')}</p><div class="betaActions"><button class="primary" id="betaMap">${t('map')}</button><button class="secondary" id="betaHelp">${t('help')}</button><button class="secondary" id="betaSound"></button><button class="secondary" id="betaFeedbackOpen">${t('feedback')}</button></div><p class="small">${t('catalog')}</p>`);document.querySelector('#betaMap').onclick=()=>{document.querySelector('#modal').close();show('map')};document.querySelector('#betaHelp').onclick=()=>window.aracneHelp();document.querySelector('#betaFeedbackOpen').onclick=feedback;bindSound()}
@@ -68,5 +93,6 @@ document.addEventListener('click',event=>{const b=event.target.closest?.('button
  if(!b.matches('#betaSound,#betaSoundQuick,#betaSoundTest,#confirmAdd,#finalizePlan,[data-zone],#stepForm button'))tone();
  if(!reduced()&&b.animate)b.animate([{transform:'scale(.94)',filter:'brightness(1.16)',boxShadow:'0 0 0 0 rgba(233,64,87,.28)'},{transform:'scale(1.035)',filter:'brightness(1.07)',boxShadow:'0 0 0 8px rgba(233,64,87,0)'},{transform:'scale(1)',filter:'brightness(1)',boxShadow:'0 0 0 0 rgba(233,64,87,0)'}],{duration:320,easing:'ease-out'});
 });
-window.aracneBeta={open,version:'1.0.0-beta.1'};
+document.addEventListener('visibilitychange',()=>{if(document.hidden){for(const audio of mediaSounds.values())audio.pause();if(context?.state==='running')context.suspend().catch(()=>{})}});
+window.aracneBeta={open,version:'1.0.0-beta.8'};
 })();
