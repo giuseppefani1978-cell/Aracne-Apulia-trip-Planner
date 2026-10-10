@@ -22,7 +22,7 @@ const flush=()=>new Promise(r=>setImmediate(r));
    const editMessage=new URL(w.document.querySelector('a[href^="https://wa.me/"]').href).searchParams.get('text');
    assert.ok(editMessage.includes('Beta trip'));assert.ok(editMessage.includes(editUrl.href));assert.notEqual(editMessage,message,'edit invitation and read-only invitation have different descriptions');
    c.click('#betaInviteCopy');await flush();assert.ok(w.document.querySelector('#betaInviteMessage').textContent,'copy fallback is explicit');
-   guest=true;await w.aracneInvitations.open();assert.equal(w.document.querySelectorAll('[data-beta-issue]').length,0);assert.equal(requests.filter(r=>r.action==='invites_issue').length,1);
+   guest=true;await w.aracneInvitations.open();assert.equal(w.document.querySelectorAll('[data-beta-issue]').length,0);assert.equal(requests.filter(r=>r.action==='invites_issue').length,2,'read and edit invitations were both issued');
    assert.equal(w.document.querySelectorAll('[data-beta-existing]').length,2,'guest can share trips with existing testers');
    console.log(lang+': PASS slot UI, WhatsApp link, permission choice, copy fallback, guest restrictions');
   }finally{c.close()}
