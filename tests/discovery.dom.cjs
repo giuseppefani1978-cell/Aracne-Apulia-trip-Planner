@@ -1,7 +1,7 @@
 const fs=require('node:fs'),path=require('node:path'),assert=require('node:assert/strict');
 const {JSDOM}=require('jsdom');
 const landing=fs.readFileSync(path.join(__dirname,'../decouvrir/index.html'),'utf8');
-const dom=new JSDOM(landing,{url:'https://myapuliatrip.com/decouvrir/',runScripts:'dangerously'});
+const dom=new JSDOM(landing,{url:'https://myapuliatrip.com/decouvrir/?lang=fr',runScripts:'dangerously'});
 const doc=dom.window.document;
 assert.equal(doc.querySelectorAll('script[src]').length,0,'landing must not load app or beta gate');
 assert.equal(doc.querySelector('a.btn[href="../dist/index.html"]').textContent,'J’ai déjà activé mon accès');
