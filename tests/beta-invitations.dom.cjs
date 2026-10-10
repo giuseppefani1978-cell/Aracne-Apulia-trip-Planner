@@ -14,7 +14,7 @@ const flush=()=>new Promise(r=>setImmediate(r));
    w.document.querySelector('#betaInviteRole').value='read';c.click('[data-beta-issue]');await flush();
    const url=new URL(w.document.querySelector('#betaInviteLink').value),args=new URLSearchParams(url.hash.slice(1));
    assert.equal(args.get('key'),'c'.repeat(64));assert.equal(args.get('trip'),session.id);assert.equal(args.get('beta'),'ABCDEF123456ABCDEF123456');
-   const wa=new URL(w.document.querySelector('a[href^="https://wa.me/"]').href);assert.ok(wa.searchParams.get('text').includes(url.href));
+   const wa=new URL(w.document.querySelector('a[href^="https://wa.me/"]').href);const message=wa.searchParams.get('text');assert.ok(message.includes(url.href));assert.ok(message.includes('Beta trip'));assert.ok(message.includes('My Apulia Trip'));assert.ok(!message.includes('Chaque lien personnel inclut'));assert.ok(message.includes('🐦'));
    c.click('#betaInviteCopy');await flush();assert.ok(w.document.querySelector('#betaInviteMessage').textContent,'copy fallback is explicit');
    guest=true;await w.aracneInvitations.open();assert.equal(w.document.querySelectorAll('[data-beta-issue]').length,0);assert.equal(requests.filter(r=>r.action==='invites_issue').length,1);
    assert.equal(w.document.querySelectorAll('[data-beta-existing]').length,2,'guest can share trips with existing testers');
