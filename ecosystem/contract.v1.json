@@ -1,0 +1,69 @@
+{
+  "contract_version": "1.0-draft",
+  "status": "planning_only",
+  "interconnections_enabled": false,
+  "shared_catalog": {
+    "primary_key": "place_id",
+    "id_format": "opaque_stable_id",
+    "cross_app_storage": "not_implemented",
+    "publish_events": false
+  },
+  "applications": [
+    {
+      "id": "hirundu",
+      "role": "game_and_collectibles",
+      "repository": "giuseppefani1978-cell/Hirundu1.1-",
+      "integration_enabled": false
+    },
+    {
+      "id": "aracne_discovery",
+      "role": "places_and_discovery",
+      "repository": "giuseppefani1978-cell/ilVolodAracne-",
+      "integration_enabled": false
+    },
+    {
+      "id": "my_apulia_trip",
+      "role": "collaborative_trip_planner",
+      "repository": "giuseppefani1978-cell/Aracne-Apulia-trip-Planner",
+      "integration_enabled": false
+    }
+  ],
+  "planned_handoffs": [
+    {
+      "from": "hirundu",
+      "to": "aracne_discovery",
+      "type": "view_place",
+      "payload": [
+        "place_id",
+        "locale"
+      ],
+      "enabled": false
+    },
+    {
+      "from": "aracne_discovery",
+      "to": "my_apulia_trip",
+      "type": "suggest_place_for_trip",
+      "payload": [
+        "place_id",
+        "locale"
+      ],
+      "enabled": false
+    },
+    {
+      "from": "my_apulia_trip",
+      "to": "aracne_discovery",
+      "type": "view_place",
+      "payload": [
+        "place_id",
+        "locale"
+      ],
+      "enabled": false
+    }
+  ],
+  "restrictions": [
+    "No beta invite tokens, trip capability links, session IDs or admin credentials may be used as inter-app navigation parameters",
+    "Cross-app handoffs require explicit user action",
+    "Do not assume shared identity, shared payments or shared authorization",
+    "Production beta database remains isolated; cross-app integrations are opt-in and disabled by default"
+  ]
+}

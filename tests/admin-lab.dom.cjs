@@ -1,0 +1,14 @@
+const fs=require('fs'),path=require('path'),assert=require('node:assert/strict'),{JSDOM}=require('jsdom');
+const root=path.join(__dirname,'..');
+const admin=fs.readFileSync(path.join(root,'dist/beta-admin.html'),'utf8');
+assert.match(admin,/id="dashboard" class="hidden"/);
+assert.match(admin,/href="\.\.\/lab\/"/);
+const html=fs.readFileSync(path.join(root,'lab/index.html'),'utf8');
+assert.ok(!/aracne_trip_v5|aracne_trip_v2|invites_issue|feedback_status/.test(html),'lab must not call any write RPC');
+assert.match(html,/p_action:'session'/);
+const {window}=new JSDOM(html,{url:'https://example.test/lab/',runScripts:'outside-only'});
+assert.equal(window.document.getElementById('lab').style.display,'');
+assert.ok(window.document.getElementById('checking'));
+assert.ok(window.document.getElementById('denied'));
+window.close();
+console.log('PASS admin preview lab: admin entry, no write RPC, mock-only content');

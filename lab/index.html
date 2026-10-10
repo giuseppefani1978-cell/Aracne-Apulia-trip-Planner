@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#8A2387">
+<title>Aracne · Atelier de développement</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--violet:#8A2387;--ink:#291f2d;--paper:#fffaf5;--line:#e7dfe8;--muted:#665c69}
+*{box-sizing:border-box}body{margin:0;font-family:Outfit,system-ui,-apple-system,sans-serif;color:var(--ink);background:linear-gradient(145deg,#fffaf5,#f7f0f9 55%,#eef7f5);min-height:100vh}
+header{background:#ffffffb8;border-bottom:1px solid var(--line);padding:16px max(18px,5vw);display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}a{color:var(--violet)}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.02em}.brand small{display:block;font-size:11px;font-weight:600;color:var(--muted)}
+main{width:min(1060px,calc(100% - 30px));margin:32px auto 60px}
+.panel{border:1px solid var(--line);background:white;padding:24px;border-radius:23px;box-shadow:0 12px 45px #5633600b}
+h1{font-size:clamp(30px,5vw,47px);letter-spacing:-.04em;line-height:1.1;margin:10px 0}
+h2{font-size:24px;margin:0 0 12px}
+p{line-height:1.5}.muted{color:var(--muted)}.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--violet);font-weight:800}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;margin-top:18px}
+.pill{display:inline-block;border:1px solid var(--line);background:var(--paper);border-radius:999px;padding:6px 11px;font-size:12px;font-weight:700}
+button{font:inherit;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;cursor:pointer;text-align:left}
+button:focus-visible,a:focus-visible{outline:3px solid #b489c4;outline-offset:3px}
+.demo{border:1px solid var(--line);border-radius:19px;padding:20px;background:var(--paper)}
+.message{background:#e5f5e7;padding:18px;border-radius:16px;border:1px solid #c9e5cc;font-size:14px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+textarea{width:100%;border:1px solid #d7ced9;border-radius:12px;font:inherit;padding:12px;min-height:75px;resize:vertical;margin:9px 0}
+.previewGroup{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px}
+.previewGroup button[aria-pressed="true"]{background:var(--violet);border-color:var(--violet);color:#fff}
+.previewGroup button{font-size:13px}
+.flow{display:flex;align-items:stretch;gap:8px;flex-wrap:wrap}.flow > div{flex:1;min-width:115px;background:#fff;border:1px solid var(--line);padding:15px;border-radius:13px;font-size:14px}
+#lab{display:none}#denied{display:none}.error{color:#a33547}
+@media(max-width:740px){.grid{grid-template-columns:1fr}.panel{padding:18px}}
+</style>
+</head>
+<body>
+<header><div class="brand">ARACNE · ATELIER<small>Maquettes de développement · environnement sans données réelles</small></div><a href="../dist/beta-admin.html">← Retour à l'administration</a></header>
+<main>
+<section class="panel" id="checking" role="status"><h1>Vérification de l'accès administrateur…</h1><p class="muted">Cet atelier présente uniquement des maquettes isolées. Il ne charge pas les voyages ni les codes des bêta-testeurs.</p></section>
+<section class="panel" id="denied" role="alert"><h1>Accès réservé à l'administration</h1><p>Ouvrez cet espace depuis votre session administrateur Aracne sur le même navigateur.</p><a href="../dist/beta-admin.html">Ouvrir l'administration</a></section>
+<div id="lab">
+<section class="panel">
+<span class="eyebrow">ARACNE LAB 0.1 · 10 OCTOBRE 2026</span>
+<h1>Prévisualisations avant release</h1>
+<p class="muted">Ici, nous pouvons examiner des interfaces et prototypes avant de les intégrer à l'application. Aucun bouton de cette page ne modifie Supabase ni les voyages. Cet atelier n'est <strong>pas encore</strong> un environnement complet de recette avec backend séparé.</p>
+<span class="pill">Version bêta publique inchangée</span> <span class="pill">Exemples fictifs</span>
+</section>
+<div class="grid">
+<section class="panel">
+<span class="eyebrow">Aperçu 01 · Invitation</span>
+<h2>Message WhatsApp</h2>
+<p class="muted">Exemple de message envoyé par l'organisateur. Aucun vrai lien d'accès ni code n'est utilisé ici.</p>
+<label for="trip">Nom fictif du voyage</label>
+<input id="trip" type="text" value="Notre escapade dans les Pouilles" maxlength="80" style="width:100%;padding:12px;border:1px solid #d7ced9;border-radius:12px;font:inherit;margin:8px 0 13px">
+<div class="previewGroup"><button type="button" id="editMode" aria-pressed="true">Invité · modification</button><button type="button" id="readMode" aria-pressed="false">Lecture seule</button></div>
+<div class="message" id="message"></div>
+</section>
+<section class="panel">
+<span class="eyebrow">Aperçu 02 · Écosystème futur</span>
+<h2>Trois applications reliées</h2>
+<p class="muted">Concept d'interconnexion, non activé. Les voyages existants ne sont pas concernés.</p>
+<div class="flow">
+<div><strong>HIRUNDU</strong><p>Découvrir un lieu en jouant</p></div>
+<div><strong>ARACNE</strong><p>Voir les informations sur ce lieu</p></div>
+<div><strong>MY APULIA TRIP</strong><p>L'ajouter à un itinéraire</p></div>
+</div>
+<p class="muted" style="font-size:13px">Futurs échanges : identifiant de lieu commun et ouverture de fiche par lien, sans partager les accès privés aux voyages.</p>
+</section>
+</div>
+<section class="panel" style="margin-top:18px">
+<span class="eyebrow">Prochain palier</span><h2>Environnement de préproduction complet</h2>
+<p class="muted">Une seconde adresse web et un Supabase de test seront nécessaires pour essayer une version complète de l'application sans risque pour les testeurs. Cet atelier servira ensuite de point d'entrée administrateur vers cette préproduction.</p>
+</section>
+</div>
+</main>
+<script>
+(function(){
+'use strict';
+const token=(function(){try{return localStorage.getItem('aracne-beta-token-v1')||''}catch(e){return ''}})();
+const SUPABASE='https://cpnjdyhsepytphwlenbg.supabase.co';
+const KEY='sb_publishable_heDZcO0ymf5N0SbnaYBT4w_v-ItZm8S';
+const showDenied=()=>{document.getElementById('checking').style.display='none';document.getElementById('denied').style.display='block'};
+if(!/^[a-f0-9]{64}$/.test(token)){showDenied();return}
+fetch(SUPABASE+'/rest/v1/rpc/aracne_beta',{method:'POST',headers:{apikey:KEY,'Content-Type':'application/json','x-aracne-beta':token},body:JSON.stringify({p_action:'session',p_data:{}})})
+.then(r=>r.ok?r.json():Promise.reject(Error('unauthorized'))).then(result=>{
+ if(!result||!result.ok||!result.admin){showDenied();return}
+ document.getElementById('checking').style.display='none';document.getElementById('lab').style.display='block';bootDemo();
+}).catch(showDenied);
+function bootDemo(){
+ const trip=document.getElementById('trip'),message=document.getElementById('message'),edit=document.getElementById('editMode'),read=document.getElementById('readMode');
+ let mode='edit';
+ const render=()=>{
+ const name=trip.value.trim()||'Notre voyage dans les Pouilles';
+ message.textContent='🌴 Bonne nouvelle ! On a accès gratuitement à la bêta de My Apulia Trip · Aracne, une appli pour organiser notre voyage dans les Pouilles !\n\n'+(mode==='edit'?'Je t’invite à rejoindre « '+name+' » pour m’aider à choisir les activités, proposer tes idées et préparer notre programme ensemble.':'Je t’invite à découvrir notre voyage « '+name+' » et à suivre notre programme commun.')+'\n\n👉 Voici ton invitation personnelle :\n[EXEMPLE DE LIEN — AUCUN ACCÈS RÉEL]\n\nTon accès bêta est déjà inclus dans le lien : aucun code à recopier. 🐦';
+ edit.setAttribute('aria-pressed',String(mode==='edit'));read.setAttribute('aria-pressed',String(mode==='read'));
+ };
+ trip.addEventListener('input',render);
+ edit.addEventListener('click',()=>{mode='edit';render()});
+ read.addEventListener('click',()=>{mode='read';render()});
+ render();
+}
+})();
+</script>
+</body></html>
