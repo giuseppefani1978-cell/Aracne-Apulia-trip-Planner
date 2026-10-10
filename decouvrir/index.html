@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#8A2387">
+<meta name="description" content="My Apulia Trip · Aracne : explorez les Pouilles, construisez un itinéraire et organisez votre voyage à plusieurs. Bêta privée sur invitation.">
+<title>My Apulia Trip · Découvrir Aracne</title>
+<link rel="icon" sizes="192x192" type="image/png" href="../dist/icons/icon-192-v4.png">
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{color-scheme:light;--purple:#8A2387;--ink:#251c2a;--muted:#65596a;--line:#e9deeb;--paper:#fffaf5;--green:#1b7364}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#fff;font-family:Outfit,system-ui,-apple-system,sans-serif;color:var(--ink);line-height:1.5}
+a{color:inherit}.wrap{max-width:1100px;width:calc(100% - 40px);margin:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:19px 0}
+.brand{display:flex;align-items:center;gap:11px;text-decoration:none}.brand img{width:44px;height:44px;border-radius:11px}.brand strong{display:block;letter-spacing:.02em}.brand small{display:block;font-size:12px;color:var(--muted)}
+header select{padding:10px 13px;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);font:inherit;font-size:13px}
+.hero{display:grid;grid-template-columns:1.02fr .98fr;gap:36px;align-items:center;padding:44px 0 60px}
+.eyebrow{text-transform:uppercase;letter-spacing:.14em;color:var(--purple);font-weight:800;font-size:11px}
+h1{font-size:clamp(41px,6.5vw,76px);line-height:1.04;letter-spacing:-.055em;margin:17px 0 20px;font-weight:800}
+h1 span{color:var(--purple)}.lead{font-size:clamp(17px,2vw,21px);color:var(--muted);max-width:510px;margin:0 0 26px}
+.pills{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:27px}.pill{border:1px solid #e2d9e4;color:#574b5b;border-radius:99px;padding:6px 11px;font-size:12px;font-weight:700}
+.btn{display:inline-flex;align-items:center;justify-content:center;padding:14px 22px;border-radius:14px;background:var(--purple);color:white;text-decoration:none;font-weight:800;min-height:47px}
+.btn:hover,.btn:focus-visible{background:#6f196d}
+.help{color:var(--muted);max-width:460px;font-size:13px;margin-top:12px}
+.photo{border-radius:26px;overflow:hidden;position:relative;min-height:490px;box-shadow:0 24px 65px #63395a1c;background:#f3f1f3}
+.photo img{width:100%;height:100%;min-height:490px;object-fit:cover;position:absolute;inset:0}
+.photo:after{content:"";position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#1b1226ae)}
+.photoWords{position:absolute;z-index:1;left:26px;bottom:24px;color:white;font-size:30px;line-height:1.05;font-weight:800;max-width:310px}
+.credit{position:absolute;bottom:8px;right:10px;color:#fff;z-index:2;font-size:9px;opacity:.85;text-decoration:none}
+section.features{background:var(--paper);border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:64px 0}
+h2{font-size:clamp(29px,4vw,43px);line-height:1.12;letter-spacing:-.04em;margin:9px 0 28px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:15px}
+.card{border:1px solid var(--line);background:#fff;border-radius:20px;padding:25px;min-height:192px}
+.card .number{font-size:13px;color:var(--purple);font-weight:800}.card h3{font-size:21px;margin:15px 0 9px}.card p{font-size:15px;color:var(--muted);margin:0}
+.beta{padding:67px 0}.betaPanel{border:1px solid var(--line);border-radius:24px;padding:28px 32px;display:flex;justify-content:space-between;align-items:center;gap:25px;background:#fff}
+.betaPanel p{margin:0;color:var(--muted);font-size:15px;max-width:650px}.betaPanel h2{font-size:25px;margin:0 0 8px}
+.betaPanel .btn{flex-shrink:0}.betaNote{margin-top:14px;font-size:13px;color:var(--muted)}
+footer{padding:25px 0 38px;border-top:1px solid var(--line);font-size:12px;color:var(--muted)}
+@media(max-width:780px){.hero{grid-template-columns:1fr;gap:25px;padding:26px 0 45px}.photo,.photo img{min-height:295px}.cards{grid-template-columns:1fr}.card{min-height:auto}.betaPanel{flex-direction:column;align-items:flex-start}.betaPanel .btn{width:100%}.photoWords{font-size:25px}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="wrap">
+  <a class="brand" href="./" aria-label="My Apulia Trip"><img src="../dist/icons/icon-192-v4.png" width="44" height="44" alt=""><span><strong>MY APULIA TRIP</strong><small>by Aracne</small></span></a>
+  <label><span data-t="languageLabel" style="position:absolute;clip-path:inset(50%)">Langue</span><select id="language" aria-label="Langue / Lingua / Language / Idioma"><option value="fr">FR · Français</option><option value="it">IT · Italiano</option><option value="en">EN · English</option><option value="es">ES · Español</option></select></label>
+</header>
+<main>
+  <div class="wrap hero">
+    <div>
+      <div class="eyebrow" data-t="eyebrow">Une nouvelle manière de voyager ensemble</div>
+      <h1 data-t="heading">Les Pouilles, <span>à votre façon.</span> Ensemble.</h1>
+      <p class="lead" data-t="lead">Explorez les Pouilles, créez votre programme et invitez vos proches à préparer le même voyage, directement depuis leur téléphone.</p>
+      <div class="pills"><span class="pill" data-t="family">Famille</span><span class="pill" data-t="friends">Amis</span><span class="pill" data-t="couple">Couple</span><span class="pill" data-t="party">EVJF / EVG</span></div>
+      <a class="btn" href="#how" data-t="discover">Découvrir comment ça marche</a>
+      <p class="help" data-t="early">Aracne est actuellement en bêta privée. L’accès se fait uniquement par invitation personnelle.</p>
+    </div>
+    <div class="photo">
+      <img src="../dist/polignano.jpg" alt="La côte de Polignano a Mare dans les Pouilles" loading="eager">
+      <div class="photoWords" data-t="photo">Un voyage qui vous ressemble.</div>
+      <a class="credit" target="_blank" rel="noopener" href="https://commons.wikimedia.org/wiki/File:Panorama_Polignano-a-Mare.jpg">Photo : acediscovery / Wikimedia Commons · CC BY 4.0</a>
+    </div>
+  </div>
+  <section id="how" class="features">
+    <div class="wrap">
+      <div class="eyebrow" data-t="simple">Simple, de l’idée au programme</div>
+      <h2 data-t="how">Votre voyage en trois étapes</h2>
+      <div class="cards">
+        <div class="card"><span class="number">01</span><h3 data-t="explore">Explorez</h3><p data-t="exploreText">Plages, villages, nature, expériences et bonnes idées à découvrir dans les Pouilles.</p></div>
+        <div class="card"><span class="number">02</span><h3 data-t="plan">Organisez</h3><p data-t="planText">Choisissez vos étapes et construisez un programme adapté aux envies du groupe.</p></div>
+        <div class="card"><span class="number">03</span><h3 data-t="together">Préparez ensemble</h3><p data-t="togetherText">Invitez vos proches par WhatsApp pour consulter le voyage et, si autorisé, proposer des changements.</p></div>
+      </div>
+    </div>
+  </section>
+  <section class="beta wrap">
+    <div class="betaPanel">
+      <div>
+        <div class="eyebrow" data-t="private">Bêta privée</div>
+        <h2 data-t="invited">Vous avez reçu une invitation ?</h2>
+        <p data-t="invitationHelp">Ouvrez le lien personnel reçu sur WhatsApp. Votre accès bêta y est déjà intégré : pas de code à recopier, pas de compte à créer. Lors du premier accès, indiquez simplement un prénom ou pseudo.</p>
+      </div>
+      <a class="btn" href="../dist/index.html" data-t="opened">J’ai déjà activé mon accès</a>
+    </div>
+    <p class="betaNote" data-t="existing">Ce bouton est réservé aux personnes ayant déjà activé leur accès sur ce navigateur. Pour une première connexion, utilisez le lien WhatsApp personnel.</p>
+  </section>
+</main>
+<footer class="wrap">© 2026 Il Volo d’Aracne · HIRUNDU · <span data-t="footer">Présentation de My Apulia Trip</span></footer>
+<script>
+(()=>{
+'use strict';
+const dictionary={
+fr:{eyebrow:'Une nouvelle manière de voyager ensemble',heading:'Les Pouilles, <span>à votre façon.</span> Ensemble.',lead:'Explorez les Pouilles, créez votre programme et invitez vos proches à préparer le même voyage, directement depuis leur téléphone.',family:'Famille',friends:'Amis',couple:'Couple',party:'EVJF / EVG',discover:'Découvrir comment ça marche',early:'Aracne est actuellement en bêta privée. L’accès se fait uniquement par invitation personnelle.',photo:'Un voyage qui vous ressemble.',simple:'Simple, de l’idée au programme',how:'Votre voyage en trois étapes',explore:'Explorez',exploreText:'Plages, villages, nature, expériences et bonnes idées à découvrir dans les Pouilles.',plan:'Organisez',planText:'Choisissez vos étapes et construisez un programme adapté aux envies du groupe.',together:'Préparez ensemble',togetherText:'Invitez vos proches par WhatsApp pour consulter le voyage et, si autorisé, proposer des changements.',private:'Bêta privée',invited:'Vous avez reçu une invitation ?',invitationHelp:'Ouvrez le lien personnel reçu sur WhatsApp. Votre accès bêta y est déjà intégré : pas de code à recopier, pas de compte à créer. Lors du premier accès, indiquez simplement un prénom ou pseudo.',opened:'J’ai déjà activé mon accès',existing:'Ce bouton est réservé aux personnes ayant déjà activé leur accès sur ce navigateur. Pour une première connexion, utilisez le lien WhatsApp personnel.',footer:'Présentation de My Apulia Trip'},
+it:{eyebrow:'Un nuovo modo di viaggiare insieme',heading:'La Puglia, <span>come piace a voi.</span> Insieme.',lead:'Esplorate la Puglia, create il vostro programma e invitate amici e familiari a organizzare lo stesso viaggio dal telefono.',family:'Famiglia',friends:'Amici',couple:'Coppia',party:'Addio al nubilato / celibato',discover:'Scopri come funziona',early:'Aracne è attualmente in beta privata. L’accesso avviene soltanto tramite invito personale.',photo:'Un viaggio che vi somiglia.',simple:'Semplice, dall’idea al programma',how:'Il viaggio in tre passi',explore:'Esplora',exploreText:'Spiagge, borghi, natura, esperienze e idee da scoprire in Puglia.',plan:'Organizza',planText:'Scegli le tappe e crea un programma adatto alle preferenze del gruppo.',together:'Organizzate insieme',togetherText:'Invita altre persone via WhatsApp a vedere il viaggio e, se autorizzate, proporre modifiche.',private:'Beta privata',invited:'Hai ricevuto un invito?',invitationHelp:'Apri il link personale ricevuto su WhatsApp. L’accesso beta è già incluso: nessun codice da copiare e nessun account da creare. Al primo accesso inserisci soltanto un nome o soprannome.',opened:'Ho già attivato l’accesso',existing:'Questo pulsante è riservato a chi ha già attivato l’accesso in questo browser. Per il primo accesso usa il tuo link WhatsApp personale.',footer:'Presentazione di My Apulia Trip'},
+en:{eyebrow:'A new way to travel together',heading:'Puglia, <span>your way.</span> Together.',lead:'Explore Puglia, build your itinerary and invite friends and family to plan the same trip from their phones.',family:'Family',friends:'Friends',couple:'Couple',party:'Hen / stag trip',discover:'See how it works',early:'Aracne is currently in private beta. Access is by personal invitation only.',photo:'A trip that feels like yours.',simple:'From ideas to plans, made simple',how:'Your trip in three steps',explore:'Explore',exploreText:'Beaches, villages, nature, experiences and new places to discover in Puglia.',plan:'Plan',planText:'Choose places and build an itinerary around your group’s interests.',together:'Plan together',togetherText:'Invite others through WhatsApp to view the trip and, with permission, suggest changes.',private:'Private beta',invited:'Have you received an invitation?',invitationHelp:'Open your personal WhatsApp invitation link. Beta access is included automatically: no code to copy and no account to create. On your first visit, simply enter a first name or nickname.',opened:'I’ve already activated access',existing:'This button is for people who have already activated access in this browser. On your first visit, use your personal WhatsApp link.',footer:'About My Apulia Trip'},
+es:{eyebrow:'Una nueva forma de viajar juntos',heading:'Apulia, <span>a vuestra manera.</span> Juntos.',lead:'Explorad Apulia, cread un itinerario e invitad a amigos y familiares a organizar el mismo viaje desde el móvil.',family:'Familia',friends:'Amigos',couple:'Pareja',party:'Despedida de soltera / soltero',discover:'Descubre cómo funciona',early:'Aracne está actualmente en beta privada. Solo se puede acceder mediante una invitación personal.',photo:'Un viaje a vuestra medida.',simple:'De las ideas al itinerario',how:'Tres pasos para organizar el viaje',explore:'Explora',exploreText:'Playas, pueblos, naturaleza, experiencias y lugares para descubrir en Apulia.',plan:'Organiza',planText:'Elige las etapas y crea un programa adaptado a los intereses del grupo.',together:'Organizad juntos',togetherText:'Invita por WhatsApp para consultar el viaje y, con permiso, proponer cambios.',private:'Beta privada',invited:'¿Has recibido una invitación?',invitationHelp:'Abre el enlace personal que has recibido por WhatsApp. El acceso beta ya está incluido: no hay ningún código que copiar ni cuenta que crear. Solo tendrás que indicar tu nombre o apodo la primera vez.',opened:'Ya he activado el acceso',existing:'Este botón es para quienes ya hayan activado el acceso en este navegador. Para entrar por primera vez, utiliza tu enlace personal de WhatsApp.',footer:'Presentación de My Apulia Trip'}
+};
+const select=document.getElementById('language');
+const params=new URLSearchParams(location.search);
+const preferred=params.get('lang')||navigator.language.slice(0,2);
+function apply(code){
+ const locale=dictionary[code]?code:'fr';document.documentElement.lang=locale;select.value=locale;
+ document.querySelectorAll('[data-t]').forEach(el=>{const text=dictionary[locale][el.dataset.t];if(text!==undefined){if(el.dataset.t==='heading')el.innerHTML=text;else el.textContent=text}});
+}
+select.addEventListener('change',()=>apply(select.value));apply(preferred);
+})();
+</script>
+</body>
+</html>
