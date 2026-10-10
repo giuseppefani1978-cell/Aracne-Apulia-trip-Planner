@@ -2,7 +2,7 @@
   "name": "aracne-trip-planner",
   "private": true,
   "scripts": {
-    "test": "node tests/v5.dom.cjs && node tests/v5.sync.cjs && node tests/v51.invitations.cjs && node tests/beta.dom.cjs && node tests/beta-feedback.dom.cjs && node tests/carnet-sharing.dom.cjs && node tests/beta-audio.dom.cjs && node tests/beta-invitations.dom.cjs",
+    "test": "node tests/v5.dom.cjs && node tests/v5.sync.cjs && node tests/v51.invitations.cjs && node tests/beta.dom.cjs && node tests/beta-feedback.dom.cjs && node tests/carnet-sharing.dom.cjs && node tests/beta-audio.dom.cjs && node tests/beta-invitations.dom.cjs && node tests/discovery.dom.cjs",
     "build": "python3 build-locales.py"
   },
   "dependencies": {
