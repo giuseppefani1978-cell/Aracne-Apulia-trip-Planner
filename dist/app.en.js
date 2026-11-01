@@ -91,3 +91,16 @@ $('#language').onchange=()=>{
 };
 try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=id==='tripName'&&Object.prototype.hasOwnProperty.call(defaultNames,v.value)?defaultNames[v.value]:v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
 catch{}
+
+
+/* A06.2 public catalog bridge: no trip state, no sessions, no mutations. 
+   Includes V2 additions because \`places\` is queried after all scripts loaded. */
+window.A06PlannerCatalog = Object.freeze({
+  list: () => places.map(p => Object.freeze({
+    id: String(p.id), name: String(p.name),
+    lat: Number.isFinite(p.lat) ? p.lat : null,
+    lon: Number.isFinite(p.lon) ? p.lon : null,
+    zone: String(p.zone || ''),
+    tags: Array.isArray(p.tags) ? Object.freeze([...p.tags]) : Object.freeze([])
+  }))
+});
