@@ -147,3 +147,18 @@ installé depuis le miroir. PASS local : quatre langues, création/changement de
 voyage, création hors ligne, rechargement et garde réseau ; zéro erreur JavaScript
 non interceptée. 24 requêtes externes annulées. Exécution également ajoutée à la CI.
 
+## Collaboration navigateur + SQL local
+
+PASS : trois contextes Chromium séparés (FR organisateur, IT éditeur, EN lecteur),
+17 appels RPC vers les fonctions SQL du baseline exécutées sous rôle anon dans
+PGlite. Création, refus de révision périmée, refus d’écriture lecteur, écriture
+éditeur, convergence par polling des trois sessions, filtrage des notes privées,
+rotation et refus des anciens liens.
+
+Le transport HTTP est intercepté par Playwright et relié à PostgreSQL embarqué :
+les réponses ne sont pas simulées, mais PostgREST, CORS et le réseau Supabase
+ne sont pas testés. Le contrôle bêta est désactivé uniquement dans cette fixture
+éphémère ; son activation est couverte séparément par la suite SQL invitations.
+Les actions d’écriture utilisent l’API interne du Planner, pas les formulaires :
+le parcours complet d’invitation via l’interface et les vrais appareils restent
+à valider. Aucune nouvelle infrastructure et aucune donnée réelle utilisées.
