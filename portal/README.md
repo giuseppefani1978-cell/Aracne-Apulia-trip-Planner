@@ -19,10 +19,23 @@ L'Intelligence touristique et la fusion du Planner avec le moteur d'Il Volo hist
 
 ```bash
 node tests/portal-links.cjs
+node tests/portal.dom.cjs
 ```
+
+Deux jobs CI sur la PR : `Aracne Portal Preview QA` vérifie la navigation DOM, les liens, l'absence de backend et fournit un artefact HTML téléchargeable ; `Aracne Portal — isolated preview & browser QA` contrôle également les gabarits bureau, Android émulé et iPhone WebKit émulé et fournit des captures. **Un émulateur ne remplace pas Safari sur un iPhone réel**.
+
+Ces fichiers ne sont **pas une prévisualisation publiquement hébergée**. L'artefact GitHub Actions s'ouvre après téléchargement : aucun accès réel aux voyages, à Supabase ou aux sessions bêta.
 
 Vérifier manuellement sur iPhone Safari et Android Chrome les deux liens sortants, le retour navigateur, et les invitations / sessions des apps de destination. Contrôler également la vue mobile/desktop avant de déployer un portail public autonome.
 
 ## Prochaine étape (nécessite revue avant publication)
 
 Définir le domaine définitif du portail (sans déplacer d'abord `myapuliatrip.com`), sa méthode d'hébergement indépendante, et la procédure de retour arrière. Préserver les domaines et données des bêtas existantes.
+
+## Plan de mise en ligne séparée (non exécuté)
+
+1. Garder `myapuliatrip.com` pour la bêta Planner tant qu'une nouvelle entrée n'a pas été approuvée ; garder `play.myapuliatrip.com` pour Hirundu.
+2. Prévoir un hébergement statique distinct et un sous-domaine de prévisualisation à confirmer. Publier uniquement `portal/index.html`, sans copier les scripts du Planner, les données ou les clés Supabase.
+3. Tester l'URL candidate sur vrais Safari iPhone et Chrome Android : affichage des deux cartes, choix des liens, navigation retour, sessions déjà actives, invitation Planner et chemin Admin Hirundu.
+4. Faire valider le nouveau portail et sa destination avant toute bascule de domaine ou modification de DNS. Rollback : revenir au dernier artefact statique du portail uniquement, sans toucher aux deux applications.
+5. Aucun compte ou abonnement supplémentaire et aucune nouvelle base cloud n'ont été créés par cette préparation.
