@@ -20,3 +20,5 @@ jobs:
         run: npm ci --ignore-scripts --no-audit
       - name: Run unit and DOM regression tests
         run: npm test
+      - name: Validate isolated Lab and synthetic database recovery
+        run: npm run test:lab
