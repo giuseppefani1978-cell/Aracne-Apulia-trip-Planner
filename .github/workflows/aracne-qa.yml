@@ -22,3 +22,7 @@ jobs:
         run: npm test
       - name: Validate isolated Lab and synthetic database recovery
         run: npm run test:lab
+      - name: Install Chromium for isolated browser tests
+        run: npx playwright install --with-deps chromium
+      - name: Exercise Lab in Chromium (external requests blocked)
+        run: npm run test:lab:browser

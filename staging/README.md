@@ -135,3 +135,12 @@ au navigateur, activation idempotente, permissions invité et absence de grants
 directs. Garde réseau testée aussi pour XHR, WebSocket, EventSource et URL objects.
 Ces tests ne remplacent pas la génération de codes par pgcrypto, PostgREST ni
 la recette sur téléphone ; ces validations restent ouvertes.
+
+## Parcours navigateur préparé
+
+`npm run test:lab:browser` lance Chromium sur un serveur 127.0.0.1 temporaire :
+création et changement de voyage, quatre langues, création hors ligne, rechargement,
+refus du backend existant. Toutes les requêtes externes sont interceptées et
+annulées : carte et backend ne sont donc pas validés par cette suite.
+Le téléchargement Chromium échoue dans le poste de travail (archive tronquée).
+Exécution ajoutée à la CI ; résultat à contrôler avant de déclarer ce parcours validé.
