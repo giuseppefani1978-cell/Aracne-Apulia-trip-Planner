@@ -1,0 +1,61 @@
+name: Aracne Portal — isolated preview & browser QA
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - "portal/**"
+      - "tests/portal-*"
+      - ".github/workflows/aracne-portal-preview.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout tested commit (read-only)
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Node static contract checks
+        run: node tests/portal-links.cjs
+      - name: Python runtime
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install pinned browser automation tools
+        run: |
+          python -m pip install playwright==1.56.0
+          python -m playwright install --with-deps webkit
+      - name: Desktop Chrome / Android Chrome / iPhone WebKit emulation
+        run: python tests/portal-browser.py
+        env:
+          PORTAL_WEBKIT: "1"
+      - name: Verify preview contains only public static files
+        run: |
+          mkdir -p portal-preview
+          cp portal/index.html portal-preview/index.html
+          test "$(find portal-preview -type f | wc -l)" -eq 1
+          if grep -Eiq 'supabase[.]co|service_role|secret_key' portal-preview/index.html; then
+            echo "Unexpected backend reference in portal preview" >&2
+            exit 1
+          fi
+      - name: Upload unhosted portal preview (not a public deployment)
+        uses: actions/upload-artifact@v4
+        with:
+          name: aracne-portal-v4-review
+          path: portal-preview/
+          retention-days: 14
+          if-no-files-found: error
+      - name: Upload emulated browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aracne-portal-v4-qa-screenshots
+          path: portal/qa-screenshots/
+          retention-days: 14
+          if-no-files-found: ignore
