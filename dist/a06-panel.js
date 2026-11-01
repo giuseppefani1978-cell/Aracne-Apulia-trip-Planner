@@ -10,6 +10,15 @@ const T={
  es:{button:'Aracne Intelligence',title:'Descubre Apulia con Aracne',hint:'Pregunta por lugares, tradiciones y visitas en Salento.',placeholder:'¿Qué ver en Otranto?',send:'Preguntar',close:'Cerrar',note:'Solo lectura · No modifica el viaje · Verifica las fuentes antes de visitarlo',examples:['¿Qué ver en Otranto?','Háblame de Lecce','¿Qué visitar cerca de Porto Badisco?'],sources:'Fuentes',error:'No puedo responder ahora.'}
 };
 const t=T[language]||T.fr;
+const MT={
+ fr:{title:'Étapes liées au Planner',cta:'Voir sur la carte',unmatched:'Lieu pas encore relié au catalogue du Planner',foot:'La carte s’ouvre sans modifier votre voyage. Pour ajouter une étape, utilisez ensuite la confirmation habituelle du Planner.'},
+ it:{title:'Tappe collegate al Planner',cta:'Vedi sulla mappa',unmatched:'Luogo non ancora collegato al catalogo Planner',foot:'La mappa si apre senza modificare il viaggio. Per aggiungere una tappa, usa la conferma abituale del Planner.'},
+ en:{title:'Places linked to Planner',cta:'Find on map',unmatched:'Not yet linked to the Planner catalogue',foot:'Opening the map does not change your trip. Add a stop later using the normal Planner confirmation.'},
+ es:{title:'Lugares vinculados al Planner',cta:'Ver en el mapa',unmatched:'Lugar todavía no vinculado al catálogo Planner',foot:'Abrir el mapa no modifica el viaje. Después utiliza la confirmación habitual del Planner para añadir una etapa.'}
+};
+const mt=MT[language]||MT.fr;
+const matcher=window.A06PlaceMatcher;
+
 const style=document.createElement('style');
 style.textContent=`
 #a06-open{position:fixed;bottom:calc(104px + env(safe-area-inset-bottom));right:16px;z-index:890;border:0;border-radius:16px;background:#6043a4;color:#fff;box-shadow:0 10px 30px #38246042;padding:13px 17px;font-size:14px;font-weight:750;max-width:calc(100vw - 32px)}
@@ -31,6 +40,13 @@ style.textContent=`
 #a06-panel .a06-send{background:#6043a4;color:#fff;border:0;padding:10px 15px;border-radius:12px;font-size:13px;font-weight:700}
 #a06-panel .a06-send:disabled{opacity:.55}
 #a06-panel .a06-note{margin:0;padding:0 14px 12px;font-size:10px;color:#817b8f;line-height:1.35}
+.a06-matches{border-top:1px solid #e5dff0;padding:11px 0 4px;white-space:normal}
+.a06-matches h4{margin:0 0 8px;font-size:13px;color:#5b417f}
+.a06-place{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid #f0edf4}
+.a06-place strong{display:block;font-size:13px;color:#30293d}
+.a06-place small{display:block;font-size:11px;color:#77707e}
+.a06-place button{margin-left:auto;flex-shrink:0;background:#f2ecfa;color:#543887;border:1px solid #d9c9e9;border-radius:10px;padding:9px;font-size:11px}
+.a06-matches .a06-foot{font-size:10px;color:#736980;margin:8px 0 0}
 @media(max-width:740px){#a06-open{bottom:calc(90px + env(safe-area-inset-bottom));font-size:12px;padding:12px 14px}#a06-panel{bottom:calc(145px + env(safe-area-inset-bottom));max-height:calc(100dvh - 185px)}}
 @media(prefers-reduced-motion:reduce){#a06-panel *{scroll-behavior:auto}}
 `;
@@ -65,6 +81,43 @@ panel.querySelector('form').addEventListener('submit',async event=>{
    const heading=document.createElement('strong');heading.textContent=t.sources;citations.append(heading);
    for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=s.title;citations.append(a)}
    output.append(citations);
+  }
+  if(response.places?.length && matcher){
+    const matches=matcher.matchMany(response.places);
+    if(matches.length){
+      const list=document.createElement('div');list.className='a06-matches';
+      const title=document.createElement('h4');title.textContent=mt.title;list.append(title);
+      for(const match of matches.slice(0,12)){
+        const line=document.createElement('div');line.className='a06-place';
+        const info=document.createElement('div');
+        const name=document.createElement('strong');name.textContent=match.ilName;
+        const status=document.createElement('small');
+        status.textContent=match.status==='matched' ? match.plannerName : mt.unmatched;
+        info.append(name,status);line.append(info);
+        if(match.status==='matched'){
+          const button=document.createElement('button');button.type='button';button.textContent=mt.cta;
+          button.addEventListener('click',()=>{
+            // Re-evaluate the trusted catalog immediately before navigating.
+            const fresh=matcher.match(match.ilId);
+            if(!fresh || fresh.status!=='matched'||fresh.plannerId!==match.plannerId)return;
+            const item=window.A06PlannerCatalog?.list?.().find(p=>p.id===fresh.plannerId);
+            const nav=document.querySelector('nav button[data-view="map"]');
+            const search=document.getElementById('search'),filter=document.getElementById('zoneFilter');
+            if(!item||!nav||!search)return;
+            toggle(false);
+            nav.click();
+            if(filter){filter.value='all';filter.dispatchEvent(new Event('change',{bubbles:true}))}
+            search.value=item.name;
+            search.dispatchEvent(new Event('input',{bubbles:true}));
+            search.focus();
+          });
+          line.append(button);
+        }
+        list.append(line);
+      }
+      const foot=document.createElement('p');foot.className='a06-foot';foot.textContent=mt.foot;list.append(foot);
+      output.append(list);
+    }
   }
  }catch(error){console.warn('[A06] query failed',error);output.textContent=t.error}
  finally{submit.disabled=false}
