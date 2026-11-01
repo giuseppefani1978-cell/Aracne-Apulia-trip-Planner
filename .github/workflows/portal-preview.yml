@@ -1,0 +1,47 @@
+name: Aracne Portal Preview QA
+
+on:
+  pull_request:
+    branches: [develop]
+    paths:
+      - 'portal/**'
+      - 'tests/portal*.cjs'
+      - '.github/workflows/portal-preview.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reviewed code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci --ignore-scripts --no-audit
+      - name: Check portal links and isolation
+        run: node tests/portal-links.cjs
+      - name: Check portal navigation and independent products
+        run: node tests/portal.dom.cjs
+      - name: Assemble offline preview (no deployment)
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p portal-preview
+          cp portal/index.html portal-preview/index.html
+          (cd portal-preview && sha256sum index.html > SHA256SUMS.txt)
+      - name: Store portable HTML preview for review
+        uses: actions/upload-artifact@v4
+        with:
+          name: aracne-portal-preview-${{ github.sha }}
+          path: portal-preview/
+          if-no-files-found: error
+          retention-days: 7
