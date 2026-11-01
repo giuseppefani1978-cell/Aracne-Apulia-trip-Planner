@@ -4,8 +4,8 @@
 (() => {
   'use strict';
   const source = window.A06IlVoloPlaces;
-  const planner = window.A06PlannerCatalog;
-  if (!Array.isArray(source) || typeof planner?.list !== 'function') return;
+  const planner = () => window.A06PlannerCatalog;
+  if (!Array.isArray(source) || typeof planner()?.list !== 'function') return;
 
   const normalize = value => String(value ?? '').normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
@@ -30,7 +30,7 @@
   };
   const coreName = value => normalize(String(value ?? '').split(/,| · /)[0]);
   const safePlanner = () => {
-    const items = planner.list();
+    const items = planner().list();
     if (!Array.isArray(items)) return [];
     return items.filter(p => p && typeof p.id === 'string' && typeof p.name === 'string');
   };
