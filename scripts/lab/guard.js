@@ -3,7 +3,7 @@
  const valid=c&&c.environment==='lab'&&c.syntheticOnly===true&&location.origin===c.origin;
  const nativeFetch=window.fetch?.bind(window);
  const allowed=new Set(valid?[c.supabaseUrl,'https://api.open-meteo.com']:[]);
- function check(input){const u=new URL(typeof input==='string'?input:input.url,location.href);if(!allowed.has(u.origin))throw Error('ARACNE_LAB_NETWORK_BLOCKED');}
+ function check(input){const u=new URL(typeof input==='string'?input:input instanceof URL?input.href:input.url,location.href);if(!allowed.has(u.origin))throw Error('ARACNE_LAB_NETWORK_BLOCKED');}
  window.fetch=(input,options)=>{check(input);return nativeFetch(input,{...options,redirect:'error',credentials:'omit'})};
  // The current Planner uses fetch only. Disable alternate outbound transports.
  window.XMLHttpRequest=function(){throw Error('ARACNE_LAB_XHR_DISABLED')};

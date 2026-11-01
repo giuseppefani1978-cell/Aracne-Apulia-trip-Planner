@@ -125,3 +125,13 @@ accord utilisateur requis avant provisionnement.
 Sources : https://supabase.com/pricing ;
 https://supabase.com/docs/guides/self-hosting/restore-from-platform ;
 rapport Audit_fusion_Aracne.md conservé dans le projet, non recopié ici.
+
+## Décision de poursuite — 1 novembre 2026
+
+L’utilisateur reporte tout abonnement et provisionnement : poursuivre localement
+jusqu’à stabilisation. Aucun projet cloud à créer et aucun changement de plan.
+Nouveau test SQL synthétique : expiration et révocation des invitations, liaison
+au navigateur, activation idempotente, permissions invité et absence de grants
+directs. Garde réseau testée aussi pour XHR, WebSocket, EventSource et URL objects.
+Ces tests ne remplacent pas la génération de codes par pgcrypto, PostgREST ni
+la recette sur téléphone ; ces validations restent ouvertes.
