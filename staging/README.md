@@ -142,5 +142,8 @@ la recette sur téléphone ; ces validations restent ouvertes.
 création et changement de voyage, quatre langues, création hors ligne, rechargement,
 refus du backend existant. Toutes les requêtes externes sont interceptées et
 annulées : carte et backend ne sont donc pas validés par cette suite.
-Le téléchargement Chromium échoue dans le poste de travail (archive tronquée).
-Exécution ajoutée à la CI ; résultat à contrôler avant de déclarer ce parcours validé.
+Après échec du premier téléchargement, Chromium 141 via Playwright 1.56.1 a été
+installé depuis le miroir. PASS local : quatre langues, création/changement de
+voyage, création hors ligne, rechargement et garde réseau ; zéro erreur JavaScript
+non interceptée. 24 requêtes externes annulées. Exécution également ajoutée à la CI.
+
