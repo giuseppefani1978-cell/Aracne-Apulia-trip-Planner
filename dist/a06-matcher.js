@@ -68,7 +68,7 @@
     if (!Array.isArray(ids)) return [];
     const seen = new Set();
     return ids.filter(id => typeof id === 'string' && !seen.has(id) && seen.add(id))
-      .slice(0, 30).map(match).filter(Boolean);
+      .slice(0, 100).map(match).filter(Boolean);
   }
   function summary() {
     const matches = matchMany(source.map(p=>p.id));
