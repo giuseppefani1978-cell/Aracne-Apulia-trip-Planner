@@ -104,7 +104,7 @@
     const review=window.A06POIReviews;
     for(const place of result.places){
       const item=review?.get?.(place.id);
-      if(item)add(item.source.url,item.name,'poi-static-checked');
+      if(item)add(item.source.url,item.name,item.sourceScope==='regional-or-municipal-context'?'poi-context-reference':'poi-static-checked');
       if(sources.length>=5)return sources.slice(0,5);
     }
     // Commercial sites evidence identity/offer description, NOT current bookability.
