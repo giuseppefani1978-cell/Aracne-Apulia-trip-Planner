@@ -110,7 +110,7 @@
     }
     return sources.slice(0,5);
   }
-  const regionQuery = /\\b(?:puglia|pouilles|apulia|apulie|puglie)\\b/i;
+  const regionQuery = /\b(?:puglia|pouilles|apulia|apulie|puglie)\b/i;
   function answer(question,lang='fr'){
     const response=search(question,lang,6);
     if(!response.recognized){
