@@ -56,10 +56,10 @@
     es: 'Esta primera versión ofrece información turística, pero todavía no modifica el viaje. Pronto podrás confirmar cada sugerencia antes de añadirla al programa.'
   });
   const unknown = Object.freeze({
-    fr: 'Essayez une question sur Otranto, Lecce, les plages ou le patrimoine du Salento. Cette base est territoriale, pas une recherche Internet en direct.',
-    it: 'Prova una domanda su Otranto, Lecce, le spiagge o il patrimonio del Salento. Questa base è territoriale, non una ricerca Internet in diretta.',
-    en: 'Try a question about Otranto, Lecce, beaches or Salento heritage. This is a local knowledge base, not live Internet search.',
-    es: 'Prueba una pregunta sobre Otranto, Lecce, las playas o el patrimonio del Salento. Es una base territorial, no una búsqueda en Internet en tiempo real.'
+    fr: 'Posez une question sur Bari, le Gargano, la Vallée d’Itria, la Murgia, Trani ou le Salento. Cette base territoriale ne consulte pas Internet en direct.',
+    it: 'Fai una domanda su Bari, Gargano, Valle d’Itria, Murgia, Trani o Salento. Questa base territoriale non consulta Internet in diretta.',
+    en: 'Ask about Bari, Gargano, Itria Valley, Murgia, Trani or Salento. This local knowledge base does not search the live Internet.',
+    es: 'Pregunta por Bari, Gargano, Valle de Itria, Murgia, Trani o Salento. Esta base territorial no realiza búsquedas en Internet en tiempo real.'
   });
   const forbiddenIntents = new Set([
     'route', 'add', 'open', 'near_me', 'scope', 'journal', 'journal_save',
@@ -86,6 +86,21 @@
     if (unsafe) {
       return {ok:false, blocked:true, language:resolvedLang, text:blocked[resolvedLang], sources:[]};
     }
+    // The structured, region-wide index extends Il Volo without rewriting its
+    // original 1.1.9 engine or breaking the historical Salento knowledge.
+    const regional = window.A06PugliaKnowledge?.answer?.(question,resolvedLang);
+    const cleanText = value=>String(value||'').replace(/\\bHIRUNDU\\b/gi,'Aracne Intelligence');
+    const q=clean(question);
+    const specificLegacy=places.some(p=>{
+      const name=clean(p.name);
+      return name.length>=6 && (' '+q+' ').includes(' '+name+' ');
+    });
+    if(regional && !specificLegacy){
+      return {ok:true,language:resolvedLang,
+        text:regional.text,places:[],plannerPlaces:regional.plannerPlaces||[],
+        sources:(regional.sources||[]).map(({title,url,quality})=>({title,url,quality})),
+        region:regional.zone,knowledgeSource:'puglia-structured-0.4',days:regional.days};
+    }
     const response = await engine.execute(question);
     // Do not expose internal actions: informational text is the only output.
     const ids = new Set((response.places || analysis.places || []).map(place => place.id));
@@ -101,7 +116,7 @@
     return {
       ok: response.ok !== false,
       language:resolvedLang,
-      text: String(response.text || unknown[resolvedLang]).slice(0, 6000),
+      text: cleanText(response.text || unknown[resolvedLang]).slice(0, 6000),
       sources:sources.slice(0, 4),
       places:[...ids].slice(0, 12)
     };
@@ -110,6 +125,6 @@
     version:'0.1.0-readonly',
     engineVersion:engine.version,
     ask, setLanguage,
-    stats:() => Object.freeze({...knowledge.stats(), plannerWrites:0, places:places.length})
+    stats:() => Object.freeze({...knowledge.stats(), plannerWrites:0, places:places.length,...(window.A06PugliaKnowledge?.stats?.()||{})})
   });
 })();
