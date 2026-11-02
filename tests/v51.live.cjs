@@ -1,3 +1,4 @@
+throw new Error('Legacy live tests disabled: use npm run test:lab; never test against beta.');
 // Temporary synthetic trip only. Removes its own server trip in finally.
 const {client}=require('./v5.dom.cjs'),assert=require('assert/strict');
 const delay=ms=>new Promise(r=>setTimeout(r,ms));
