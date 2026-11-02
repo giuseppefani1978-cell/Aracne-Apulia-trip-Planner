@@ -4,10 +4,10 @@ const api=window.A06TourismAssistant;
 if(!api || document.getElementById('a06-open'))return;
 const language=document.documentElement.lang;
 const T={
- fr:{button:'Aracne Intelligence',title:'Découvrir les Pouilles avec Aracne',hint:'Posez une question sur les lieux, les traditions et les découvertes du Salento.',placeholder:'Que voir à Otranto ?',send:'Demander',close:'Fermer',note:'Lecture seule · Ne change pas votre voyage · Sources à vérifier avant visite',examples:['Que voir à Otranto ?','Parle-moi de Lecce','Que découvrir autour de Porto Badisco ?'],sources:'Sources',error:'Impossible de répondre pour le moment.'},
- it:{button:'Aracne Intelligence',title:'Scopri la Puglia con Aracne',hint:'Fai una domanda sui luoghi, le tradizioni e il Salento.',placeholder:'Cosa vedere a Otranto?',send:'Chiedi',close:'Chiudi',note:'Solo lettura · Non modifica il viaggio · Verifica le fonti prima della visita',examples:['Cosa vedere a Otranto?','Parlami di Lecce','Cosa scoprire vicino a Porto Badisco?'],sources:'Fonti',error:'Non posso rispondere per ora.'},
- en:{button:'Aracne Intelligence',title:'Discover Puglia with Aracne',hint:'Ask about places, traditions and discoveries in Salento.',placeholder:'What to see in Otranto?',send:'Ask',close:'Close',note:'Read-only · Does not change your trip · Verify sources before visiting',examples:['What to see in Otranto?','Tell me about Lecce','What is near Porto Badisco?'],sources:'Sources',error:'Unable to answer right now.'},
- es:{button:'Aracne Intelligence',title:'Descubre Apulia con Aracne',hint:'Pregunta por lugares, tradiciones y visitas en Salento.',placeholder:'¿Qué ver en Otranto?',send:'Preguntar',close:'Cerrar',note:'Solo lectura · No modifica el viaje · Verifica las fuentes antes de visitarlo',examples:['¿Qué ver en Otranto?','Háblame de Lecce','¿Qué visitar cerca de Porto Badisco?'],sources:'Fuentes',error:'No puedo responder ahora.'}
+ fr:{button:'Aracne Intelligence',title:'Découvrir les Pouilles avec Aracne',hint:'Posez une question touristique sur les six régions des Pouilles : lieux, nature, gastronomie, patrimoine.',placeholder:'Que voir à Otranto ?',send:'Demander',close:'Fermer',note:'Lecture seule · Ne change pas votre voyage · Sources à vérifier avant visite',examples:['Que voir à Bari ?','Nature dans le Gargano ?','Que visiter en Vallée d’Itria pendant 3 jours ?'],sources:'Sources',error:'Impossible de répondre pour le moment.'},
+ it:{button:'Aracne Intelligence',title:'Scopri la Puglia con Aracne',hint:'Fai domande sulle sei zone della Puglia: luoghi, natura, cibo e patrimonio.',placeholder:'Cosa vedere a Otranto?',send:'Chiedi',close:'Chiudi',note:'Solo lettura · Non modifica il viaggio · Verifica le fonti prima della visita',examples:['Cosa vedere a Bari?','Natura nel Gargano?','Valle d’Itria in 3 giorni?'],sources:'Fonti',error:'Non posso rispondere per ora.'},
+ en:{button:'Aracne Intelligence',title:'Discover Puglia with Aracne',hint:'Ask about places, nature, food and heritage throughout Puglia.',placeholder:'What to see in Otranto?',send:'Ask',close:'Close',note:'Read-only · Does not change your trip · Verify sources before visiting',examples:['What to see in Bari?','Nature in Gargano?','Itria Valley in 3 days?'],sources:'Sources',error:'Unable to answer right now.'},
+ es:{button:'Aracne Intelligence',title:'Descubre Apulia con Aracne',hint:'Pregunta por lugares, naturaleza, gastronomía y patrimonio de toda Apulia.',placeholder:'¿Qué ver en Otranto?',send:'Preguntar',close:'Cerrar',note:'Solo lectura · No modifica el viaje · Verifica las fuentes antes de visitarlo',examples:['¿Qué ver en Bari?','Naturaleza en Gargano?','¿Valle de Itria en 3 días?'],sources:'Fuentes',error:'No puedo responder ahora.'}
 };
 const t=T[language]||T.fr;
 const MT={
@@ -139,8 +139,35 @@ panel.querySelector('form').addEventListener('submit',async event=>{
   if(response.sources?.length){
    const citations=document.createElement('div');citations.className='a06-attrib';
    const heading=document.createElement('strong');heading.textContent=t.sources;citations.append(heading);
-   for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=s.title;citations.append(a)}
+   for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=s.title+(s.quality==='unreverified-catalogue'?' · '+({fr:'source catalogue non revérifiée',it:'fonte catalogo da verificare',en:'catalogue source not rechecked',es:'fuente del catálogo sin reverificar'}[language]||'source to verify'):'');citations.append(a)}
    output.append(citations);
+  }
+
+  // Region-wide answers refer directly to the Planner's stable POI ids.
+  // The only action is a voluntary map search: never mutate trip or session.
+  if(response.plannerPlaces?.length){
+    const regionList=document.createElement('div');regionList.className='a06-matches';
+    const title=document.createElement('h4');title.textContent=mt.title;
+    regionList.append(title);
+    for(const id of [...new Set(response.plannerPlaces)].slice(0,8)){
+      const item=window.A06PugliaKnowledge?.getPlace?.(id);
+      const current=window.A06PlannerCatalog?.list?.().find(p=>p.id===id);
+      if(!item || !current || item.name!==current.name)continue;
+      const row=document.createElement('div');row.className='a06-place';
+      const name=document.createElement('strong');name.textContent=item.name;
+      const button=document.createElement('button');button.type='button';button.textContent=mt.cta;
+      button.addEventListener('click',()=>{
+        const live=window.A06PlannerCatalog?.list?.().find(p=>p.id===id);
+        const nav=document.querySelector('nav button[data-view="map"]');
+        const search=document.getElementById('search'),filter=document.getElementById('zoneFilter');
+        if(!live||live.name!==item.name||!nav||!search)return;
+        toggle(false);nav.click();
+        if(filter){filter.value='all';filter.dispatchEvent(new Event('change',{bubbles:true}))}
+        search.value=live.name;search.dispatchEvent(new Event('input',{bubbles:true}));search.focus();
+      });
+      row.append(name,button);regionList.append(row);
+    }
+    if(regionList.children.length>1)output.append(regionList);
   }
   if(response.places?.length && matcher){
     const matches=matcher.matchMany(response.places);
