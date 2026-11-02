@@ -168,7 +168,9 @@ function beginTurn(question){
  const turn=document.createElement('div');turn.className='a06-turn';
  const bubble=document.createElement('div');bubble.className='a06-question';bubble.textContent=question;
  const reply=document.createElement('div');reply.className='a06-reply';turn.append(bubble,reply);
- output.append(turn);activeReply=reply;panel.classList.add('a06-has-turns');output.scrollTop=output.scrollHeight;
+ output.append(turn);activeReply=reply;panel.classList.add('a06-has-turns');
+ // Keep the new question visible above its answer, even if the answer is long.
+ output.scrollTop=Math.max(0,turn.offsetTop-output.offsetTop-8);
 }
 
 const routeButton=document.createElement('button');
@@ -321,7 +323,11 @@ panel.querySelector('form').addEventListener('submit',async event=>{
     }
   }
  }catch(error){console.warn('[A06] query failed',error);activeReply.textContent=t.error}
- finally{submit.disabled=false;output.scrollTop=output.scrollHeight}
+ finally{submit.disabled=false;
+  // Showing the end of a long answer hides the question on a phone.
+  const turn=activeReply.closest('.a06-turn');
+  if(turn)output.scrollTop=Math.max(0,turn.offsetTop-output.offsetTop-8);
+ }
 });
 document.body.append(open,panel);
 })();
