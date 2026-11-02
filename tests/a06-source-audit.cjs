@@ -12,7 +12,7 @@ const catalog=[...catalogV1.map((r,i)=>({id:'p'+i,name:r[0],lat:r[2],lon:r[3]}))
 const ids=new Set(catalog.map(p=>p.id));
 assert.equal(ids.size,83,'Planner IDs are immutable and non-colliding');
 const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-adapter.js',
- 'a06-matcher.js','a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js',
+ 'a06-matcher.js','a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js',
  'a06-puglia-knowledge.js','a06-proposals.js','a06-panel.js'];
 
 (async()=>{
@@ -37,16 +37,16 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    const reviews=w.A06POIReviews,dupes=w.A06DuplicateAudit,k=w.A06PugliaKnowledge;
    assert.ok(reviews&&dupes&&k,'review knowledge/duplicates missing');
    const list=reviews.list();
-   assert.equal(list.length,29);
-   assert.equal(reviews.stats().reviewed,29);
-   assert.equal(new Set(list.map(p=>p.id)).size,29);
+   assert.equal(list.length,45);
+   assert.equal(reviews.stats().reviewed,45);
+   assert.equal(new Set(list.map(p=>p.id)).size,45);
    assert.deepEqual([...new Set(list.map(p=>p.zone))].sort(),['bari','gargano','imperiale','itria','murgia','salento']);
    for(const p of list){
     assert.ok(ids.has(p.id),'Audited POI must correspond to real Planner ID '+p.id);
     assert.equal(catalog.find(x=>x.id===p.id).name,p.name);
     assert.ok(/^https:\/\//.test(p.source.url));
     assert.equal(p.verification,'static-claim-reviewed');
-    assert.ok(['UNESCO','official-or-manager'].includes(p.source.type));
+    assert.ok(['UNESCO','official-or-manager','protected-area-register'].includes(p.source.type));
     for(const language of langs)assert.ok(p.claim[language].length>=55,'Missing fact '+p.id+' '+language);
     for(const flag of Object.values(p.limits))assert.equal(flag,false,'No verification of dynamic/geo claims');
    }
@@ -61,7 +61,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(dupes.get('spa-cesarea','p35').decision,'keep-separate');
    assert.equal(k.unifiedList().length,126,'No automatic merge/delete of legacy IDs');
    const stats=k.stats();
-   assert.equal(stats.poiStaticReviewed,29);
+   assert.equal(stats.poiStaticReviewed,45);
    assert.equal(stats.duplicateKeepSeparate,7);
    const queries=[
     ['p2','Foresta Umbra','gargano'],
@@ -102,6 +102,39 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
         'Missing direct new source '+id+' '+lang);
    }
    assert.equal(batch2.length,15);
+   const batch3=[
+      ['p5','Lucera','gargano'],['p10','Bisceglie','imperiale'],['p15','Giovinazzo','bari'],
+      ['p26','Castellaneta','murgia'],['p31','Porto Cesareo','salento'],['p32','Nardò','salento'],
+      ['p33','Santa Maria di Leuca','salento'],['nature-dune-costiere','Parco Dune Costiere','itria'],
+      ['nature-pianelle','Bosco delle Pianelle','itria'],['nature-porto-selvaggio','Parco di Porto Selvaggio','salento'],
+      ['nature-ugento','Parco Naturale Litorale di Ugento','salento'],
+      ['nature-otranto-leuca','Parco Costa Otranto–Leuca e Bosco di Tricase','salento'],
+      ['nature-rauccio','Bosco e Paludi di Rauccio · Lecce','salento'],
+      ['nature-lama-balice','Parco Naturale Lama Balice · Bari','bari'],
+      ['nature-saline-margherita','Saline di Margherita di Savoia','imperiale'],
+      ['nature-oasi-laterza','Oasi Gravina di Laterza','murgia']
+   ];
+   assert.equal(batch3.length,16);
+   for(const [id,name,zone] of batch3){
+     const response=k.answer('Que voir à '+name+' ?',lang);
+     assert.equal(response?.zone,zone,'Missing new zone '+id+' '+lang);
+     assert.ok(response.text.includes(reviews.get(id).claim[lang]),'No batch3 fact '+id+' '+lang);
+     assert.ok(response.sources.some(s=>s.quality==='poi-static-checked'&&s.url===reviews.get(id).source.url),
+       'Missing direct batch3 source '+id+' '+lang);
+   }
+   const quality=w.A06DataQuality;
+   assert.equal(quality.stats().plannerPins,83);
+   assert.equal(quality.stats().independentlyVerifiedPins,0);
+   assert.equal(quality.stats().macrozoneWarnings,6);
+   assert.equal(quality.stats().legacyPinsMissing,15);
+   assert.equal(quality.stats().commercialVerifiedCurrentOffers,0);
+   assert.ok(quality.stats().commercialPending>10);
+   assert.equal(quality.getLocation('p36').reviewZone,true);
+   assert.equal(quality.getLocation('p34').reviewZone,true);
+   assert.equal(quality.getLocation('nature-ugento').coordinatesVerified,false);
+   assert.ok(quality.listCommercialPending().every(p=>p.isPromotedToVerified===false&&p.operatingStatus==='not-checked'));
+   const caution=reviews.get('nature-saline-margherita').accessCaution;
+   assert.ok(caution?.[lang]?.length>30);
    const noPOI=k.answer('Un lieu complètement inconnu ?',lang);
    assert.equal(noPOI,null);
    w.localStorage.setItem('aracne-puglia-v1','private-trip-unchanged');
@@ -112,7 +145,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(w.localStorage.getItem('aracne-puglia-v1'),'private-trip-unchanged');
    assert.equal(w.A06TourismAssistant.stats().plannerWrites,0);
    const page=read(lang==='fr'?'index.html':'index.'+lang+'.html');
-   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-puglia-knowledge.js'];
+   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js','a06-puglia-knowledge.js','a06-puglia-knowledge.js'];
    let prev=-1;
    for(const script of order){
     const loc=page.indexOf('<script src="'+script);
@@ -120,7 +153,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
     prev=loc;
    }
    assert.equal(errors.length,0,errors.join('; '));
-   console.log('PASS A06.5 '+lang+': 29 sourced POI facts, 7 keep-separate pairs, 126 IDs, no writes');
+   console.log('PASS A06.5 '+lang+': 45 sourced POI facts, 7 keep-separate pairs, 126 IDs, no writes');
   } finally {
    await new Promise(resolve=>setTimeout(resolve,0));
    dom.window.close();
