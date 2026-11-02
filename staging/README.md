@@ -193,5 +193,7 @@ Correctif chargé uniquement dans les bases de tests locales. Le baseline reste
 fidèle au schéma examiné. Aucun SQL exécuté sur la bêta : le risque correspondant
 n’est donc pas corrigé sur le service hébergé et bloque sa validation de sécurité.
 
-Restent ouverts : course changement de voyage/réponse tardive, génération réelle
+PASS supplémentaire : une réponse de lecture retardée du voyage A ne remplace
+pas le voyage B devenu actif (test DOM). Les courses d’écriture restent à étendre.
+Restent ouverts : génération réelle
 des invitations via pgcrypto, PostgREST, appareils physiques et rollback hébergé.
