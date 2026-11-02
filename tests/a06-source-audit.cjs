@@ -37,8 +37,8 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    const reviews=w.A06POIReviews,dupes=w.A06DuplicateAudit,k=w.A06PugliaKnowledge;
    assert.ok(reviews&&dupes&&k,'review knowledge/duplicates missing');
    const list=reviews.list();
-   assert.equal(list.length,14);
-   assert.equal(reviews.stats().reviewed,14);
+   assert.equal(list.length,29);
+   assert.equal(reviews.stats().reviewed,29);
    assert.equal(new Set(list.map(p=>p.id)).size,14);
    assert.deepEqual([...new Set(list.map(p=>p.zone))].sort(),['bari','gargano','imperiale','itria','murgia','salento']);
    for(const p of list){
@@ -77,6 +77,31 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
     assert.ok(answer.text.includes(reviews.get(id).claim[lang]),'No audited fact for '+id+' '+lang);
     assert.ok(answer.sources.some(s=>s.url===reviews.get(id).source.url&&s.quality==='poi-static-checked'),'No direct audited source for '+id);
    }
+   const batch2=[
+    ['p1','Peschici','gargano'],
+    ['p3','Monte Sant’Angelo','gargano'],
+    ['p4','Bovino','gargano'],
+    ['p6','Îles Tremiti','gargano'],
+    ['p8','Barletta','imperiale'],
+    ['p13','Monopoli','bari'],
+    ['p17','Locorotondo','itria'],
+    ['p18','Martina Franca','itria'],
+    ['p19','Cisternino','itria'],
+    ['p20','Ostuni','itria'],
+    ['p23','Gravina in Puglia','murgia'],
+    ['p24','Laterza','murgia'],
+    ['p28','Gallipoli','salento'],
+    ['p30','Otranto','salento'],
+    ['p34','Brindisi','salento']
+   ];
+   for(const [id,name,zone] of batch2){
+     const result=k.answer('Que voir à '+name+' ?',lang);
+     assert.equal(result?.zone,zone,'Missing zone '+id+' '+lang);
+     assert.ok(result.text.includes(reviews.get(id).claim[lang]),'Missing new verified fact '+id+' '+lang);
+     assert.ok(result.sources.some(x=>x.quality==='poi-static-checked'&&x.url===reviews.get(id).source.url),
+        'Missing direct new source '+id+' '+lang);
+   }
+   assert.equal(batch2.length,15);
    const noPOI=k.answer('Un lieu complètement inconnu ?',lang);
    assert.equal(noPOI,null);
    w.localStorage.setItem('aracne-puglia-v1','private-trip-unchanged');
@@ -95,7 +120,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
     prev=loc;
    }
    assert.equal(errors.length,0,errors.join('; '));
-   console.log('PASS A06.5 '+lang+': 14 sourced POI facts, 7 keep-separate pairs, 126 IDs, no writes');
+   console.log('PASS A06.5 '+lang+': 29 sourced POI facts, 7 keep-separate pairs, 126 IDs, no writes');
   } finally {
    await new Promise(resolve=>setTimeout(resolve,0));
    dom.window.close();
