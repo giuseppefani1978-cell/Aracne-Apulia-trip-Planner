@@ -107,6 +107,11 @@
       if(item)add(item.source.url,item.name,'poi-static-checked');
       if(sources.length>=5)return sources.slice(0,5);
     }
+    // Commercial sites evidence identity/offer description, NOT current bookability.
+    for(const p of result.places){
+      const operator=window.A06CommercialAudit?.get?.(p.id);
+      if(operator)add(operator.evidenceUrl,p.name,'operator-site-reference-not-bookable');
+    }
     const region=DATA.zones[result.zone];
     if(region) add(region.sourceUrl,region.label?.[result.language]||result.zone,'official-region-context');
     for(const p of result.places){
@@ -138,7 +143,7 @@
     const dayText=response.days?' '+t.duration+': '+response.days+' '+t.days+'.':'';
     const descriptions=response.places.slice(0,5).map(p=>{
       const staticFact=window.A06POIReviews?.get?.(p.id);
-      const desc=staticFact?.claim?.[l]||p.description?.[l];
+      const desc=staticFact?.claim?.[l]||window.A06CommercialAudit?.get?.(p.id)?.description?.[l]||p.description?.[l];
       return '• '+p.name+(desc?' — '+desc:'');
     });
     const text=[intro,dayText,(descriptions.length?t.chosen+':\n'+descriptions.join('\n'):''),t.verified,t.volatile]
@@ -168,7 +173,9 @@
       legacyIndependentlyVerified:0,
       geoPinsVerified:window.A06DataQuality?.stats?.().independentlyVerifiedPins||0,
       geoMacrozoneWarnings:window.A06DataQuality?.stats?.().macrozoneWarnings||0,
-      commercialOffersPending:window.A06DataQuality?.stats?.().commercialPending||0
+      commercialOffersPending:window.A06DataQuality?.stats?.().commercialPending||0,
+      operatorSitesReviewed:window.A06CommercialAudit?.stats?.().operatorSitesReviewed||0,
+      commercialBookingVerified:0
     });
   };
   // Virtual union: retain Il Volo records not matched to stable Planner IDs.
