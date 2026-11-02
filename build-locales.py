@@ -59,6 +59,6 @@ catch{}
     page=page.replace('</body>', '<script src="catalog-v2.js?v=1.0.0-beta.1"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js?v=5.2.2"></script><script src="experience.js?v=5.1.0"></script><script src="collaboration-v3.js?v=5.2.1"></script><script src="v5.js?v=5.1.0"></script><script src="invitations-v51.js?v=5.2.2"></script><script src="beta-invitations.js?v=1.0.0-beta.11"></script><script src="beta.js?v=1.0.0-beta.10"></script></body>')
     # A06 pilot in Lab/development only: read-only tourism information.
     # Keep the original five Planner navigation tabs, data contracts and IDs intact.
-    page=page.replace('</body>', '<script src="a06-places.js?v=0.1.0"></script><script src="a06-knowledge.js?v=1.0.0"></script><script src="a06-intelligence.js?v=1.1.9"></script><script src="a06-adapter.js?v=0.1.0"></script><script src="a06-matcher.js?v=0.2.0"></script><script src="a06-panel.js?v=0.2.0"></script></body>')
+    page=page.replace('</body>', '<script src="a06-places.js?v=0.1.0"></script><script src="a06-knowledge.js?v=1.0.0"></script><script src="a06-intelligence.js?v=1.1.9"></script><script src="a06-adapter.js?v=0.1.0"></script><script src="a06-matcher.js?v=0.2.0"></script><script src="a06-proposals.js?v=0.3.0"></script><script src="a06-panel.js?v=0.3.0"></script></body>')
     (root/('dist/index.html' if lang=='fr' else f'dist/index.{lang}.html')).write_text(page)
 print('Built four locales from one source and',len(rows),'translation entries.')
