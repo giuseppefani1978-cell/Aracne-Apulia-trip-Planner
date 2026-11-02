@@ -93,6 +93,11 @@ for(const lang of langs){
   assert.equal(w.document.getElementById('modal').open,false);
   assert.equal(w.A06TourismAssistant.stats().plannerWrites,0,'Il Volo bridge remains read-only');
   console.log('PASS A06.3 '+lang+': grounded proposal, two-click confirm, reader denial, stale & revocation guards');
- } finally{c.close()}
+ } finally{
+  // Cancel synthetic shared session and let MutationObservers settle before JSDOM teardown.
+  try{w.aracneShared?._setRaw?.(null)}catch{}
+  await new Promise(resolve=>setTimeout(resolve,0));
+  c.close();
+ }
 }
 })().catch(error=>{console.error(error);process.exitCode=1});
