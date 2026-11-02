@@ -43,6 +43,16 @@ style.textContent=`
 #a06-panel .a06-example{flex-shrink:0;max-width:260px;border:1px solid #d8d1e9;border-radius:99px;background:#fff;color:#55447d;padding:8px 11px;font-size:12px}
 #a06-panel .a06-out{padding:15px 16px;overflow:auto;min-height:45px;flex:1;white-space:pre-line;line-height:1.55;font-size:14px;overflow-wrap:anywhere}
 #a06-panel .a06-out:empty{display:none}
+#a06-panel .a06-turn{padding:9px 0 13px;border-bottom:1px solid #f0ecf5;margin-bottom:8px}
+#a06-panel .a06-question{background:#eee8f9;color:#4f347c;padding:9px 12px;border-radius:15px 15px 4px 15px;max-width:93%;margin-left:auto;width:fit-content;font-weight:650;white-space:pre-wrap}
+#a06-panel .a06-reply{padding:11px 1px 2px;white-space:pre-line;line-height:1.55}
+#a06-panel .a06-input{min-height:58px;max-height:132px;resize:vertical;line-height:1.45}
+#a06-panel .a06-voice{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:8px 12px 2px}
+#a06-panel .a06-voice button{border:1px solid #d8cce9;background:#f5f1fb;color:#583d8e;border-radius:11px;font-size:12px;font-weight:700;padding:8px 10px}
+#a06-panel .a06-voice button:disabled{opacity:.5}
+#a06-panel .a06-voice small{font-size:11px;color:#776a88;flex:1 1 130px}
+#a06-panel .a06-voice [data-listening="true"]{background:#fcebef;color:#a12c45;border-color:#f3b7c8}
+
 #a06-panel .a06-attrib{margin-top:12px;padding-top:10px;border-top:1px solid #eee8f3;white-space:normal}
 #a06-panel .a06-attrib strong{display:block;font-size:12px;margin-bottom:4px}
 #a06-panel .a06-attrib a{display:block;font-size:12px;color:#654bb3;line-height:1.7;overflow-wrap:anywhere}
@@ -76,25 +86,40 @@ open.id='a06-open';open.type='button';open.textContent='✦ '+t.button;
 open.setAttribute('aria-controls','a06-panel');open.setAttribute('aria-expanded','false');
 const panel=document.createElement('section');
 panel.id='a06-panel';panel.hidden=true;panel.setAttribute('aria-label',t.button);
-panel.innerHTML='<div class="a06-head"><div><strong></strong><p></p></div><button class="a06-x" type="button" aria-label=""></button></div><div class="a06-samples"></div><div class="a06-out" role="status" aria-live="polite"></div><form class="a06-form"><input class="a06-input" type="text" maxlength="600" required autocomplete="off"><button class="a06-send" type="submit"></button></form><p class="a06-note"></p>';
+panel.innerHTML='<div class="a06-head"><div><strong></strong><p></p></div><button class="a06-x" type="button" aria-label=""></button></div><div class="a06-samples"></div><div class="a06-out" role="status" aria-live="polite"></div><div class="a06-voice" role="group" aria-label="Dictée et lecture"></div><form class="a06-form"><textarea class="a06-input" maxlength="600" rows="2" required></textarea><button class="a06-send" type="submit"></button></form><p class="a06-note"></p>';
 panel.querySelector('.a06-head strong').textContent=t.title;
 panel.querySelector('.a06-head p').textContent=t.hint;
 panel.querySelector('.a06-x').setAttribute('aria-label',t.close);
 panel.querySelector('.a06-input').placeholder=t.placeholder;
 panel.querySelector('.a06-input').setAttribute('aria-label',t.placeholder);
 panel.querySelector('.a06-send').textContent=t.send;
+
 panel.querySelector('.a06-note').textContent=t.note;
 const samples=panel.querySelector('.a06-samples'),input=panel.querySelector('.a06-input'),output=panel.querySelector('.a06-out'),submit=panel.querySelector('.a06-send');
+input.addEventListener('keydown',event=>{
+  if(event.key==='Enter'&&!event.shiftKey&&!event.isComposing){
+    event.preventDefault();
+    if(typeof panel.querySelector('form').requestSubmit==='function')panel.querySelector('form').requestSubmit();
+    else panel.querySelector('form').dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}));
+  }
+});
+let activeReply=output;
+function beginTurn(question){
+ const turn=document.createElement('div');turn.className='a06-turn';
+ const bubble=document.createElement('div');bubble.className='a06-question';bubble.textContent=question;
+ const reply=document.createElement('div');reply.className='a06-reply';turn.append(bubble,reply);
+ output.append(turn);activeReply=reply;output.scrollTop=output.scrollHeight;
+}
 
 const routeButton=document.createElement('button');
 routeButton.type='button';routeButton.className='a06-route-action';
 routeButton.textContent='✦ '+rt.button;
 panel.querySelector('.a06-form').before(routeButton);
 function renderProposal(question){
-  output.replaceChildren();
-  if(!proposer){output.textContent=rt.none;return}
+  activeReply.replaceChildren();
+  if(!proposer){activeReply.textContent=rt.none;return}
   const proposal=proposer.propose(question,language);
-  if(!proposal.ok){output.textContent=proposal.text||rt.none;return}
+  if(!proposal.ok){activeReply.textContent=proposal.text||rt.none;return}
   // Snapshot is opaque (no trip data) and invalidates on role, revision or plan change.
   const context=window.A06PlannerCatalog?.proposalContext?.();
   const section=document.createElement('section');section.className='a06-proposal';
@@ -109,33 +134,44 @@ function renderProposal(question){
     button.addEventListener('click',()=>{
       const open=window.A06PlannerCatalog?.openNativeAdd?.(stop.plannerId,context.fingerprint);
       if(open?.ok){toggle(false)}
-      else{output.replaceChildren();output.textContent=rt.stale}
+      else{activeReply.replaceChildren();activeReply.textContent=rt.stale}
     });
     li.append(name,button);list.append(li);
   }
   const warning=document.createElement('p');
   warning.textContent=proposal.disclaimer+' '+rt.pending;
   section.append(heading,list,warning);
-  output.append(section);
+  activeReply.append(section);
 }
 routeButton.addEventListener('click',()=>{
   const question=input.value.trim();
-  if(!question){output.textContent=rt.none;input.focus();return}
-  renderProposal(question);
+  if(!question){input.focus();return}
+  beginTurn(question);renderProposal(question);
 });
 
 for(const example of t.examples){const b=document.createElement('button');b.type='button';b.className='a06-example';b.textContent=example;b.addEventListener('click',()=>{input.value=example;panel.querySelector('form').requestSubmit()});samples.append(b)}
-function toggle(show){panel.hidden=!show;open.setAttribute('aria-expanded',String(show));if(show)input.focus();else open.focus()}
+function toggle(show){panel.hidden=!show;open.setAttribute('aria-expanded',String(show));if(show)input.focus();else{window.A06Voice?.stop?.();open.focus()}}
 open.addEventListener('click',()=>toggle(panel.hidden));
 panel.querySelector('.a06-x').addEventListener('click',()=>toggle(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)toggle(false)});
+const resetControl=document.createElement('button');resetControl.type='button';
+resetControl.className='a06-example';
+resetControl.textContent=({fr:'Nouvelle conversation',it:'Nuova conversazione',en:'New conversation',es:'Nueva conversación'}[language]||'Nouvelle conversation');
+resetControl.addEventListener('click',()=>{
+  window.A06Voice?.stop?.();window.A06Conversation?.reset?.();
+  window.A06TourismAssistant?.setLanguage?.(language);
+  output.replaceChildren();activeReply=output;input.value='';input.focus();
+});
+samples.append(resetControl);
 panel.querySelector('form').addEventListener('submit',async event=>{
  event.preventDefault();const question=input.value.trim();if(!question||submit.disabled)return;
- submit.disabled=true;output.replaceChildren();output.textContent='…';
+ window.A06Voice?.stop?.();
+ submit.disabled=true;beginTurn(question);activeReply.textContent='…';
  try{
   if(routeIntent.test(question)){renderProposal(question);return}
-  const response=await api.ask(question,language);
-  output.textContent=response.text;
+  const response=await (window.A06Conversation?.ask?.(question,language)||api.ask(question,language));
+  window.A06Voice?.setLastAnswer?.(response.text);
+  activeReply.textContent=response.text;
   if(response.sources?.length){
    const citations=document.createElement('div');citations.className='a06-attrib';
    const heading=document.createElement('strong');heading.textContent=t.sources;citations.append(heading);
@@ -148,7 +184,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
       'official-region-context':{fr:'contexte régional uniquement',it:'solo contesto regionale',en:'regional context only',es:'solo contexto regional'}
     };
     a.textContent=s.title+(sourceLabel[s.quality]?' · '+(sourceLabel[s.quality][language]||sourceLabel[s.quality].fr):'');citations.append(a)}
-   output.append(citations);
+   activeReply.append(citations);
   }
 
   // Region-wide answers refer directly to the Planner's stable POI ids.
@@ -175,7 +211,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
       });
       row.append(name,button);regionList.append(row);
     }
-    if(regionList.children.length>1)output.append(regionList);
+    if(regionList.children.length>1)activeReply.append(regionList);
   }
   if(response.places?.length && matcher){
     const matches=matcher.matchMany(response.places);
@@ -211,10 +247,10 @@ panel.querySelector('form').addEventListener('submit',async event=>{
         list.append(line);
       }
       const foot=document.createElement('p');foot.className='a06-foot';foot.textContent=mt.foot;list.append(foot);
-      output.append(list);
+      activeReply.append(list);
     }
   }
- }catch(error){console.warn('[A06] query failed',error);output.textContent=t.error}
+ }catch(error){console.warn('[A06] query failed',error);activeReply.textContent=t.error}
  finally{submit.disabled=false}
 });
 document.body.append(open,panel);
