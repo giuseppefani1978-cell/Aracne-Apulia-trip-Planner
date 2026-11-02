@@ -104,7 +104,7 @@
     const review=window.A06POIReviews;
     for(const place of result.places){
       const item=review?.get?.(place.id);
-      if(item)add(item.source.url,item.name,item.sourceScope==='regional-or-municipal-context'?'poi-context-reference':'poi-static-checked');
+      if(item)add(item.source.url,item.name,item.verification==='static-claim-reviewed'?'poi-static-checked':'poi-draft-source-to-check');
       if(sources.length>=5)return sources.slice(0,5);
     }
     // Commercial sites evidence identity/offer description, NOT current bookability.
@@ -144,7 +144,13 @@
     const descriptions=response.places.slice(0,5).map(p=>{
       const staticFact=window.A06POIReviews?.get?.(p.id);
       const desc=staticFact?.claim?.[l]||window.A06CommercialAudit?.get?.(p.id)?.description?.[l]||p.description?.[l];
-      return '• '+p.name+(desc?' — '+desc:'');
+      const draftNote=staticFact?.verification==='source-linked-draft'?{
+        fr:' (description à revérifier auprès de la source)',
+        it:' (descrizione da verificare con la fonte)',
+        en:' (description requires confirmation against source)',
+        es:' (descripción pendiente de comprobar con la fuente)'
+      }[l]:'';
+      return '• '+p.name+(desc?' — '+desc:'')+draftNote;
     });
     const text=[intro,dayText,(descriptions.length?t.chosen+':\n'+descriptions.join('\n'):''),t.verified,t.volatile]
       .filter(Boolean).join('\n\n');
@@ -167,6 +173,7 @@
       catalogueSourceUnreverified:DATA.places.filter(p=>sourceStatus(p)==='catalogue-source-unreverified').length,
       editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length,
       poiStaticReviewed:window.A06POIReviews?.stats?.().reviewed||0,
+      poiSourceLinkedDrafts:window.A06POIReviews?.stats?.().sourceLinkedDraft||0,
       duplicateKeepSeparate:window.A06DuplicateAudit?.list?.().length||0,
       legacyInheritedPending:window.A06LegacyAudit?.stats?.().inheritedPending||0,
       legacyMissingCoordinates:window.A06LegacyAudit?.stats?.().missingCoordinates||0,
