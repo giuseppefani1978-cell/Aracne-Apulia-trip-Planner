@@ -107,7 +107,7 @@ function setup(lang){
   assert.equal(errors.length,0,errors.join('; '));
   const page=fs.readFileSync(path.resolve(__dirname,'../dist/index.'+(lang==='fr'?'html':lang+'.html')),'utf8');
   assert.ok(page.includes('a06-puglia-data.js?v=0.4.0'));
-  assert.ok(page.includes('a06-puglia-knowledge.js?v=0.5.1'));
+  assert.ok(page.includes('a06-puglia-knowledge.js?v=0.5.2'));
   assert.ok(page.indexOf('a06-puglia-knowledge.js') < page.indexOf('a06-proposals.js'));
   console.log('PASS A06.4 '+lang+': six zones, 126 unique records, provenance, route, local-only, map click');
  }finally{await new Promise(resolve=>setTimeout(resolve,0));dom.window.close()}
