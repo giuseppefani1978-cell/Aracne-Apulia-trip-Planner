@@ -89,7 +89,7 @@
     // The structured, region-wide index extends Il Volo without rewriting its
     // original 1.1.9 engine or breaking the historical Salento knowledge.
     const regional = window.A06PugliaKnowledge?.answer?.(question,resolvedLang);
-    const cleanText = value=>String(value||'').replace(/\\bHIRUNDU\\b/gi,'Aracne Intelligence');
+    const cleanText = value=>String(value||'').replace(/\bHIRUNDU\b/gi,'Aracne Intelligence');
     const q=clean(question);
     const specificLegacy=places.some(p=>{
       const name=clean(p.name);
