@@ -162,7 +162,10 @@
       catalogueSourceUnreverified:DATA.places.filter(p=>sourceStatus(p)==='catalogue-source-unreverified').length,
       editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length,
       poiStaticReviewed:window.A06POIReviews?.stats?.().reviewed||0,
-      duplicateKeepSeparate:window.A06DuplicateAudit?.list?.().length||0
+      duplicateKeepSeparate:window.A06DuplicateAudit?.list?.().length||0,
+      legacyInheritedPending:window.A06LegacyAudit?.stats?.().inheritedPending||0,
+      legacyMissingCoordinates:window.A06LegacyAudit?.stats?.().missingCoordinates||0,
+      legacyIndependentlyVerified:0
     });
   };
   // Virtual union: retain Il Volo records not matched to stable Planner IDs.
@@ -173,7 +176,7 @@
     const unmatched=legacy.filter(p=>matcher?.match?.(p.id)?.status!=='matched');
     return Object.freeze([
       ...DATA.places.map(p=>Object.freeze({id:p.id,name:p.name,zone:p.zone,origin:p.origin,plannerId:p.id,sourceGrade:p.sourceGrade})),
-      ...unmatched.map(p=>Object.freeze({id:'legacy:'+p.id,name:p.name,zone:'legacy-salento',origin:'il-volo',plannerId:null,sourceGrade:'legacy-source-review-required'}))
+      ...unmatched.map(p=>Object.freeze({id:'legacy:'+p.id,name:p.name,zone:'legacy-salento',origin:'il-volo',plannerId:null,sourceGrade:'legacy-source-review-required', inheritedStatus:window.A06LegacyAudit?.get?.(p.id)?.inheritedStatus||'unknown', coordinateStatus:window.A06LegacyAudit?.get?.(p.id)?.coordinateStatus||'unknown'}))
     ]);
   }
   window.A06PugliaKnowledge=Object.freeze({
