@@ -68,7 +68,7 @@ for(const lang of langs){
   assert.equal(w.document.getElementById('modal').open,false);
 
   // Read-only capability receives suggestions but cannot even open a modal.
-  const base=run('structuredClone(state)');
+  const base=JSON.parse(JSON.stringify(run('state')));
   w.aracneShared._setRaw({id:'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaaa',
     token:'a'.repeat(64),role:'read',revision:1,base});
   const readCtx=w.A06PlannerCatalog.proposalContext();
