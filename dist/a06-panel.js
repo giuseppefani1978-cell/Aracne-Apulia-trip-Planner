@@ -19,6 +19,17 @@ const MT={
 const mt=MT[language]||MT.fr;
 const matcher=window.A06PlaceMatcher;
 
+const proposer=window.A06RouteProposals;
+const RT={
+ fr:{button:'Proposer un parcours',title:'Proposition d’itinéraire',step:'Préparer l’ajout',read:'Lecture seule',stale:'Le voyage, les droits ou la synchronisation ont changé. Relancez la proposition.',none:'Ajoutez un lieu dans votre question pour proposer des étapes vérifiées.',pending:'Les étapes ne sont pas encore ajoutées. Confirmez-les une par une dans le Planner.'},
+ it:{button:'Suggerisci un percorso',title:'Proposta di itinerario',step:'Prepara l’aggiunta',read:'Sola lettura',stale:'Il viaggio, i permessi o la sincronizzazione sono cambiati. Riprova.',none:'Specifica un luogo nella domanda per proporre tappe verificate.',pending:'Le tappe non sono state aggiunte. Conferma ogni tappa nel Planner.'},
+ en:{button:'Suggest a route',title:'Itinerary suggestion',step:'Prepare to add',read:'View only',stale:'The trip, permissions or synchronization changed. Generate the proposal again.',none:'Include a place in your question to suggest verified stops.',pending:'Stops have not been added. Confirm each one separately in Planner.'},
+ es:{button:'Proponer un recorrido',title:'Propuesta de itinerario',step:'Preparar la adición',read:'Solo lectura',stale:'El viaje, los permisos o la sincronización cambiaron. Vuelve a generar la propuesta.',none:'Especifica un lugar para proponer etapas verificadas.',pending:'Las etapas aún no se han añadido. Confirma cada una en Planner.'}
+};
+const rt=RT[language]||RT.fr;
+const routeIntent=/(?:parcours|itin[ée]raire|circuit|percorso|itinerario|tragitto|itinerary|route|road\s*trip|recorrido|ruta)/i;
+
+
 const style=document.createElement('style');
 style.textContent=`
 #a06-open{position:fixed;bottom:calc(104px + env(safe-area-inset-bottom));right:16px;z-index:890;border:0;border-radius:16px;background:#6043a4;color:#fff;box-shadow:0 10px 30px #38246042;padding:13px 17px;font-size:14px;font-weight:750;max-width:calc(100vw - 32px)}
@@ -47,6 +58,15 @@ style.textContent=`
 .a06-place small{display:block;font-size:11px;color:#77707e}
 .a06-place button{margin-left:auto;flex-shrink:0;background:#f2ecfa;color:#543887;border:1px solid #d9c9e9;border-radius:10px;padding:9px;font-size:11px}
 .a06-matches .a06-foot{font-size:10px;color:#736980;margin:8px 0 0}
+.a06-route-action{margin:5px 12px 10px;border:1px solid #b8a5de;background:#f5f0fd;border-radius:12px;color:#5a397f;padding:11px 12px;font-size:13px;font-weight:750;cursor:pointer}
+.a06-route-action:disabled,.a06-add-stop:disabled{opacity:.55;cursor:not-allowed}
+.a06-proposal{white-space:normal;border-top:1px solid #e6ddf3;margin-top:12px;padding-top:12px}
+.a06-proposal h4{font-size:15px;margin:0 0 10px;color:#493267}
+.a06-proposal ol{padding-left:22px;margin:6px 0 12px}
+.a06-proposal li{margin:9px 0;border-bottom:1px solid #f1edf8;padding-bottom:10px}
+.a06-proposal li strong{font-size:13px;display:block;margin-bottom:5px}
+.a06-add-stop{border:0;background:#5e3c99;color:white;border-radius:10px;font-size:12px;padding:9px 12px}
+.a06-proposal p{font-size:12px;color:#6c6579;line-height:1.5;margin:9px 0 2px}
 @media(max-width:740px){#a06-open{bottom:calc(90px + env(safe-area-inset-bottom));font-size:12px;padding:12px 14px}#a06-panel{bottom:calc(145px + env(safe-area-inset-bottom));max-height:calc(100dvh - 185px)}}
 @media(prefers-reduced-motion:reduce){#a06-panel *{scroll-behavior:auto}}
 `;
@@ -65,6 +85,45 @@ panel.querySelector('.a06-input').setAttribute('aria-label',t.placeholder);
 panel.querySelector('.a06-send').textContent=t.send;
 panel.querySelector('.a06-note').textContent=t.note;
 const samples=panel.querySelector('.a06-samples'),input=panel.querySelector('.a06-input'),output=panel.querySelector('.a06-out'),submit=panel.querySelector('.a06-send');
+
+const routeButton=document.createElement('button');
+routeButton.type='button';routeButton.className='a06-route-action';
+routeButton.textContent='✦ '+rt.button;
+panel.querySelector('.a06-form').before(routeButton);
+function renderProposal(question){
+  output.replaceChildren();
+  if(!proposer){output.textContent=rt.none;return}
+  const proposal=proposer.propose(question,language);
+  if(!proposal.ok){output.textContent=proposal.text||rt.none;return}
+  // Snapshot is opaque (no trip data) and invalidates on role, revision or plan change.
+  const context=window.A06PlannerCatalog?.proposalContext?.();
+  const section=document.createElement('section');section.className='a06-proposal';
+  const heading=document.createElement('h4');heading.textContent=rt.title+' · '+proposal.anchor;
+  const list=document.createElement('ol');
+  for(const stop of proposal.stops){
+    const li=document.createElement('li');
+    const name=document.createElement('strong');name.textContent=stop.name;
+    const button=document.createElement('button');button.type='button';button.className='a06-add-stop';
+    button.textContent=context?.role==='read'?rt.read:rt.step;
+    button.disabled=!context?.canEdit;
+    button.addEventListener('click',()=>{
+      const open=window.A06PlannerCatalog?.openNativeAdd?.(stop.plannerId,context.fingerprint);
+      if(open?.ok){toggle(false)}
+      else{output.replaceChildren();output.textContent=rt.stale}
+    });
+    li.append(name,button);list.append(li);
+  }
+  const warning=document.createElement('p');
+  warning.textContent=proposal.disclaimer+' '+rt.pending;
+  section.append(heading,list,warning);
+  output.append(section);
+}
+routeButton.addEventListener('click',()=>{
+  const question=input.value.trim();
+  if(!question){output.textContent=rt.none;input.focus();return}
+  renderProposal(question);
+});
+
 for(const example of t.examples){const b=document.createElement('button');b.type='button';b.className='a06-example';b.textContent=example;b.addEventListener('click',()=>{input.value=example;panel.querySelector('form').requestSubmit()});samples.append(b)}
 function toggle(show){panel.hidden=!show;open.setAttribute('aria-expanded',String(show));if(show)input.focus();else open.focus()}
 open.addEventListener('click',()=>toggle(panel.hidden));
@@ -74,6 +133,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
  event.preventDefault();const question=input.value.trim();if(!question||submit.disabled)return;
  submit.disabled=true;output.replaceChildren();output.textContent='…';
  try{
+  if(routeIntent.test(question)){renderProposal(question);return}
   const response=await api.ask(question,language);
   output.textContent=response.text;
   if(response.sources?.length){
