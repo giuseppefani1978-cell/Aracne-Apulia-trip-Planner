@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Aracne Lab — Intelligence Pouilles</title>
+<style>
+:root{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,Inter,Arial,sans-serif;color:#29213e;background:#f9f6ef;font-synthesis:none}*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;background:radial-gradient(circle at 85% 0,#dfd1fa90,transparent 32%),#f9f6ef}
+main{max-width:920px;margin:0 auto;padding:24px 16px 80px}
+header{display:flex;gap:18px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.brand{font-size:24px;font-weight:850;letter-spacing:.09em;color:#52328b}.lab{font-size:11px;border:1px solid #b7a4d4;color:#613c94;background:#eee6fa;border-radius:99px;padding:6px 10px;font-weight:750}
+select,button,input{font:inherit}select{padding:10px;border:1px solid #d7cee1;background:#fff;border-radius:12px;color:#29213e}
+.hero{margin:35px 0 20px}.hero h1{font-size:clamp(29px,5vw,48px);line-height:1.09;letter-spacing:-.045em;margin:0 0 12px}.hero p{font-size:16px;color:#746d7f;line-height:1.55;margin:0;max-width:690px}
+.strip{background:#f1eaf9;border:1px solid #e1d7f1;border-radius:15px;padding:12px 16px;color:#564272;font-size:13px;line-height:1.5;margin:20px 0}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:18px}
+.metric{background:#fff;border:1px solid #ede7f1;border-radius:16px;padding:16px}.metric b{display:block;color:#5e4194;font-size:25px}.metric small{color:#83798d;font-size:11px}
+.card{background:#fff;border:1px solid #ebe5ef;border-radius:24px;box-shadow:0 15px 55px #4839600d;padding:22px}
+.tabs{display:flex;gap:8px;margin-bottom:17px}.tabs button{border:1px solid #ded4ea;border-radius:12px;background:#fff;padding:11px 14px;color:#60467f;cursor:pointer;font-weight:700}.tabs button[aria-pressed=true]{background:#5b388f;border-color:#5b388f;color:#fff}
+label{display:block;font-weight:750;font-size:13px;margin:0 0 9px}form{display:flex;gap:8px}input{min-width:0;flex:1;border:1px solid #d8d0e5;border-radius:12px;padding:14px;color:#25193c;font-size:15px}
+button.submit{border:0;border-radius:12px;background:#6243a1;color:#fff;font-weight:750;padding:0 21px;cursor:pointer}button:disabled{opacity:.5}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chip{border:1px solid #e5d9ed;color:#654d83;background:#fbf8ff;border-radius:99px;padding:8px 12px;font-size:12px;cursor:pointer}
+#answer{margin-top:20px;border-top:1px solid #eee7f2;padding-top:20px;min-height:42px;color:#322947;line-height:1.65;white-space:pre-line;overflow-wrap:anywhere;font-size:14px}
+#answer:empty{display:none}.sources{margin-top:15px;border-top:1px solid #ede7f1;padding-top:12px;display:grid;gap:6px;white-space:normal}.sources a{color:#6040a5;font-size:12px;overflow-wrap:anywhere}
+.stop{padding:12px 0;border-bottom:1px solid #efe9f2}.stop b{display:block}.stop span{display:block;font-size:11px;color:#847a8c}
+.fine{font-size:11px;color:#897f8d;line-height:1.5;margin-top:16px}
+footer{font-size:12px;color:#8d8792;margin-top:22px}
+@media(max-width:540px){main{padding:18px 13px 55px}.hero{margin-top:28px}.metrics{gap:6px}.metric{padding:12px 8px}.metric b{font-size:21px}.metric small{font-size:10px}.card{padding:16px}form{flex-direction:column}.submit{min-height:45px}.hero p{font-size:14px}}
+</style>
+</head>
+<body><main>
+<header><div class="brand">ARACNE <span class="lab">LAB · A06.5</span></div>
+<label for="lang"><select id="lang" aria-label="Langue"><option value="fr">Français</option><option value="it">Italiano</option><option value="en">English</option><option value="es">Español</option></select></label></header>
+<section class="hero"><h1 id="headline">Les Pouilles, intelligemment.</h1><p id="intro">Testez le moteur Aracne Intelligence sur toutes les Pouilles, avec ses connaissances territoriales, ses sources et ses suggestions indicatives.</p></section>
+<div class="strip" id="notice">Environnement de test isolé : aucune connexion Supabase, aucun accès aux voyages, aucune réservation et aucun ajout d'étape possible.</div>
+<section class="metrics"><div class="metric"><b>83</b><small id="metricA">Lieux du Planner</small></div><div class="metric"><b>66</b><small id="metricB">Fiches de lieux documentées*</small></div><div class="metric"><b>17</b><small id="metricC">Offres à revalider</small></div></section>
+<section class="card" aria-label="Assistant de découverte">
+<div class="tabs"><button type="button" id="infoMode" aria-pressed="true">Découvrir</button><button type="button" id="routeMode" aria-pressed="false">Parcours indicatif</button></div>
+<label for="question" id="questionLabel">Votre question</label>
+<form id="askForm" autocomplete="off"><input id="question" maxlength="600" required placeholder="Que voir à Bari ?" aria-label="Question touristique"><button class="submit" id="submit" type="submit">Explorer</button></form>
+<div class="chips" id="suggestions"></div>
+<section id="answer" role="status" aria-live="polite"></section>
+<div class="fine" id="fine">* 45 descriptions documentaires revues et 21 fiches géographiques à vérifier plus précisément. Les horaires, tarifs, coordonnées exactes et disponibilités ne sont pas certifiés.</div>
+</section>
+<footer id="footer">Aracne Lab · Prévisualisation consultative A06.5 · Données touristiques publiques uniquement · Pas de compte requis</footer>
+</main>
+<script src="dist/a06-places.js"></script>
+<script src="dist/a06-knowledge.js"></script>
+<script src="dist/a06-intelligence.js"></script>
+<script src="dist/a06-adapter.js"></script>
+<script src="dist/a06-puglia-data.js"></script>
+<script>
+/* Synthetic public catalogue ONLY. The production Planner state, storage,
+   Supabase keys, auth, shared trips and write methods are never loaded. */
+window.A06PlannerCatalog=Object.freeze({
+  list:()=>window.A06PugliaData.places.map(p=>Object.freeze({
+    id:p.id,name:p.name,lat:p.lat,lon:p.lon,zone:p.zone,tags:p.tags
+  })),
+  proposalContext:()=>Object.freeze({canEdit:false,role:'read',fingerprint:'lab-never-writes'})
+});
+</script>
+<script src="dist/a06-matcher.js"></script>
+<script src="dist/a06-poi-reviews.js"></script>
+<script src="dist/a06-duplicate-audit.js"></script>
+<script src="dist/a06-legacy-audit.js"></script>
+<script src="dist/a06-commercial-audit.js"></script>
+<script src="dist/a06-data-quality.js"></script>
+<script src="dist/a06-puglia-knowledge.js"></script>
+<script src="dist/a06-proposals.js"></script>
+<script>
+(()=>{
+'use strict';
+const $=id=>document.getElementById(id),texts={
+fr:{h:'Les Pouilles, intelligemment.',intro:'Testez Aracne Intelligence sur toutes les Pouilles : lieux, connaissances, sources et parcours indicatifs.',notice:'Lab isolé : aucun Supabase, aucun voyage réel, aucune réservation et aucun ajout d’étape possible.',a:'Lieux du Planner',b:'Fiches de lieux documentées*',c:'Offres à revalider',info:'Découvrir',route:'Parcours indicatif',q:'Votre question',go:'Explorer',place:'Que voir à Bari ?',fine:'* 45 descriptions revues et 21 fiches géographiques à vérifier plus précisément. Horaires, tarifs, coordonnées exactes et disponibilités non certifiés.',foot:'Aracne Lab · A06.5 · Informations publiques seulement · Aucun compte requis',ask:['Que voir à Bari ?','Nature dans le Gargano ?','Que voir à Alberobello ?'],routes:['Parcours autour de Trani','Parcours dans le Gargano','Parcours autour d’Otranto'],none:'Aucune proposition vérifiée pour cette question.',waiting:'Analyse en cours…',error:'Cette question ne peut pas être traitée actuellement.',refs:'Références (qualité variable)',stop:'Étape indicative, non ajoutée au Planner'},
+it:{h:'La Puglia, in modo intelligente.',intro:'Prova Aracne Intelligence per tutta la Puglia: luoghi, conoscenze, fonti e itinerari indicativi.',notice:'Lab isolato: nessun Supabase, viaggio reale, prenotazione o modifica del programma.',a:'Luoghi Planner',b:'Schede documentate*',c:'Offerte da verificare',info:'Scopri',route:'Itinerario indicativo',q:'La tua domanda',go:'Esplora',place:'Cosa vedere a Bari?',fine:'* 45 descrizioni revisionate e 21 schede geografiche da approfondire. Orari, prezzi, coordinate e disponibilità non certificati.',foot:'Aracne Lab · A06.5 · Informazioni pubbliche · Nessun account',ask:['Cosa vedere a Bari?','Natura nel Gargano?','Cosa vedere ad Alberobello?'],routes:['Itinerario a Trani','Percorso nel Gargano','Percorso vicino a Otranto'],none:'Nessuna proposta verificata per questa domanda.',waiting:'Analisi in corso…',error:'Impossibile rispondere ora.',refs:'Fonti (affidabilità variabile)',stop:'Tappa indicativa, non aggiunta al Planner'},
+en:{h:'Explore Puglia, intelligently.',intro:'Try Aracne Intelligence across Puglia: destinations, knowledge, sources and indicative trips.',notice:'Isolated Lab: no Supabase, real trips, bookings, or modifications to itineraries.',a:'Planner places',b:'Documented places*',c:'Offers needing checks',info:'Discover',route:'Indicative route',q:'Your question',go:'Explore',place:'What to see in Bari?',fine:'* 45 reviewed descriptions and 21 geographic drafts needing further checks. No verified opening hours, prices, accurate pins or availability.',foot:'Aracne Lab · A06.5 · Public data only · No account required',ask:['What to see in Bari?','Nature in Gargano?','What to see in Alberobello?'],routes:['Route around Trani','Route in Gargano','Route around Otranto'],none:'No grounded suggestion for this question.',waiting:'Thinking…',error:'This question cannot be answered right now.',refs:'Sources (varying reliability)',stop:'Indicative stop, not added to Planner'},
+es:{h:'Explora Apulia con inteligencia.',intro:'Prueba Aracne Intelligence en toda Apulia: lugares, fuentes y recorridos indicativos.',notice:'Lab aislado: sin Supabase, viajes reales, reservas ni modificaciones de itinerario.',a:'Lugares Planner',b:'Fichas documentadas*',c:'Ofertas por verificar',info:'Descubrir',route:'Ruta indicativa',q:'Tu pregunta',go:'Explorar',place:'¿Qué ver en Bari?',fine:'* 45 descripciones revisadas y 21 fichas geográficas pendientes de verificación. Sin horarios, precios, puntos exactos ni disponibilidad confirmados.',foot:'Aracne Lab · A06.5 · Solo datos públicos · Sin registro',ask:['¿Qué ver en Bari?','¿Naturaleza en Gargano?','¿Qué ver en Alberobello?'],routes:['Ruta por Trani','Ruta por Gargano','Ruta cerca de Otranto'],none:'No hay propuesta fundamentada para esta pregunta.',waiting:'Analizando…',error:'No es posible responder ahora.',refs:'Fuentes (fiabilidad variable)',stop:'Etapa orientativa, no añadida al Planner'}
+};
+let mode='info';const lang=()=>$('lang').value;
+const clear=()=>{$('answer').replaceChildren()};
+function apply(){
+ const t=texts[lang()];document.documentElement.lang=lang();
+ for(const [id,key] of [['headline','h'],['intro','intro'],['notice','notice'],['metricA','a'],['metricB','b'],['metricC','c'],['infoMode','info'],['routeMode','route'],['questionLabel','q'],['submit','go'],['fine','fine'],['footer','foot']])$(id).textContent=t[key];
+ $('question').placeholder=mode==='info'?t.place:t.routes[0];$('infoMode').setAttribute('aria-pressed',String(mode==='info'));$('routeMode').setAttribute('aria-pressed',String(mode==='route'));
+ const sample=mode==='info'?t.ask:t.routes;$('suggestions').replaceChildren();
+ for(const str of sample){const b=document.createElement('button');b.className='chip';b.type='button';b.textContent=str;b.onclick=()=>{$('question').value=str;$('askForm').requestSubmit()};$('suggestions').append(b)}
+}
+function addLink(box,item){
+ if(!item?.url || !/^https:\/\//i.test(item.url))return;
+ const a=document.createElement('a');a.href=item.url;a.rel='noopener noreferrer';a.target='_blank';
+ a.textContent=String(item.title||'Source')+' · '+String(item.quality||'non certifiée');box.append(a)
+}
+function renderSources(items){
+ if(!items?.length)return;const box=document.createElement('div');box.className='sources';
+ const strong=document.createElement('strong');strong.textContent=texts[lang()].refs;box.append(strong);
+ for(const item of items.slice(0,6))addLink(box,item);$('answer').append(box);
+}
+$('infoMode').onclick=()=>{mode='info';clear();apply()};
+$('routeMode').onclick=()=>{mode='route';clear();apply()};
+$('lang').onchange=()=>{clear();window.A06TourismAssistant?.setLanguage?.(lang());apply()};
+$('askForm').onsubmit=async e=>{
+ e.preventDefault();const q=$('question').value.trim();if(!q)return;
+ clear();$('submit').disabled=true;$('answer').textContent=texts[lang()].waiting;
+ try{
+  if(mode==='info'){
+   const result=await window.A06TourismAssistant.ask(q,lang());$('answer').textContent=result.text||texts[lang()].none;
+   renderSources(result.sources);
+  }else{
+   const result=window.A06RouteProposals.propose(q,lang());
+   $('answer').replaceChildren();
+   if(!result?.ok){$('answer').textContent=result?.text||texts[lang()].none;return}
+   const t=document.createElement('strong');t.textContent=result.anchor;$('answer').append(t);
+   for(const item of result.stops){
+    const row=document.createElement('div');row.className='stop';
+    const title=document.createElement('b');title.textContent=item.name;
+    const note=document.createElement('span');note.textContent=texts[lang()].stop;
+    row.append(title,note);$('answer').append(row);
+   }
+   const disclaimer=document.createElement('p');disclaimer.textContent=result.disclaimer;$('answer').append(disclaimer);
+  }
+ }catch(err){$('answer').textContent=texts[lang()].error;console.warn('[Aracne Lab]',err)}
+ finally{$('submit').disabled=false}
+};
+apply();
+})();
+</script>
+</body></html>
