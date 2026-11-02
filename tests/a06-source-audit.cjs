@@ -39,7 +39,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    const list=reviews.list();
    assert.equal(list.length,29);
    assert.equal(reviews.stats().reviewed,29);
-   assert.equal(new Set(list.map(p=>p.id)).size,14);
+   assert.equal(new Set(list.map(p=>p.id)).size,29);
    assert.deepEqual([...new Set(list.map(p=>p.zone))].sort(),['bari','gargano','imperiale','itria','murgia','salento']);
    for(const p of list){
     assert.ok(ids.has(p.id),'Audited POI must correspond to real Planner ID '+p.id);
@@ -61,7 +61,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(dupes.get('spa-cesarea','p35').decision,'keep-separate');
    assert.equal(k.unifiedList().length,126,'No automatic merge/delete of legacy IDs');
    const stats=k.stats();
-   assert.equal(stats.poiStaticReviewed,14);
+   assert.equal(stats.poiStaticReviewed,29);
    assert.equal(stats.duplicateKeepSeparate,7);
    const queries=[
     ['p2','Foresta Umbra','gargano'],
