@@ -30,9 +30,9 @@ for(const p of places){
  assert.deepEqual(JSON.parse(JSON.stringify(a.sourceIds)),JSON.parse(JSON.stringify(old.sourceIds||[])));
 }
 const pending=['lecce','scarra','enea','ripe','giurupi'];
-const actual=audit.list().filter(x=>x.inheritedStatus==='legacy-pending').map(x=>x.id).sort();
+const actual=Array.from(audit.list()).filter(x=>x.inheritedStatus==='legacy-pending').map(x=>x.id).sort();
 assert.deepEqual(actual,pending.slice().sort());
-assert.deepEqual(audit.list().filter(x=>x.coordinateStatus==='missing').map(x=>x.id).sort(),
+assert.deepEqual(Array.from(audit.list()).filter(x=>x.coordinateStatus==='missing').map(x=>x.id).sort(),
  ['santemiliano','cervi','scarra','enea','ripe','caprarica','treporte','casale','giurupi','montagna','fiume','cavallo','grottella','santacaterina','mulino'].sort());
 assert.ok(!audit.get('non-existent'));
 for(const language of ['fr','it','en','es']){
