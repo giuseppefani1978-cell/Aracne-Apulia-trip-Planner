@@ -165,7 +165,10 @@
       duplicateKeepSeparate:window.A06DuplicateAudit?.list?.().length||0,
       legacyInheritedPending:window.A06LegacyAudit?.stats?.().inheritedPending||0,
       legacyMissingCoordinates:window.A06LegacyAudit?.stats?.().missingCoordinates||0,
-      legacyIndependentlyVerified:0
+      legacyIndependentlyVerified:0,
+      geoPinsVerified:window.A06DataQuality?.stats?.().independentlyVerifiedPins||0,
+      geoMacrozoneWarnings:window.A06DataQuality?.stats?.().macrozoneWarnings||0,
+      commercialOffersPending:window.A06DataQuality?.stats?.().commercialPending||0
     });
   };
   // Virtual union: retain Il Volo records not matched to stable Planner IDs.
