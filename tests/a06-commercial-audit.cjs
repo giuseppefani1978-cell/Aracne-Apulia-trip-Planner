@@ -9,7 +9,7 @@ assert.ok(audit&&quality);
 const actual=Array.from(audit.list()),expected=region.places.filter(p=>/^spa-|^boat-/.test(p.id));
 assert.equal(actual.length,17);
 assert.equal(expected.length,17);
-assert.equal(audit.stats().operatorSitesReviewed,17);
+assert.equal(audit.stats().operatorSitesReviewed,10);
 assert.equal(audit.stats().bookableConfirmed,0);
 assert.equal(audit.stats().priceVerified,0);
 assert.equal(audit.stats().currentHoursVerified,0);
@@ -21,8 +21,9 @@ for(const p of expected){
  assert.equal(e.name,p.name);
  assert.equal(e.zone,p.zone);
  assert.equal(e.oldSourceUrl,p.sourceUrl);
- assert.ok(/^https:\/\//.test(e.evidenceUrl),p.id+' invalid evidence URL');
- assert.equal(e.evidenceScope,'operator-website-content-observed');
+ assert.ok(['operator-website-content-observed','catalogue-url-not-independently-confirmed'].includes(e.evidenceScope));
+ if(e.evidenceScope==='operator-website-content-observed')assert.ok(/^https:\/\//.test(e.evidenceUrl),p.id+' invalid evidence URL');
+ else assert.equal(e.evidenceUrl,null,'unconfirmed vendor must not expose verified source');
  assert.equal(e.currentPriceVerified,false);
  assert.equal(e.bookingInventoryChecked,false);
  assert.equal(e.currentHoursVerified,false);
@@ -35,9 +36,9 @@ for(const p of expected){
 }
 assert.equal(audit.get('spa-torre-canne').operationalStatus,'seasonal-closure-announced');
 assert.equal(audit.stats().seasonalClosureWarnings,1);
-assert.ok(actual.every(x=>x.operationalStatus==='availability-not-verified'||x.operationalStatus==='seasonal-closure-announced'));
+assert.ok(actual.every(x=>['availability-not-verified','seasonal-closure-announced','unknown'].includes(x.operationalStatus)));
 assert.equal(quality.stats().commercialPending,17);
-assert.equal(quality.stats().commercialSitesReviewed,17);
+assert.equal(quality.stats().commercialSitesReviewed,10);
 assert.equal(quality.stats().commercialVerifiedCurrentOffers,0);
 assert.equal(quality.stats().independentlyVerifiedPins,0);
 assert.equal(quality.stats().plannerPins,83);
@@ -52,4 +53,4 @@ for(const lang of ['fr','it','en','es']){
   last=idx;
  }
 }
-console.log('PASS A06.5 commercial: 17 provider source pages reviewed; 1 seasonal closure warning; ZERO current bookings, prices, hours or geocodes certified');
+console.log('PASS A06.5 commercial: 10 provider pages observed, 7 unconfirmed; 1 seasonal closure warning; ZERO current bookings, prices, hours or geocodes certified');
