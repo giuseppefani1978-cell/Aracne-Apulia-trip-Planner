@@ -99,6 +99,13 @@ catch{}
  * The existing confirmAdd handler owns the write; capture guards enforce role,
  * trip identity and revision AGAIN immediately before native confirmation.
  */
+const a06FingerprintSalt = Math.random().toString(36).slice(2);
+function a06Fingerprint(input) {
+  // Opaque UI change detector, not an authorization token or a security hash.
+  let hash=2166136261;
+  for(let i=0;i<input.length;i++){hash^=input.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  return a06FingerprintSalt+':'+(hash>>>0).toString(16)+':'+input.length;
+}
 function a06ProposalContext() {
   const shared=window.aracneShared;
   const session=shared?.getSession?.()||null;
@@ -106,12 +113,13 @@ function a06ProposalContext() {
   const id=session?.id||state.localTripId||localStorage.getItem('aracne-v5-active')||'local';
   const status=session ? shared?._status?.() : 'local';
   const plan=Array.isArray(state.plan) ? state.plan.map(row=>Array.isArray(row)?row.map(p=>[p.uid,p.id,p.name,p.time,p.status]):[]) : [];
-  const fingerprint=JSON.stringify({id,role,revision:session?.revision??null,
-    name:state.name,start:state.start,days:state.days,plan});
+  const fingerprint=a06Fingerprint(JSON.stringify({id,role,revision:session?.revision??null,
+    name:state.name,start:state.start,days:state.days,plan}));
   const busy=Boolean(session&&(shared?._busy?.()||shared?._pending?.()));
   const canEdit=Boolean(['owner','edit'].includes(role)&&
-    (!session || status==='synced')&&!busy&&window.aracneBetaAccess?.active!==false);
-  return Object.freeze({canEdit,role,status,days:state.days,fingerprint,id,
+    (!session || status==='synced')&&!busy&&typeof state.name==='string'&&state.name.trim().length>0&&
+    window.aracneBetaAccess?.active!==false);
+  return Object.freeze({canEdit,role,status,days:state.days,fingerprint,
     reason:canEdit?null:role==='read'?'read-only':'sync-or-permission'});
 }
 function a06OpenNativeAdd(plannerId,expectedFingerprint) {
