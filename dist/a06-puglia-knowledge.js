@@ -17,7 +17,7 @@
     beach:/(?:plag|mer\b|baign|spiagg|mare\b|beach|coast|playa|costas?\b)/i,
     city:/(?:vill|ville|patrim|monum|centro|storic|historic|town|cultur|arquitect|architecture|borgo|ciudad)/i,
     food:/(?:mang|manger|cuisin|gastronom|food|eat|restaurant|vino|wine|vin\b|comer|comida|essen)/i,
-    nature:/(?:nature|natur|randonn|hike|hiking|bosco|foret|for[eê]t|parc|park|sentier|caminar|naturaleza)/i,
+    nature:/(?:nature|natur|randonn|hike|hiking|bosco|foret|for[eê]t|\bparc\b|\bparco\b|\bparque\b|\bpark\b|sentier|caminar|naturaleza)/i,
     boat:/(?:bateau|barca|boat|kayak|navig|croisi|cruise|vela|velero)/i,
     spa:/(?:spa|therm|terme|wellness|bien.etre|benessere|relajaci|relax)/i,
     party:/(?:soir|fete|fête|nightlife|club|fiesta|divert|discotec)/i
