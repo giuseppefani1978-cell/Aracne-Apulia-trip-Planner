@@ -35,7 +35,10 @@
     const focus=index?.findFocus?.(question);
     if(!focus?.zone) return null;
     const items=index.search(question,lang,12).places;
+    // No unconfirmed commercial operator can enter an automatic itinerary preview.
+    // Spa and boat pages are reference-only until booking/seasonality is verified.
     const zoneItems=items.filter(p=>p.zone===focus.zone &&
+      !window.A06CommercialAudit?.get?.(p.id) &&
       Number.isFinite(p.lat)&&Number.isFinite(p.lon));
     const ordered=zoneItems.sort((a,b)=>{
       const score=p=>(p.origin==='planner-v1'?3:1)+
