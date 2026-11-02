@@ -23,10 +23,10 @@
     party:/(?:soir|fete|fête|nightlife|club|fiesta|divert|discotec)/i
   };
   const copy = {
-    fr:{intro:'Informations touristiques pour',around:'autour de',chosen:'Quelques lieux du catalogue',no:'Précisez une destination des Pouilles (Gargano, Bari, Vallée d’Itria, Murgia, Trani ou Salento).',verified:'Source touristique officielle pour certains lieux ; autres descriptions du catalogue à confirmer.',volatile:'Horaires, tarifs, accès, météo et disponibilités doivent être vérifiés avant la visite.',duration:'Séjour évoqué',days:'jours',places:'lieux du Planner'},
-    it:{intro:'Informazioni turistiche per',around:'nei dintorni di',chosen:'Alcuni luoghi del catalogo',no:'Specifica una destinazione in Puglia (Gargano, Bari, Valle d’Itria, Murgia, Trani o Salento).',verified:'Fonte turistica ufficiale per alcuni luoghi; altre descrizioni del catalogo da verificare.',volatile:'Orari, prezzi, accessi, meteo e disponibilità vanno verificati prima della visita.',duration:'Soggiorno richiesto',days:'giorni',places:'luoghi del Planner'},
-    en:{intro:'Visitor information for',around:'near',chosen:'Places from the catalogue',no:'Specify a destination in Puglia (Gargano, Bari, Itria Valley, Murgia, Trani or Salento).',verified:'Official tourism sources support selected places; other catalogue descriptions need rechecking.',volatile:'Opening hours, prices, access, weather and availability must be checked before visiting.',duration:'Trip length mentioned',days:'days',places:'Planner places'},
-    es:{intro:'Información turística de',around:'cerca de',chosen:'Lugares del catálogo',no:'Indica un destino de Apulia (Gargano, Bari, Valle de Itria, Murgia, Trani o Salento).',verified:'Fuentes turísticas oficiales avalan algunos lugares; otras descripciones del catálogo requieren revisión.',volatile:'Comprueba horarios, precios, accesos, meteorología y disponibilidad antes de la visita.',duration:'Duración mencionada',days:'días',places:'lugares del Planner'}
+    fr:{intro:'Informations touristiques pour',around:'autour de',chosen:'Quelques lieux du catalogue',no:'Précisez une destination des Pouilles (Gargano, Bari, Vallée d’Itria, Murgia, Trani ou Salento).',verified:'Certaines sources officielles documentent la région ; les descriptions de lieux restent à vérifier individuellement.',volatile:'Horaires, tarifs, accès, météo et disponibilités doivent être vérifiés avant la visite.',duration:'Séjour évoqué',days:'jours',places:'lieux du Planner'},
+    it:{intro:'Informazioni turistiche per',around:'nei dintorni di',chosen:'Alcuni luoghi del catalogo',no:'Specifica una destinazione in Puglia (Gargano, Bari, Valle d’Itria, Murgia, Trani o Salento).',verified:'Le fonti ufficiali descrivono la regione; le schede dei singoli luoghi richiedono una verifica.',volatile:'Orari, prezzi, accessi, meteo e disponibilità vanno verificati prima della visita.',duration:'Soggiorno richiesto',days:'giorni',places:'luoghi del Planner'},
+    en:{intro:'Visitor information for',around:'near',chosen:'Places from the catalogue',no:'Specify a destination in Puglia (Gargano, Bari, Itria Valley, Murgia, Trani or Salento).',verified:'Official sources provide regional context; individual place descriptions still require checking.',volatile:'Opening hours, prices, access, weather and availability must be checked before visiting.',duration:'Trip length mentioned',days:'days',places:'Planner places'},
+    es:{intro:'Información turística de',around:'cerca de',chosen:'Lugares del catálogo',no:'Indica un destino de Apulia (Gargano, Bari, Valle de Itria, Murgia, Trani o Salento).',verified:'Las fuentes oficiales aportan contexto regional; las fichas de cada lugar requieren comprobación.',volatile:'Comprueba horarios, precios, accesos, meteorología y disponibilidad antes de la visita.',duration:'Duración mencionada',days:'días',places:'lugares del Planner'}
   };
   const placeById=new Map(DATA.places.map(p=>[p.id,p]));
   const knownZones=new Set(Object.keys(DATA.zones));
@@ -102,7 +102,7 @@
     const region=DATA.zones[result.zone];
     if(region) add(region.sourceUrl,region.label?.[result.language]||result.zone,'official-region-context');
     for(const p of result.places){
-      if(p.sourceGrade==='official-regional-context')add(p.sourceUrl,p.name,'official');
+      if(p.sourceGrade==='official-regional-context')add(p.sourceUrl,p.name,'official-region-context');
       // Existing V2 vendor/regional URL may be shown, but is explicitly marked
       // as not reverified; never claim it proves opening hours or availability.
       else if(p.sourceGrade==='catalogue-source-unreverified')add(p.sourceUrl,p.name,'unreverified-catalogue');
@@ -110,9 +110,20 @@
     }
     return sources.slice(0,5);
   }
+  const regionQuery = /\\b(?:puglia|pouilles|apulia|apulie|puglie)\\b/i;
   function answer(question,lang='fr'){
     const response=search(question,lang,6);
-    if(!response.recognized)return null;
+    if(!response.recognized){
+      if(!regionQuery.test(normalize(question)))return null;
+      const l=response.language,t=copy[l],zones=Object.values(DATA.zones);
+      const lines=zones.map(z=>'• '+z.label[l]+': '+z.description[l]);
+      return {ok:true,language:l,recognized:true,source:'puglia-structured-v0.4',
+        zone:null,text:lines.join('\n')+'\n\n'+t.verified+' '+t.volatile,
+        plannerPlaces:[],sources:Object.values(DATA.zones)
+          .map(z=>({url:z.sourceUrl,title:z.label[l],quality:'official-region-context'}))
+          .filter((s,i,a)=>a.findIndex(x=>x.url===s.url)===i).slice(0,5),
+        days:response.days};
+    }
     const l=response.language,t=copy[l],region=DATA.zones[response.zone];
     const title=region.label[l]||region.label.fr;
     const intro=t.intro+' '+title+'. '+region.description[l];
@@ -143,8 +154,19 @@
       editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length
     });
   };
+  // Virtual union: retain Il Volo records not matched to stable Planner IDs.
+  // Legacy records are NEVER written to Planner data or silently converted.
+  function unifiedList(){
+    const legacy=Array.isArray(window.A06IlVoloPlaces)?window.A06IlVoloPlaces:[];
+    const matcher=window.A06PlaceMatcher;
+    const unmatched=legacy.filter(p=>matcher?.match?.(p.id)?.status!=='matched');
+    return Object.freeze([
+      ...DATA.places.map(p=>Object.freeze({id:p.id,name:p.name,zone:p.zone,origin:p.origin,plannerId:p.id,sourceGrade:p.sourceGrade})),
+      ...unmatched.map(p=>Object.freeze({id:'legacy:'+p.id,name:p.name,zone:'legacy-salento',origin:'il-volo',plannerId:null,sourceGrade:'legacy-source-review-required'}))
+    ]);
+  }
   window.A06PugliaKnowledge=Object.freeze({
-    version:'0.4.0',search,answer,stats,findFocus,
+    version:'0.4.0',search,answer,stats,findFocus,unifiedList,
     getPlace:id=>placeById.get(id)||null,
     getZone:id=>DATA.zones[id]||null
   });
