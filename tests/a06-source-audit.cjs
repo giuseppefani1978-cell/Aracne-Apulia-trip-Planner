@@ -145,7 +145,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(w.localStorage.getItem('aracne-puglia-v1'),'private-trip-unchanged');
    assert.equal(w.A06TourismAssistant.stats().plannerWrites,0);
    const page=read(lang==='fr'?'index.html':'index.'+lang+'.html');
-   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js','a06-puglia-knowledge.js','a06-puglia-knowledge.js'];
+   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js','a06-puglia-knowledge.js'];
    let prev=-1;
    for(const script of order){
     const loc=page.indexOf('<script src="'+script);
