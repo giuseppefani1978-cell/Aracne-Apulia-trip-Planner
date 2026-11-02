@@ -31,9 +31,12 @@
    /^spa-|^boat-/.test(p.id)
  ).map(p=>Object.freeze({
    id:p.id,name:p.name,category:p.id.startsWith('spa-')?'spa':'boat',
-   previousUrl:p.sourceUrl,operatingStatus:'not-checked',
-   pricingStatus:'not-checked',hoursStatus:'not-checked',
-   bookingStatus:'not-checked',accessStatus:'not-checked',
+   previousUrl:p.sourceUrl,
+   operatingStatus:window.A06CommercialAudit?.get?.(p.id)?.operationalStatus||'not-checked',
+   evidenceUrl:window.A06CommercialAudit?.get?.(p.id)?.evidenceUrl||null,
+   evidenceScope:window.A06CommercialAudit?.get?.(p.id)?.evidenceScope||'not-checked',
+   pricingStatus:'not-confirmed',hoursStatus:'not-confirmed',
+   bookingStatus:'not-confirmed',accessStatus:'not-confirmed',
    sourceFreshness:'recheck-before-recommendation',
    isPromotedToVerified:false
  })));
@@ -49,7 +52,9 @@
      legacyPinsMissing:window.A06LegacyAudit.stats().missingCoordinates,
      macrozoneWarnings:mapped.filter(p=>p.reviewZone).length,
      commercialPending:commercial.length,
-     commercialVerifiedCurrentOffers:0
+     commercialVerifiedCurrentOffers:0,
+     commercialSitesReviewed:window.A06CommercialAudit?.stats?.().operatorSitesReviewed||0,
+     commercialSeasonalWarnings:window.A06CommercialAudit?.stats?.().seasonalClosureWarnings||0
    })
  });
 })();
