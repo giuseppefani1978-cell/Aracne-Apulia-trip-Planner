@@ -38,9 +38,9 @@
     const k=Math.sin(dLat/2)**2+Math.cos(radians(a.lat))*Math.cos(radians(b.lat))*Math.sin(dLon/2)**2;
     return 12742*Math.atan2(Math.sqrt(Math.max(0,k)),Math.sqrt(Math.max(0,1-k)));
   };
-  const sourceStatus=p=>p.sourceGrade==='official-reviewed'?'official-reviewed':
+  const sourceStatus=p=>p.sourceGrade==='official-regional-context'?'official-regional-context':
     p.sourceGrade==='catalogue-source-unreverified'?'catalogue-source-unreverified':'editorial-unverified';
-  const rank=p=>p.sourceGrade==='official-reviewed'?3:p.sourceGrade==='catalogue-source-unreverified'?2:1;
+  const rank=p=>p.sourceGrade==='official-regional-context'?3:p.sourceGrade==='catalogue-source-unreverified'?2:1;
   const durationMention=query=>{
     const match=normalize(query).match(/\b(\d{1,2})\s*(?:jour|jours|giorno|giorni|days|day|dia|dias)\b/);
     const n=match?Number(match[1]):null;
@@ -100,9 +100,9 @@
       sources.push({url,title:label,quality});
     };
     const region=DATA.zones[result.zone];
-    if(region) add(region.sourceUrl,region.label?.[result.language]||result.zone,'official');
+    if(region) add(region.sourceUrl,region.label?.[result.language]||result.zone,'official-region-context');
     for(const p of result.places){
-      if(p.sourceGrade==='official-reviewed')add(p.sourceUrl,p.name,'official');
+      if(p.sourceGrade==='official-regional-context')add(p.sourceUrl,p.name,'official');
       // Existing V2 vendor/regional URL may be shown, but is explicitly marked
       // as not reverified; never claim it proves opening hours or availability.
       else if(p.sourceGrade==='catalogue-source-unreverified')add(p.sourceUrl,p.name,'unreverified-catalogue');
@@ -138,7 +138,7 @@
       plannerPlaces:unique.size,legacyPlaces:ilCount,legacyMapped:mapped,
       unifiedDistinct:unique.size+ilCount-mapped,
       sixZones:Object.fromEntries(Object.keys(DATA.zones).map(z=>[z,DATA.places.filter(p=>p.zone===z).length])),
-      officialReviewed:DATA.places.filter(p=>sourceStatus(p)==='official-reviewed').length,
+      officialRegionalContext:DATA.places.filter(p=>sourceStatus(p)==='official-regional-context').length,
       catalogueSourceUnreverified:DATA.places.filter(p=>sourceStatus(p)==='catalogue-source-unreverified').length,
       editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length
     });
