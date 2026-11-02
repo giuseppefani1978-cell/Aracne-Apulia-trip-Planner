@@ -78,7 +78,7 @@ const open=w.document.getElementById('a06-open');
 open.click();
 assert.equal(w.document.querySelector('#a06-panel').hidden,false);
 const form=w.document.querySelector('#a06-panel form');
-form.querySelector('input').value='Parle-moi de Porto Badisco';
+form.querySelector('.a06-input').value='Parle-moi de Porto Badisco';
 form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
 for(let i=0;i<40 && w.document.querySelectorAll('.a06-place button').length===0;i++)
  await new Promise(resolve=>setTimeout(resolve,10));
