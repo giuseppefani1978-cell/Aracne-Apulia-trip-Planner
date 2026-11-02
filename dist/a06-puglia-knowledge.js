@@ -99,6 +99,14 @@
       if(typeof url!=='string'||!/^https:\/\/[a-z0-9.-]+\//i.test(url)||sources.some(item=>item.url===url))return;
       sources.push({url,title:label,quality});
     };
+    // POI-specific source audited in A06.5 takes precedence over regional
+    // background or older V2 vendor URL. No live opening-time assertions.
+    const review=window.A06POIReviews;
+    for(const place of result.places){
+      const item=review?.get?.(place.id);
+      if(item)add(item.source.url,item.name,'poi-static-checked');
+      if(sources.length>=5)return sources.slice(0,5);
+    }
     const region=DATA.zones[result.zone];
     if(region) add(region.sourceUrl,region.label?.[result.language]||result.zone,'official-region-context');
     for(const p of result.places){
@@ -129,7 +137,8 @@
     const intro=t.intro+' '+title+'. '+region.description[l];
     const dayText=response.days?' '+t.duration+': '+response.days+' '+t.days+'.':'';
     const descriptions=response.places.slice(0,5).map(p=>{
-      const desc=p.description?.[l];
+      const staticFact=window.A06POIReviews?.get?.(p.id);
+      const desc=staticFact?.claim?.[l]||p.description?.[l];
       return '• '+p.name+(desc?' — '+desc:'');
     });
     const text=[intro,dayText,(descriptions.length?t.chosen+':\n'+descriptions.join('\n'):''),t.verified,t.volatile]
@@ -151,7 +160,9 @@
       sixZones:Object.fromEntries(Object.keys(DATA.zones).map(z=>[z,DATA.places.filter(p=>p.zone===z).length])),
       officialRegionalContext:DATA.places.filter(p=>sourceStatus(p)==='official-regional-context').length,
       catalogueSourceUnreverified:DATA.places.filter(p=>sourceStatus(p)==='catalogue-source-unreverified').length,
-      editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length
+      editorialUnverified:DATA.places.filter(p=>sourceStatus(p)==='editorial-unverified').length,
+      poiStaticReviewed:window.A06POIReviews?.stats?.().reviewed||0,
+      duplicateKeepSeparate:window.A06DuplicateAudit?.list?.().length||0
     });
   };
   // Virtual union: retain Il Volo records not matched to stable Planner IDs.
