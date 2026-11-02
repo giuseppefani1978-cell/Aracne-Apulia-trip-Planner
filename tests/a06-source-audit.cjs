@@ -136,7 +136,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(quality.getLocation('p34').reviewZone,true);
    assert.equal(quality.getLocation('nature-ugento').coordinatesVerified,false);
    assert.ok(quality.listCommercialPending().every(p=>p.isPromotedToVerified===false&&p.bookingStatus==='not-confirmed'));
-   assert.equal(quality.stats().commercialSitesReviewed,17);
+   assert.equal(quality.stats().commercialSitesReviewed,10);
    assert.equal(quality.stats().commercialSeasonalWarnings,1);
    assert.equal(quality.getCommercial('spa-torre-canne').operatingStatus,'seasonal-closure-announced');
    const caution=reviews.get('nature-saline-margherita').accessCaution;
@@ -147,7 +147,8 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
      const result=k.answer('Que voir à '+record.name+' ?',lang);
      assert.equal(result?.zone,record.zone,'New area zone '+record.id+' '+lang);
      assert.ok(result.text.includes(record.claim[lang]),'New area claim '+record.id+' '+lang);
-     const quality=record.sourceScope==='regional-or-municipal-context'?'poi-context-reference':'poi-static-checked';
+     assert.equal(record.verification,'source-linked-draft');
+      const quality='poi-draft-source-to-check';
      assert.ok(result.sources.some(s=>s.url===record.source.url&&s.quality===quality),
        'New area provenance '+record.id+' '+lang);
    }
