@@ -77,7 +77,67 @@ style.textContent=`
 .a06-proposal li strong{font-size:13px;display:block;margin-bottom:5px}
 .a06-add-stop{border:0;background:#5e3c99;color:white;border-radius:10px;font-size:12px;padding:9px 12px}
 .a06-proposal p{font-size:12px;color:#6c6579;line-height:1.5;margin:9px 0 2px}
-@media(max-width:740px){#a06-open{bottom:calc(90px + env(safe-area-inset-bottom));font-size:12px;padding:12px 14px}#a06-panel{bottom:calc(145px + env(safe-area-inset-bottom));max-height:calc(100dvh - 185px)}}
+
+/* Shared layout safety: prevent fixed popup from widening the mobile page. */
+#a06-panel,#a06-panel *{box-sizing:border-box}
+#a06-panel .a06-head>div{flex:1;min-width:0}
+#a06-panel .a06-out{min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;flex:1 1 auto;scroll-behavior:smooth}
+#a06-panel .a06-turn{min-width:0;overflow-wrap:anywhere}
+#a06-panel .a06-reply{font-size:15px;line-height:1.58}
+#a06-panel .a06-compose{flex:0 0 auto;min-width:0;border-top:1px solid #ebe5f3;background:#fff}
+#a06-panel .a06-voice-details{flex:0 0 100%;font-size:11px;color:#776a88;max-width:100%}
+#a06-panel .a06-voice-details summary{cursor:pointer;display:inline-block;text-decoration:underline;text-underline-offset:2px}
+#a06-panel .a06-voice-details small{display:block;line-height:1.5;padding:4px 0 0}
+#a06-panel .a06-voice .a06-voice-status{flex:1 1 130px;min-width:0}
+#a06-panel .a06-voice-stop:disabled{display:none}
+#a06-panel .a06-voice [data-reading="true"]{background:#e9def9;border-color:#9171c9}
+#a06-panel .a06-new{border:1px solid #d8cbea;background:#fff;color:#573989;border-radius:10px;padding:9px 10px;font-size:12px;white-space:nowrap;flex-shrink:0}
+#a06-panel.a06-has-turns .a06-samples{display:none}
+#a06-panel .a06-send{min-width:85px;white-space:nowrap}
+#a06-panel textarea.a06-input{font-size:16px!important;max-width:100%;width:100%;min-height:56px;resize:vertical}
+html.a06-chat-open,body.a06-chat-open{overflow:hidden}
+html.a06-chat-open #a06-open{visibility:hidden}
+@media(max-width:740px){
+ #a06-open{bottom:calc(15px + env(safe-area-inset-bottom));right:12px;font-size:13px;padding:12px 13px;max-width:calc(100vw - 24px)}
+ #a06-panel{
+  position:fixed!important;inset:0!important;
+  top:var(--a06-view-top,0px)!important;left:0!important;right:0!important;bottom:auto!important;
+  width:100%!important;max-width:none!important;
+  height:var(--a06-view-height,100dvh)!important;max-height:var(--a06-view-height,100dvh)!important;
+  min-height:0;overflow:hidden;border:0;border-radius:0;box-shadow:none;
+ }
+ #a06-panel .a06-head{padding:calc(8px + env(safe-area-inset-top)) 12px 9px;gap:8px;flex:0 0 auto}
+ #a06-panel .a06-head strong{font-size:16px;line-height:1.27}
+ #a06-panel .a06-head p{display:none}
+ #a06-panel .a06-x{height:38px;width:38px;flex:0 0 38px}
+ #a06-panel .a06-new{font-size:11px;padding:8px 9px}
+ #a06-panel .a06-samples{padding:7px 11px;max-height:48px;flex:0 0 auto;overflow-x:auto;overflow-y:hidden}
+ #a06-panel .a06-example{font-size:12px;max-width:218px;white-space:nowrap}
+ #a06-panel .a06-out{padding:10px 14px 12px;font-size:15px;min-height:0;flex:1 1 0;overflow-y:auto}
+ #a06-panel .a06-out:empty{display:block}
+ #a06-panel .a06-turn{padding:6px 0 10px}
+ #a06-panel .a06-question{max-width:92%;font-size:15px}
+ #a06-panel .a06-reply{font-size:15px;line-height:1.55;padding:12px 1px 3px}
+ #a06-panel .a06-compose{padding-bottom:calc(5px + env(safe-area-inset-bottom));overflow:visible}
+ #a06-panel .a06-voice{padding:8px 11px 2px;gap:6px}
+ #a06-panel .a06-voice button{padding:9px 10px;font-size:12px;min-height:38px;flex-shrink:0}
+ #a06-panel .a06-voice .a06-voice-status{font-size:11px;flex:1 1 80px}
+ #a06-panel .a06-voice-details{font-size:10px}
+ #a06-panel .a06-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:stretch;padding:7px 11px;gap:8px}
+ #a06-panel textarea.a06-input{font-size:16px!important;line-height:1.35;height:60px;min-height:60px;max-height:118px;padding:11px}
+ #a06-panel .a06-send{min-height:60px;font-size:14px;padding:8px 12px;min-width:78px}
+ #a06-panel .a06-route-action{padding:8px 10px;margin:5px 11px 3px;font-size:12px}
+ #a06-panel .a06-note{display:none}
+ #a06-panel .a06-voice-details[open]{font-size:11px}
+}
+@media(max-width:370px){
+ #a06-panel .a06-voice .a06-voice-status{flex-basis:100%}
+ #a06-panel .a06-head strong{font-size:14px}
+ #a06-panel .a06-new{font-size:10px}
+ #a06-panel .a06-send{min-width:74px}
+}
+@media(prefers-reduced-motion:reduce){#a06-panel .a06-out{scroll-behavior:auto}}
+
 @media(prefers-reduced-motion:reduce){#a06-panel *{scroll-behavior:auto}}
 `;
 document.head.append(style);
@@ -108,13 +168,15 @@ function beginTurn(question){
  const turn=document.createElement('div');turn.className='a06-turn';
  const bubble=document.createElement('div');bubble.className='a06-question';bubble.textContent=question;
  const reply=document.createElement('div');reply.className='a06-reply';turn.append(bubble,reply);
- output.append(turn);activeReply=reply;output.scrollTop=output.scrollHeight;
+ output.append(turn);activeReply=reply;panel.classList.add('a06-has-turns');output.scrollTop=output.scrollHeight;
 }
 
 const routeButton=document.createElement('button');
 routeButton.type='button';routeButton.className='a06-route-action';
 routeButton.textContent='✦ '+rt.button;
-panel.querySelector('.a06-form').before(routeButton);
+const composer=document.createElement('div');composer.className='a06-compose';
+panel.querySelector('.a06-out').after(composer);
+composer.append(panel.querySelector('.a06-voice'),routeButton,panel.querySelector('.a06-form'),panel.querySelector('.a06-note'));
 function renderProposal(question){
   activeReply.replaceChildren();
   if(!proposer){activeReply.textContent=rt.none;return}
@@ -150,22 +212,30 @@ routeButton.addEventListener('click',()=>{
 });
 
 for(const example of t.examples){const b=document.createElement('button');b.type='button';b.className='a06-example';b.textContent=example;b.addEventListener('click',()=>{input.value=example;panel.querySelector('form').requestSubmit()});samples.append(b)}
-function toggle(show){panel.hidden=!show;open.setAttribute('aria-expanded',String(show));if(show)input.focus();else{window.A06Voice?.stop?.();open.focus()}}
+function toggle(show){
+ panel.hidden=!show;open.setAttribute('aria-expanded',String(show));
+ document.documentElement.classList.toggle('a06-chat-open',show);
+ document.body.classList.toggle('a06-chat-open',show);
+ if(!show){window.A06Voice?.stop?.();open.focus()}
+ // On iPhone, don't open the keyboard immediately when opening the chat.
+ else if(window.matchMedia?.('(min-width: 741px)')?.matches)input.focus();
+}
 open.addEventListener('click',()=>toggle(panel.hidden));
 panel.querySelector('.a06-x').addEventListener('click',()=>toggle(false));
 document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!panel.hidden)toggle(false)});
 const resetControl=document.createElement('button');resetControl.type='button';
-resetControl.className='a06-example';
+resetControl.className='a06-new';
 resetControl.textContent=({fr:'Nouvelle conversation',it:'Nuova conversazione',en:'New conversation',es:'Nueva conversación'}[language]||'Nouvelle conversation');
 resetControl.addEventListener('click',()=>{
-  window.A06Voice?.stop?.();window.A06Conversation?.reset?.();
+  window.A06Voice?.reset?.();window.A06Conversation?.reset?.();
   window.A06TourismAssistant?.setLanguage?.(language);
-  output.replaceChildren();activeReply=output;input.value='';input.focus();
+  output.replaceChildren();activeReply=output;panel.classList.remove('a06-has-turns');input.value='';input.focus();
 });
-samples.append(resetControl);
+panel.querySelector('.a06-x').before(resetControl);
 panel.querySelector('form').addEventListener('submit',async event=>{
  event.preventDefault();const question=input.value.trim();if(!question||submit.disabled)return;
  window.A06Voice?.stop?.();
+ if(window.matchMedia?.('(max-width: 740px)')?.matches)input.blur();
  submit.disabled=true;beginTurn(question);activeReply.textContent='…';
  try{
   if(routeIntent.test(question)){renderProposal(question);return}
@@ -251,7 +321,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
     }
   }
  }catch(error){console.warn('[A06] query failed',error);activeReply.textContent=t.error}
- finally{submit.disabled=false}
+ finally{submit.disabled=false;output.scrollTop=output.scrollHeight}
 });
 document.body.append(open,panel);
 })();
