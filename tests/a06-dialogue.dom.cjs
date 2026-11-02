@@ -93,7 +93,7 @@ for(const locale of locales){
   assert.ok(output.querySelectorAll('.a06-turn').length>=2,'Conversation history must be visible');
   assert.ok(output.querySelectorAll('.a06-reply').length>=2);
   assert.equal(w.A06Voice.status().listening,false);
-  panel.querySelector('.a06-samples button:last-child').click(); // New conversation
+  panel.querySelector('.a06-new').click(); // New conversation
   assert.equal(output.querySelectorAll('.a06-turn').length,0);
   assert.equal(dialogue.context().zone,null);
   assert.equal(errors.length,0,errors.join('; '));
