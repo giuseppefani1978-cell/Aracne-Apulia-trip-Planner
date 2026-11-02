@@ -178,3 +178,20 @@ Limites : navigateur desktop émulant un écran mobile, pas un iPhone physique ;
 partage natif capturé par un double de test, aucune ouverture WhatsApp ; transport
 RPC intercepté vers SQL local, accès bêta désactivé dans cette fixture. Aucun
 changement du code applicatif publié, aucun abonnement, aucun déploiement.
+
+## Revue CI et compatibilité — 2 novembre 2026
+
+CI 41517828576 : suites DOM/SQL réussies, Chromium non installé car ubuntu-latest
+résout ubuntu26.04, non pris en charge par Playwright 1.56.1. Runner fixé à
+ubuntu-24.04 ; nouvelle exécution à vérifier.
+
+Le test de l’ancienne API v1 sur la fixture reproduit une écriture v5 indue.
+`legacy-v1-guard.sql` propose le refus des mutations v1 sur documents v5 tout en
+conservant la lecture. Test négatif reproduit avant correction ; tests write,
+delete, rotate et lecture vérifient ensuite les refus et la révision inchangée.
+Correctif chargé uniquement dans les bases de tests locales. Le baseline reste
+fidèle au schéma examiné. Aucun SQL exécuté sur la bêta : le risque correspondant
+n’est donc pas corrigé sur le service hébergé et bloque sa validation de sécurité.
+
+Restent ouverts : course changement de voyage/réponse tardive, génération réelle
+des invitations via pgcrypto, PostgREST, appareils physiques et rollback hébergé.

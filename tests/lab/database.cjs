@@ -6,6 +6,7 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
  try{
  await db.exec('CREATE ROLE anon; CREATE ROLE authenticated;');
  await db.exec(fs.readFileSync('staging/schema-baseline.sql','utf8'));
+ await db.exec(fs.readFileSync('staging/legacy-v1-guard.sql','utf8'));
  await db.exec("INSERT INTO aracne_private.beta_settings(id,enabled) VALUES(true,true); INSERT INTO aracne_private.beta_batches(id,label) VALUES('11111111-1111-4111-8111-111111111111','LAB SYNTHETIC'); INSERT INTO aracne_private.beta_invites(id,batch_id,code_hash,suffix,is_admin) VALUES('22222222-2222-4222-8222-222222222222','11111111-1111-4111-8111-111111111111',sha256(convert_to(repeat('A',24),'UTF8')),'AAAAAA',false);");
  const token='d'.repeat(64),owner='a'.repeat(64),edit='b'.repeat(64),read='c'.repeat(64);
  const rpc=async(action,id=null,tok=owner,doc=null,rev=null,extra='')=>(await db.query(`SELECT public.aracne_trip_v5($1,p_id=>$2,p_token=>$3,p_document=>$4,p_revision=>$5${extra}) AS r`,[action,id,tok,doc,rev])).rows[0].r;
@@ -26,6 +27,9 @@ const fs=require('node:fs'),assert=require('node:assert/strict');
  assert.equal((await rpc('write',id,edit,clean,1)).revision,2);
  assert.equal((await rpc('write',id,owner,clean,1)).error,'conflict');
  const legacy=(await db.query('SELECT public.aracne_trip_v2($1,p_id=>$2,p_token=>$3,p_document=>$4,p_revision=>$5) AS r',['write',id,owner,clean,2])).rows[0].r;assert.equal(legacy.error,'upgrade_required');
+ const v1=(await db.query('SELECT public.aracne_trip($1,p_id=>$2,p_token=>$3,p_document=>$4,p_revision=>$5) AS r',['write',id,edit,{...clean,carnetVersion:99},2])).rows[0].r;assert.equal(v1.error,'upgrade_required','v1 must not bypass v5 protections');
+ for(const action of ['delete','rotate']){const res=(await db.query('SELECT public.aracne_trip($1,p_id=>$2,p_token=>$3) AS r',[action,id,owner])).rows[0].r;assert.equal(res.error,'upgrade_required')}
+ const oldRead=(await db.query('SELECT public.aracne_trip($1,p_id=>$2,p_token=>$3) AS r',['read',id,read])).rows[0].r;assert.equal(oldRead.revision,2);assert.equal(oldRead.document.carnetVersion,clean.carnetVersion);
  const snap=await rpc('snapshot',id);assert.ok(snap.version_id);
  assert.equal((await rpc('rename',id,owner,null,null,",p_name=>'LAB modified'")).name,'LAB modified');
  const restored=await rpc('restore',id,owner,null,null,`,p_version_id=>${Number(snap.version_id)}`);assert.equal(restored.document.name,clean.name);

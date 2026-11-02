@@ -8,7 +8,7 @@ const {PGlite}=require('@electric-sql/pglite');
  await new Promise(r=>server.listen(4173,'127.0.0.1',r));let browser;
  const db=new PGlite();
  try{
- await db.exec('CREATE ROLE anon; CREATE ROLE authenticated;');await db.exec(fs.readFileSync('staging/schema-baseline.sql','utf8'));
+ await db.exec('CREATE ROLE anon; CREATE ROLE authenticated;');await db.exec(fs.readFileSync('staging/schema-baseline.sql','utf8'));await db.exec(fs.readFileSync('staging/legacy-v1-guard.sql','utf8'));
  // This suite exercises trip capabilities; beta activation has its own SQL suite.
  await db.exec('INSERT INTO aracne_private.beta_settings(id,enabled) VALUES(true,false)');
  let queue=Promise.resolve(),calls=0;
