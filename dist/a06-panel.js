@@ -139,7 +139,12 @@ panel.querySelector('form').addEventListener('submit',async event=>{
   if(response.sources?.length){
    const citations=document.createElement('div');citations.className='a06-attrib';
    const heading=document.createElement('strong');heading.textContent=t.sources;citations.append(heading);
-   for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';a.textContent=s.title+(s.quality==='unreverified-catalogue'?' · '+({fr:'source catalogue non revérifiée',it:'fonte catalogo da verificare',en:'catalogue source not rechecked',es:'fuente del catálogo sin reverificar'}[language]||'source to verify'):'');citations.append(a)}
+   for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';const sourceLabel={
+      'poi-static-checked':{fr:'fait vérifié (hors horaires/prix)',it:'fatto verificato (non orari/prezzi)',en:'static fact checked (not hours/prices)',es:'dato verificado (no horarios/precios)'},
+      'unreverified-catalogue':{fr:'source catalogue non revérifiée',it:'fonte catalogo da verificare',en:'catalogue source not rechecked',es:'fuente del catálogo sin reverificar'},
+      'official-region-context':{fr:'contexte régional uniquement',it:'solo contesto regionale',en:'regional context only',es:'solo contexto regional'}
+    };
+    a.textContent=s.title+(sourceLabel[s.quality]?' · '+(sourceLabel[s.quality][language]||sourceLabel[s.quality].fr):'');citations.append(a)}
    output.append(citations);
   }
 
