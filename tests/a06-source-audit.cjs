@@ -38,14 +38,16 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.ok(reviews&&dupes&&k,'review knowledge/duplicates missing');
    const list=reviews.list();
    assert.equal(list.length,66);
-   assert.equal(reviews.stats().reviewed,66);
+   assert.equal(reviews.stats().reviewed,45);
+   assert.equal(reviews.stats().sourceLinkedDraft,21);
+   assert.equal(reviews.stats().total,66);
    assert.equal(new Set(list.map(p=>p.id)).size,66);
    assert.deepEqual([...new Set(list.map(p=>p.zone))].sort(),['bari','gargano','imperiale','itria','murgia','salento']);
    for(const p of list){
     assert.ok(ids.has(p.id),'Audited POI must correspond to real Planner ID '+p.id);
     assert.equal(catalog.find(x=>x.id===p.id).name,p.name);
     assert.ok(/^https:\/\//.test(p.source.url));
-    assert.equal(p.verification,'static-claim-reviewed');
+    assert.ok(['static-claim-reviewed','source-linked-draft'].includes(p.verification));
     assert.ok(['UNESCO','official-or-manager','protected-area-register','official','official-context','operator-context','editorial','editorial-context'].includes(p.source.type));
     for(const language of langs)assert.ok(p.claim[language].length>=55,'Missing fact '+p.id+' '+language);
     for(const flag of Object.values(p.limits))assert.equal(flag,false,'No verification of dynamic/geo claims');
@@ -61,7 +63,8 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(dupes.get('spa-cesarea','p35').decision,'keep-separate');
    assert.equal(k.unifiedList().length,126,'No automatic merge/delete of legacy IDs');
    const stats=k.stats();
-   assert.equal(stats.poiStaticReviewed,66);
+   assert.equal(stats.poiStaticReviewed,45);
+   assert.equal(stats.poiSourceLinkedDrafts,21);
    assert.equal(stats.duplicateKeepSeparate,7);
    const queries=[
     ['p2','Foresta Umbra','gargano'],
