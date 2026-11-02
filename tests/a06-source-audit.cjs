@@ -12,7 +12,7 @@ const catalog=[...catalogV1.map((r,i)=>({id:'p'+i,name:r[0],lat:r[2],lon:r[3]}))
 const ids=new Set(catalog.map(p=>p.id));
 assert.equal(ids.size,83,'Planner IDs are immutable and non-colliding');
 const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-adapter.js',
- 'a06-matcher.js','a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js',
+ 'a06-matcher.js','a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-commercial-audit.js','a06-data-quality.js',
  'a06-puglia-knowledge.js','a06-proposals.js','a06-panel.js'];
 
 (async()=>{
@@ -37,16 +37,16 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    const reviews=w.A06POIReviews,dupes=w.A06DuplicateAudit,k=w.A06PugliaKnowledge;
    assert.ok(reviews&&dupes&&k,'review knowledge/duplicates missing');
    const list=reviews.list();
-   assert.equal(list.length,45);
-   assert.equal(reviews.stats().reviewed,45);
-   assert.equal(new Set(list.map(p=>p.id)).size,45);
+   assert.equal(list.length,66);
+   assert.equal(reviews.stats().reviewed,66);
+   assert.equal(new Set(list.map(p=>p.id)).size,66);
    assert.deepEqual([...new Set(list.map(p=>p.zone))].sort(),['bari','gargano','imperiale','itria','murgia','salento']);
    for(const p of list){
     assert.ok(ids.has(p.id),'Audited POI must correspond to real Planner ID '+p.id);
     assert.equal(catalog.find(x=>x.id===p.id).name,p.name);
     assert.ok(/^https:\/\//.test(p.source.url));
     assert.equal(p.verification,'static-claim-reviewed');
-    assert.ok(['UNESCO','official-or-manager','protected-area-register'].includes(p.source.type));
+    assert.ok(['UNESCO','official-or-manager','protected-area-register','official','official-context','operator-context','editorial','editorial-context'].includes(p.source.type));
     for(const language of langs)assert.ok(p.claim[language].length>=55,'Missing fact '+p.id+' '+language);
     for(const flag of Object.values(p.limits))assert.equal(flag,false,'No verification of dynamic/geo claims');
    }
@@ -61,7 +61,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(dupes.get('spa-cesarea','p35').decision,'keep-separate');
    assert.equal(k.unifiedList().length,126,'No automatic merge/delete of legacy IDs');
    const stats=k.stats();
-   assert.equal(stats.poiStaticReviewed,45);
+   assert.equal(stats.poiStaticReviewed,66);
    assert.equal(stats.duplicateKeepSeparate,7);
    const queries=[
     ['p2','Foresta Umbra','gargano'],
@@ -132,9 +132,22 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(quality.getLocation('p36').reviewZone,true);
    assert.equal(quality.getLocation('p34').reviewZone,true);
    assert.equal(quality.getLocation('nature-ugento').coordinatesVerified,false);
-   assert.ok(quality.listCommercialPending().every(p=>p.isPromotedToVerified===false&&p.operatingStatus==='not-checked'));
+   assert.ok(quality.listCommercialPending().every(p=>p.isPromotedToVerified===false&&p.bookingStatus==='not-confirmed'));
+   assert.equal(quality.stats().commercialSitesReviewed,17);
+   assert.equal(quality.stats().commercialSeasonalWarnings,1);
+   assert.equal(quality.getCommercial('spa-torre-canne').operatingStatus,'seasonal-closure-announced');
    const caution=reviews.get('nature-saline-margherita').accessCaution;
    assert.ok(caution?.[lang]?.length>30);
+   const newPlaces=reviews.list().filter(p=>p.reviewScope==='geographic-fact-only');
+   assert.equal(newPlaces.length,21,'New 21 area records missing');
+   for(const record of newPlaces){
+     const result=k.answer('Que voir à '+record.name+' ?',lang);
+     assert.equal(result?.zone,record.zone,'New area zone '+record.id+' '+lang);
+     assert.ok(result.text.includes(record.claim[lang]),'New area claim '+record.id+' '+lang);
+     const quality=record.sourceScope==='regional-or-municipal-context'?'poi-context-reference':'poi-static-checked';
+     assert.ok(result.sources.some(s=>s.url===record.source.url&&s.quality===quality),
+       'New area provenance '+record.id+' '+lang);
+   }
    const noPOI=k.answer('Un lieu complètement inconnu ?',lang);
    assert.equal(noPOI,null);
    w.localStorage.setItem('aracne-puglia-v1','private-trip-unchanged');
@@ -145,7 +158,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
    assert.equal(w.localStorage.getItem('aracne-puglia-v1'),'private-trip-unchanged');
    assert.equal(w.A06TourismAssistant.stats().plannerWrites,0);
    const page=read(lang==='fr'?'index.html':'index.'+lang+'.html');
-   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-data-quality.js','a06-puglia-knowledge.js'];
+   const order=['a06-puglia-data.js','a06-poi-reviews.js','a06-duplicate-audit.js','a06-legacy-audit.js','a06-commercial-audit.js','a06-data-quality.js','a06-puglia-knowledge.js'];
    let prev=-1;
    for(const script of order){
     const loc=page.indexOf('<script src="'+script);
@@ -153,7 +166,7 @@ const modules=['a06-places.js','a06-knowledge.js','a06-intelligence.js','a06-ada
     prev=loc;
    }
    assert.equal(errors.length,0,errors.join('; '));
-   console.log('PASS A06.5 '+lang+': 45 sourced POI facts, 7 keep-separate pairs, 126 IDs, no writes');
+   console.log('PASS A06.5 '+lang+': 66 regional facts, 7 keep-separate pairs, 126 IDs, no writes');
   } finally {
    await new Promise(resolve=>setTimeout(resolve,0));
    dom.window.close();
