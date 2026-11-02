@@ -6,7 +6,8 @@
     "build": "python3 build-locales.py",
     "build:lab": "node scripts/lab/build.cjs",
     "test:lab": "node tests/lab/isolation.cjs && node tests/lab/database.cjs && node tests/lab/invitations.cjs",
-    "test:lab:browser": "node tests/lab/browser.cjs && node tests/lab/collaboration.browser.cjs"
+    "test:lab:browser": "node tests/lab/browser.cjs && node tests/lab/collaboration.browser.cjs",
+    "test:lab:ui": "node tests/lab/sharing-ui.browser.cjs"
   },
   "dependencies": {
     "jsdom": "26.1.0"

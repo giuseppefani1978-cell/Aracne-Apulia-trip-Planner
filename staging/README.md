@@ -162,3 +162,19 @@ ne sont pas testés. Le contrôle bêta est désactivé uniquement dans cette fi
 Les actions d’écriture utilisent l’API interne du Planner, pas les formulaires :
 le parcours complet d’invitation via l’interface et les vrais appareils restent
 à valider. Aucune nouvelle infrastructure et aucune donnée réelle utilisées.
+
+## Recette UI locale — 2 novembre 2026
+
+PASS `npm run test:lab:ui` : trois sessions Chromium au format 390×844,
+création par boutons, liens modification/lecture produits par l'interface,
+acceptation des invitations, retrait des secrets du fragment d'URL, renommage
+propagé, absence de commandes destructives pour le lecteur, refus du renommage
+hors ligne puis réussite après reconnexion, session organisateur après recharge.
+Le test ferme d'abord le dialogue initial via son bouton. Le renommage partagé
+exige volontairement une synchronisation préalable : ce test ne prétend pas
+valider une file d'écritures hors ligne pour cette commande.
+
+Limites : navigateur desktop émulant un écran mobile, pas un iPhone physique ;
+partage natif capturé par un double de test, aucune ouverture WhatsApp ; transport
+RPC intercepté vers SQL local, accès bêta désactivé dans cette fixture. Aucun
+changement du code applicatif publié, aucun abonnement, aucun déploiement.

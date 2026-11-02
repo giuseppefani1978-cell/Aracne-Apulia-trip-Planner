@@ -26,3 +26,5 @@ jobs:
         run: npx playwright install --with-deps chromium
       - name: Exercise Lab in Chromium (external requests blocked)
         run: npm run test:lab:browser
+      - name: Exercise sharing UI and reconnect on synthetic SQL
+        run: npm run test:lab:ui
