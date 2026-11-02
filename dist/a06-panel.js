@@ -141,6 +141,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
    const heading=document.createElement('strong');heading.textContent=t.sources;citations.append(heading);
    for(const s of response.sources){const a=document.createElement('a');a.href=s.url;a.target='_blank';a.rel='noopener noreferrer';const sourceLabel={
       'poi-static-checked':{fr:'fait vérifié (hors horaires/prix)',it:'fatto verificato (non orari/prezzi)',en:'static fact checked (not hours/prices)',es:'dato verificado (no horarios/precios)'},
+      'poi-draft-source-to-check':{fr:'fiche en cours de vérification',it:'scheda in verifica',en:'place description pending source review',es:'ficha pendiente de revisión'},
       'poi-context-reference':{fr:'source contextuelle, lieu à confirmer',it:'fonte di contesto, luogo da verificare',en:'context source; place details to verify',es:'fuente contextual; comprobar detalles del lugar'},
       'operator-site-reference-not-bookable':{fr:'site du prestataire, disponibilité non vérifiée',it:'sito operatore, disponibilità non verificata',en:'operator website; availability not checked',es:'web del operador; disponibilidad no comprobada'},
       'unreverified-catalogue':{fr:'source catalogue non revérifiée',it:'fonte catalogo da verificare',en:'catalogue source not rechecked',es:'fuente del catálogo sin reverificar'},
