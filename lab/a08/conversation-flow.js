@@ -10,7 +10,7 @@
  const lang=document.documentElement.lang;
  const n=s=>String(s||'').normalize('NFD').toLowerCase().replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
  const routeWord=/(?:itin[eé]raire|parcours|trajet|circuit|route|road trip|itinerario|percorso|ruta|recorrido)/i;
- const continuation=/(?:^et\b|^puis\b|^ensuite\b|^apr[eè]s\b|^and\b|^then\b|^after\b|^e poi\b|^dopo\b|^y luego\b|^despu[eé]s\b|ajoute|aggiungi|add|a[ñn]ade)/i;
+ const continuation=/(?:^et\b|^puis\b|^ensuite\b|^apr[eè]s\b|^and\b|^then\b|^after\b|^e poi\b|^poi\b|^dopo\b|^luego\b|^y luego\b|^despu[eé]s\b|ajoute|aggiungi|add|a[ñn]ade)/i;
  const topic=/(?:plage|plages|beach|spiagg|playa|gastronom|cuisine|food|eat|mang|nature|histoire|history|patrimoine|museum|musee|museo|visite|visit)/i;
  const transport=/(?:train|bus|voiture|en auto|by car|by train|transports? en commun|public transport|treno|autobus|tren|coche)/i;
  let history=[],lastLocation=null,lastTopic=null,routeIds=[];
