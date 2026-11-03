@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<title>Aracne Lab — A06 · Intelligence touristique</title>
+<style>
+:root{font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#282139;background:#f8f6fc}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}.shell{max-width:1120px;margin:auto;padding:24px 20px 170px}
+header{background:#fff;border-bottom:1px solid #eae4f4}.top{max-width:1120px;margin:auto;padding:19px 20px;display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap}
+.brand{font-size:20px;font-weight:850;letter-spacing:.04em;color:#5d3d99}.brand b{color:#e7a44b}.role{display:flex;align-items:center;gap:10px;font-size:13px;color:#514866}.role select{font:inherit;border:1px solid #d3c9e6;border-radius:10px;background:#fff;padding:9px;color:#493971}
+.banner{display:flex;align-items:center;gap:9px;color:#5b408a;padding:14px 17px;background:#ede7fa;border:1px solid #ded3f4;border-radius:13px;font-weight:650;font-size:13px;margin-bottom:25px}
+h1{font-size:clamp(28px,5vw,46px);letter-spacing:-.04em;line-height:1.09;margin:0 0 13px}p.lead{color:#625a6d;line-height:1.55;max-width:760px;font-size:17px;margin:0 0 25px}
+.grid{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,.8fr);gap:20px}.surface{background:#fff;border:1px solid #e8e3ee;border-radius:19px;padding:20px}
+h2{font-size:18px;margin:0 0 12px}.muted{color:#777080;font-size:13px;line-height:1.45}.toolbar{display:flex;gap:10px;flex-wrap:wrap;margin:13px 0}
+.toolbar input,.toolbar select{border:1px solid #d6cede;border-radius:11px;padding:12px 13px;font-size:14px;color:#2c2440;min-width:0;background:white}.toolbar input{flex:2 1 190px}.toolbar select{flex:1 1 145px}
+.tags{display:flex;flex-wrap:wrap;gap:7px;margin:12px 0 20px}.tag{border:1px solid #e5d9f2;background:#faf7ff;color:#62438a;border-radius:999px;font-size:12px;padding:8px 10px;cursor:pointer}
+.result{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.poi{border:1px solid #ede7f3;border-radius:12px;padding:12px;min-width:0}.poi b{display:block;font-size:13px;margin-bottom:4px}.poi small{color:#756e83}
+.item{padding:10px 0;border-bottom:1px solid #eee9f3;display:flex;gap:9px;justify-content:space-between}.item strong{font-size:13px}.item span{font-size:12px;color:#615975}.empty{color:#7d7289;font-size:13px}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid #9a80e5;outline-offset:2px}
+.caction{display:inline-block;padding:11px 14px;border:0;border-radius:12px;background:#6043a4;color:white;font-size:13px;font-weight:750;cursor:pointer}
+small.disclaimer{color:#837d8c;font-size:11px;display:block;margin-top:9px;line-height:1.4}
+dialog{border:1px solid #e1d4f0;border-radius:19px;box-shadow:0 20px 70px #24103744;width:min(440px,calc(100% - 25px));padding:24px;color:#282139}
+dialog::backdrop{background:#110c1a83}.dialogActions{display:flex;gap:9px;justify-content:flex-end;margin-top:16px}
+.dialogActions button{border:0;padding:10px 13px;border-radius:10px;cursor:pointer}.secondary{background:#eee8f4;color:#493866}
+#lab-day{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #d8ccdf;margin-top:6px}
+footer{margin-top:23px;font-size:12px;color:#88818f}
+@media(max-width:760px){.grid{grid-template-columns:1fr}.surface{padding:16px}.result{grid-template-columns:1fr}.shell{padding:20px 14px 150px}}
+</style>
+<script src="../../dist/a06-puglia-data.js"></script>
+<script>
+(function(){
+"use strict";
+const dataset=window.A06PugliaData;
+const places=Object.freeze(dataset.places.map(p=>Object.freeze({
+ id:p.id,name:p.name,zone:p.zone,lat:p.lat,lon:p.lon,tags:Object.freeze([...(p.tags||[])])
+})));
+const norm=x=>String(x||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+let role='owner',revision=0,stops=[],pending=null;
+function context(){return Object.freeze({role,canEdit:role!=='read',fingerprint:'lab-readonly-source-'+revision,days:3})}
+function renderList(){
+ const q=norm(document.getElementById('search').value),z=document.getElementById('zoneFilter').value,root=document.getElementById('lab-list');
+ root.replaceChildren();
+ const selected=places.filter(p=>(z==='all'||p.zone===z)&&(!q||norm(p.name).includes(q))).slice(0,24);
+ for(const p of selected){
+  const node=document.createElement('div');node.className='poi';
+  const title=document.createElement('b');title.textContent=p.name;
+  const cat=document.createElement('small');cat.textContent=dataset.zones[p.zone]?.label?.fr||p.zone;
+  node.append(title,cat);root.append(node);
+ }
+ if(!selected.length){const line=document.createElement('p');line.className='empty';line.textContent='Aucun lieu correspondant';root.append(line)}
+ document.getElementById('lab-count').textContent=selected.length+' lieu(x) affiché(s)';
+}
+function renderPlan(){
+ const root=document.getElementById('lab-plan');root.replaceChildren();
+ if(!stops.length){const t=document.createElement('p');t.className='empty';t.textContent='Aucune étape ajoutée dans ce voyage fictif.';root.append(t);return}
+ for(const s of stops){const line=document.createElement('div');line.className='item';const b=document.createElement('strong');b.textContent=s.name;
+ const day=document.createElement('span');day.textContent='Jour '+s.day;line.append(b,day);root.append(line)}
+}
+window.A06PlannerCatalog=Object.freeze({
+ list:()=>places,
+ proposalContext:context,
+ openNativeAdd:(id,fingerprint)=>{
+  const live=context(),place=places.find(p=>p.id===id);
+  if(!live.canEdit||live.fingerprint!==fingerprint||!place)return {ok:false,reason:'denied-or-stale'};
+  pending={id,revision,role};
+  document.getElementById('lab-pending').textContent=place.name;
+  document.getElementById('lab-day').value='1';
+  document.getElementById('lab-dialog').showModal();
+  return {ok:true,opened:true};
+ }
+});
+document.addEventListener('DOMContentLoaded',()=>{
+ const filter=document.getElementById('zoneFilter');
+ for(const [key,zone]of Object.entries(dataset.zones)){const o=document.createElement('option');o.value=key;o.textContent=zone.label.fr;filter.append(o)}
+ document.getElementById('lab-role').addEventListener('change',e=>{role=e.target.value;revision++;document.getElementById('lab-dialog').close();renderPlan()});
+ document.getElementById('lab-confirm').addEventListener('click',()=>{
+  if(!pending||role==='read'||revision!==pending.revision||role!==pending.role){document.getElementById('lab-dialog').close();return}
+  const source=places.find(p=>p.id===pending.id),day=Number(document.getElementById('lab-day').value);
+  if(source&&Number.isInteger(day)&&day>=1&&day<=3){stops=[...stops,{id:source.id,name:source.name,day}];revision++;renderPlan()}
+  pending=null;document.getElementById('lab-dialog').close();
+ });
+ document.getElementById('lab-cancel').addEventListener('click',()=>{pending=null;document.getElementById('lab-dialog').close()});
+ document.getElementById('lab-reset').addEventListener('click',()=>{stops=[];revision++;renderPlan()});
+ document.getElementById('search').addEventListener('input',renderList);
+ filter.addEventListener('change',renderList);
+ document.getElementById('lab-nav').addEventListener('click',()=>document.getElementById('catalogue').scrollIntoView({block:'start',behavior:'smooth'}));
+ document.querySelectorAll('[data-zone]').forEach(btn=>btn.addEventListener('click',()=>{filter.value=btn.dataset.zone;renderList()}));
+ renderList();renderPlan();
+});
+window.A06Lab=Object.freeze({stats:()=>Object.freeze({role,revision,stops:stops.map(p=>({...p})),placeCount:places.length,backend:'none',persistence:'none'})});
+})();
+</script>
+</head>
+<body>
+<header><div class="top"><span class="brand">ARACNE <b>· LAB</b></span><label class="role">Rôle fictif <select id="lab-role" aria-label="Rôle de test"><option value="owner">Organisateur</option><option value="edit">Éditeur</option><option value="read">Lecteur</option></select></label></div></header>
+<main class="shell">
+ <div class="banner">🔒 LAB A06 · Données de démonstration · Aucun compte Supabase · Aucune donnée réelle</div>
+ <h1>Les Pouilles, avec Aracne Intelligence.</h1>
+ <p class="lead">Teste les connaissances touristiques et les propositions de parcours dans les six zones des Pouilles. Ouvre le bouton violet <strong>Aracne Intelligence</strong> en bas de l’écran pour poser une question ou proposer un parcours.</p>
+ <div class="grid">
+  <section class="surface" id="catalogue" aria-label="Catalogue de test">
+   <nav><button id="lab-nav" type="button" data-view="map" class="caction">Carte d’essai / catalogue</button></nav>
+   <p class="muted">83 lieux du Planner, filtrables. Les coordonnées sont indicatives et cette liste n’est pas une carte de navigation.</p>
+   <div class="toolbar"><input id="search" autocomplete="off" placeholder="Rechercher Bari, Vieste, Lecce…" aria-label="Rechercher un lieu"><select id="zoneFilter" aria-label="Filtrer une zone"><option value="all">Toutes les zones</option></select></div>
+   <div class="tags"><button class="tag" type="button" data-zone="gargano">Gargano</button><button class="tag" type="button" data-zone="bari">Bari</button><button class="tag" type="button" data-zone="itria">Vallée d’Itria</button><button class="tag" type="button" data-zone="murgia">Murgia</button><button class="tag" type="button" data-zone="imperiale">Trani</button><button class="tag" type="button" data-zone="salento">Salento</button></div>
+   <div class="result" id="lab-list"></div><small class="disclaimer" id="lab-count"></small>
+  </section>
+  <aside class="surface">
+   <h2>Programme fictif</h2>
+   <p class="muted">L’ajout ne se fait qu’après deux actions explicites : proposer une étape dans l’assistant, puis confirmer dans ce dialogue. Le rôle Lecteur interdit l’ajout.</p>
+   <div id="lab-plan"></div>
+   <button class="caction" id="lab-reset" type="button">Effacer ce voyage fictif</button>
+   <small class="disclaimer">Rien n’est sauvegardé : la page réinitialise tout au rechargement. Aucun accès à Supabase, aucune invitation ni synchronisation.</small>
+  </aside>
+ </div>
+ <footer>Aracne Lab A06 · Preview autonome · 83 lieux et 43 fiches Il Volo héritées · Données documentaires à niveaux de fiabilité différents · Ne pas utiliser pour des réservations.</footer>
+</main>
+<dialog id="lab-dialog" aria-labelledby="lab-modal-title">
+ <h2 id="lab-modal-title">Confirmer l’étape fictive</h2>
+ <p id="lab-pending"></p>
+ <label>Jour du séjour <select id="lab-day"><option value="1">Jour 1</option><option value="2">Jour 2</option><option value="3">Jour 3</option></select></label>
+ <div class="dialogActions"><button class="secondary" type="button" id="lab-cancel">Annuler</button><button type="button" class="caction" id="lab-confirm">Confirmer cet ajout fictif</button></div>
+</dialog>
+<script src="../../dist/a06-places.js"></script>
+<script src="../../dist/a06-knowledge.js"></script>
+<script src="../../dist/a06-intelligence.js"></script>
+<script src="../../dist/a06-adapter.js"></script>
+<script src="../../dist/a06-matcher.js"></script>
+<script src="../../dist/a06-poi-reviews.js"></script>
+<script src="../../dist/a06-duplicate-audit.js"></script>
+<script src="../../dist/a06-legacy-audit.js"></script>
+<script src="../../dist/a06-commercial-audit.js"></script>
+<script src="../../dist/a06-data-quality.js"></script>
+<script src="../../dist/a06-puglia-knowledge.js"></script>
+<script src="../../dist/a06-proposals.js"></script>
+<script src="../../dist/a06-dialogue.js"></script>
+<script src="../../dist/a06-panel.js"></script>
+<script src="../../dist/a06-voice.js"></script>
+
+</body></html>
