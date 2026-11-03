@@ -19,6 +19,15 @@
  const supported=typeof Recognition==='function';
  const webkitMobile=/(?:iPhone|iPad|iPod)/i.test(navigator.userAgent||'');
  const embeddedBrowser=/(?:FBAN|FBAV|Instagram|CriOS.*FB)/i.test(navigator.userAgent||'');
+ // Mobile Web Speech is unstable after the first recording on some iPhones.
+ // iOS's system keyboard dictation is NOT programmatically startable by the web page.
+ // Make the native keyboard the default and keep Web Speech explicitly experimental.
+ const nativeTip={
+  fr:'Clavier ouvert : touchez le micro du clavier iPhone pour dicter.',
+  it:'Tastiera aperta: tocca il microfono della tastiera iPhone.',
+  en:'Keyboard open: tap the iPhone keyboard microphone to dictate.',
+  es:'Teclado abierto: toca el micrófono del teclado del iPhone.'
+ }[lang]||'Use the keyboard microphone.';
  const make=(cls,value)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=value;return b};
  const start=make('a06-voice-start',tr.start),finish=make('a06-voice-stop',tr.stop);
  const keyboard=make('a08-keyboard-fallback',tr.keyboard),read=make('a06-voice-read','🔊');
@@ -28,6 +37,18 @@
  const summary=document.createElement('summary');summary.textContent=tr.privTitle;
  const privacy=document.createElement('small');privacy.textContent=tr.privacy;
  details.append(summary,privacy);controls.append(start,finish,keyboard,read,status,details);
+ if(webkitMobile){
+   start.textContent=({fr:'⌨️ Dictée iPhone',it:'⌨️ Dettatura iPhone',en:'⌨️ iPhone dictation',es:'⌨️ Dictado iPhone'}[lang]||'⌨️ iPhone dictation');
+   keyboard.textContent=({fr:'🎙 Micro web (essai)',it:'🎙 Micro web (test)',en:'🎙 Web mic (test)',es:'🎙 Micro web (prueba)'}[lang]||'🎙 Web mic (test)');
+   finish.hidden=true;
+   controls.classList.add('a08-native-voice-default');
+ }
+ function openNativeKeyboard(){
+   if(session)end({discard:false});
+   input.focus();
+   lastMessage=nativeTip;
+   status.textContent=nativeTip;
+ }
  let session=null,phase='idle',generation=0,base='',finalText='',lastMessage='',lastError=null;
  let discarded=false,everResult=false,watchStart=null,watchSilence=null,watchRelease=null;
  function clearTimer(which){
@@ -40,7 +61,8 @@
  function clearAll(){clearTimer('start');clearTimer('silence');clearTimer('release')}
  function draw(message=''){
   // A tap during WebKit's delayed closing state is an explicit retry gesture.
-  start.disabled=!supported||phase==='starting'||phase==='listening';
+  start.disabled=webkitMobile?false:(!supported||phase==='starting'||phase==='listening');
+  keyboard.disabled=webkitMobile?(!supported||phase==='starting'||phase==='listening'):false;
   finish.disabled=phase==='idle'||phase==='closing';
   start.dataset.listening=String(phase==='listening'||phase==='starting');
   controls.dataset.voicePhase=phase;
@@ -145,9 +167,10 @@
   },8000);
   try{input.blur();sr.start()}catch(_){lastError=tr.error;release(sr,id)}
  }
- start.addEventListener('click',launch);
+ start.addEventListener('click',()=>webkitMobile?openNativeKeyboard():launch());
  finish.addEventListener('click',()=>end({discard:false}));
  keyboard.addEventListener('click',()=>{
+   if(webkitMobile){launch();return;}
    end({discard:false});input.focus();draw(supported?tr.ready:tr.unsupported);
  });
  function stop(){end({discard:true})}
@@ -162,6 +185,6 @@
   status:()=>Object.freeze({phase,listening:phase==='starting'||phase==='listening',
    lang:language,webRecognitionAvailable:supported,speechAvailable:false,audioState:'disabled',
    transcript:input.value,lastError,messages:lastMessage,hasTranscript:everResult,
-   embeddedBrowser,webkitMobile})
+   embeddedBrowser,webkitMobile,nativeKeyboardDefault:webkitMobile})
  });
 })();
