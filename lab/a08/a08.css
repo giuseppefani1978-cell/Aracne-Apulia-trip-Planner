@@ -85,3 +85,6 @@
     outline:2px solid #9b82ca;outline-offset:0;
   }
 }
+
+/* A08.2: optional speech synthesis is deferred until Safari audio is validated. */
+#a06-panel .a06-voice-read {display:none!important}
