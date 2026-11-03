@@ -145,11 +145,11 @@
   if(ordered.length<2){
    if(!hits.length&&!memory.ids.length)return enrichProposal(fallback.propose(q,lang),lang);
    if(memory.ids.length>=2&&continuing)ordered=[...memory.ids];
-   else return fallback.propose(q,lang);
+   else return enrichProposal(fallback.propose(q,lang),lang);
   }
   const unique=new Set();ordered=ordered.filter(id=>byId.has(id)&&!unique.has(id)&&unique.add(id));
   const stops=ordered.map(id=>byId.get(id));
-  if(stops.length<2)return fallback.propose(q,lang);
+  if(stops.length<2)return enrichProposal(fallback.propose(q,lang),lang);
   const mode=transportMode(explicitTransport);
   const hints=detourCandidates(stops);
   memory={ids:[...ordered],mode,lastQuestion:q,revision:memory.revision+1};
