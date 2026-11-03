@@ -182,7 +182,9 @@
     // The original catalogue is restored by Clear; otherwise its 83 pins obscure
     // the route and the spider in the user's iPhone screen recording.
     if(route)layer?.clearLayers?.();
-    const signature=JSON.stringify([route,selected,mapDrawGeneration]);
+    // Redrawing the Planner's base layer must not restart an identical animated route.
+    // Only a changed route or an explicit Replay should restart Aracne's thread.
+    const signature=JSON.stringify([route,selected]);
     if(signature===lastPaintSignature&&lastMap===map)return;
     stopWeave();lastPaintSignature=signature;lastMap=map;
     if(!overlay)overlay=L.layerGroup().addTo(map);
