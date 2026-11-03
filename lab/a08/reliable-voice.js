@@ -17,6 +17,8 @@
  }[lang]||null;
  const Recognition=window.SpeechRecognition||window.webkitSpeechRecognition;
  const supported=typeof Recognition==='function';
+ const webkitMobile=/(?:iPhone|iPad|iPod)/i.test(navigator.userAgent||'');
+ const embeddedBrowser=/(?:FBAN|FBAV|Instagram|CriOS.*FB)/i.test(navigator.userAgent||'');
  const make=(cls,value)=>{const b=document.createElement('button');b.type='button';b.className=cls;b.textContent=value;return b};
  const start=make('a06-voice-start',tr.start),finish=make('a06-voice-stop',tr.stop);
  const keyboard=make('a08-keyboard-fallback',tr.keyboard),read=make('a06-voice-read','🔊');
@@ -37,7 +39,9 @@
  }
  function clearAll(){clearTimer('start');clearTimer('silence');clearTimer('release')}
  function draw(message=''){
-  start.disabled=!supported||phase!=='idle';finish.disabled=phase==='idle'||phase==='closing';
+  // A tap during WebKit's delayed closing state is an explicit retry gesture.
+  start.disabled=!supported||phase==='starting'||phase==='listening';
+  finish.disabled=phase==='idle'||phase==='closing';
   start.dataset.listening=String(phase==='listening'||phase==='starting');
   controls.dataset.voicePhase=phase;
   status.textContent=message||lastMessage||(!supported?tr.unsupported:phase==='idle'?tr.ready:phase==='starting'?tr.starting:phase==='listening'?tr.listening:tr.closing);
@@ -80,16 +84,30 @@
  }
  function launch(){
   if(!supported){draw(tr.unsupported);return;}
+  if(phase==='closing'&&session){
+    // A previous aborted recognition may never emit onend on Safari.
+    // Detach the obsolete handlers and create a fresh instance in THIS click.
+    const prior=session,id=generation;
+    prior.onresult=null;prior.onstart=null;prior.onerror=null;prior.onend=null;
+    release(prior,id);
+  }
   if(phase!=='idle'||session)return;
   lastError=null;lastMessage='';discarded=false;everResult=false;
   base=input.value.trim();finalText='';
   const id=++generation;
   let sr;try{sr=new Recognition()}catch(_){draw(tr.error);return}
   session=sr;phase='starting';draw();
-  sr.lang=language;sr.continuous=true;sr.interimResults=true;sr.maxAlternatives=1;
+  sr.lang=language;
+  // Continuous recognition is not consistently reliable in WebKit on iPhone.
+  // One question per session, followed by an explicit fresh click, is safer.
+  sr.continuous=!webkitMobile;
+  sr.interimResults=true;sr.maxAlternatives=1;
   sr.onstart=()=>{
     if(sr!==session||id!==generation||phase!=='starting')return;
-    phase='listening';draw(tr.listening);armSilence(sr,id);
+    phase='listening';
+    // WebKit onstart confirms browser activation, not actual audio reception.
+    draw(embeddedBrowser?tr.silent:tr.listening);
+    armSilence(sr,id);
   };
   sr.onresult=event=>{
     if(sr!==session||id!==generation||phase==='closing'||discarded)return;
@@ -143,6 +161,7 @@
   reset:()=>{stop();input.value='';input.dispatchEvent(new Event('input',{bubbles:true}))},
   status:()=>Object.freeze({phase,listening:phase==='starting'||phase==='listening',
    lang:language,webRecognitionAvailable:supported,speechAvailable:false,audioState:'disabled',
-   transcript:input.value,lastError,messages:lastMessage,hasTranscript:everResult})
+   transcript:input.value,lastError,messages:lastMessage,hasTranscript:everResult,
+   embeddedBrowser,webkitMobile})
  });
 })();
