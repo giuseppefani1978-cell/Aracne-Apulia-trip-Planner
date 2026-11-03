@@ -188,6 +188,10 @@ function renderProposal(question){
   const context=window.A06PlannerCatalog?.proposalContext?.();
   const section=document.createElement('section');section.className='a06-proposal';
   const heading=document.createElement('h4');heading.textContent=rt.title+' · '+proposal.anchor;
+  // A08.2 itinerary intent is an ordered route, not a list of nearby POIs.
+  // Explain order, inherited transport preference and what the map actually shows.
+  const explain=document.createElement('p');explain.className='a08-journey-explain';
+  explain.textContent=proposal.text||'';
   const list=document.createElement('ol');
   for(const stop of proposal.stops){
     const li=document.createElement('li');
@@ -211,7 +215,11 @@ function renderProposal(question){
     const ids=proposal.stops.map(p=>p.plannerId);
     if(window.A08MapBridge?.showRoute(ids)?.ok)toggle(false);
   });
-  section.append(heading,mapPreview,list,warning);
+  if(proposal.explicitWaypoints&&proposal.optionalStops?.length){
+    const optional=document.createElement('p');optional.className='a08-journey-optional';
+    optional.textContent=({fr:'À explorer éventuellement en chemin : ',it:'Da esplorare lungo il percorso: ',en:'Optional places along the way: ',es:'Lugares opcionales por el camino: '}[language]||'Optional: ')+proposal.optionalStops.map(p=>p.name).join(', ')+'.';
+    section.append(heading,explain,mapPreview,list,optional,warning);
+  }else section.append(heading,explain,mapPreview,list,warning);
   activeReply.append(section);
 }
 routeButton.addEventListener('click',()=>{
@@ -293,6 +301,7 @@ resetControl.className='a06-new';
 resetControl.textContent=({fr:'Nouvelle conversation',it:'Nuova conversazione',en:'New conversation',es:'Nueva conversación'}[language]||'Nouvelle conversation');
 resetControl.addEventListener('click',()=>{
   window.A06Voice?.reset?.();window.A06Conversation?.reset?.();
+  window.A08JourneyEngine?.reset?.();
   window.A06TourismAssistant?.setLanguage?.(language);
   output.replaceChildren();activeReply=output;panel.classList.remove('a06-has-turns');input.value='';input.focus();
 });
@@ -307,7 +316,7 @@ panel.querySelector('form').addEventListener('submit',async event=>{
  if(mobileChat())input.blur();
  submit.disabled=true;beginTurn(question);activeReply.textContent='…';
  try{
-  if(routeIntent.test(question)){renderProposal(question);return}
+  if(routeIntent.test(question)||window.A08JourneyEngine?.hasRouteIntent?.(question)){renderProposal(question);return}
   const response=await (window.A06Conversation?.ask?.(question,language)||api.ask(question,language));
   window.A06Voice?.setLastAnswer?.(response.text);
   activeReply.textContent=response.text;
