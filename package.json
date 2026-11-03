@@ -2,7 +2,7 @@
   "name": "aracne-trip-planner",
   "private": true,
   "scripts": {
-    "test": "node tests/v5.dom.cjs && node tests/v5.sync.cjs && node tests/v51.invitations.cjs && node tests/beta.dom.cjs && node tests/beta-feedback.dom.cjs && node tests/carnet-sharing.dom.cjs && node tests/beta-audio.dom.cjs && node tests/beta-invitations.dom.cjs && node tests/discovery.dom.cjs && node tests/admin-lab.dom.cjs",
+    "test": "node tests/v5.dom.cjs && node tests/v5.sync.cjs && node tests/v51.invitations.cjs && node tests/beta.dom.cjs && node tests/beta-feedback.dom.cjs && node tests/carnet-sharing.dom.cjs && node tests/beta-audio.dom.cjs && node tests/beta-invitations.dom.cjs && node tests/discovery.dom.cjs && node tests/admin-lab.dom.cjs && node tests/a06-readonly.cjs && node tests/a06-matcher.cjs && node tests/a06-proposals.cjs && node tests/a06-puglia.cjs && node tests/a06-source-audit.cjs && node tests/a06-legacy-inventory.cjs && node tests/a06-commercial-audit.cjs && node tests/a06-lab.dom.cjs && node tests/a06-dialogue.dom.cjs && node tests/a06-mobile-voice.dom.cjs && node tests/a07-local-planner.dom.cjs",
     "build": "python3 build-locales.py"
   },
   "dependencies": {
