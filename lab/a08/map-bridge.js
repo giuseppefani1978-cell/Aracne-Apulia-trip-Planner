@@ -8,6 +8,7 @@
   const byId=new Map(data.places.map(p=>[p.id,p]));
   let selected=[],route=false,overlay=null,lastLabel='',lastResult=null;
   let lastPaintSignature='',lastMap=null,weaveFrame=null,weaveSpider=null,weaveThread=null;
+  let mapDrawGeneration=0;
   let weaveRun=0,weaveCleanup=null,routePreviewCount=0;
   const locale=document.documentElement.lang;
   const words={
@@ -109,6 +110,8 @@
   clear.addEventListener('click',()=>{
     stopWeave();selected=[];route=false;lastPaintSignature='';
     overlay?.clearLayers();summary.hidden=true;lastResult=null;
+    // Restore the Planner's ordinary POIs when exiting route preview.
+    if(typeof originalDraw==='function')originalDraw();
   });
   const replay=document.createElement('button');replay.type='button';replay.className='a08-replay-weave';
   replay.textContent=t.replay;
@@ -134,7 +137,11 @@
       row.append(name,add);list.append(row);
     }
     if(!window.L||!map)return; // Still present text/list without Leaflet.
-    const signature=JSON.stringify([route,selected]);
+    // Suppress the full Planner catalogue ONLY while reviewing an itinerary.
+    // The original catalogue is restored by Clear; otherwise its 83 pins obscure
+    // the route and the spider in the user's iPhone screen recording.
+    if(route)layer?.clearLayers?.();
+    const signature=JSON.stringify([route,selected,mapDrawGeneration]);
     if(signature===lastPaintSignature&&lastMap===map)return;
     stopWeave();lastPaintSignature=signature;lastMap=map;
     if(!overlay)overlay=L.layerGroup().addTo(map);
@@ -168,11 +175,17 @@
     selected=next;route=!!isRoute;lastResult={ids:[...selected],route};lastLabel=route?t.route:t.places;
     if(!selected.length)return {ok:false,reason:'no-valid-place'};
     show('map');
-    setTimeout(repaint,80);
+    // The Planner schedules drawMap() 40ms after show('map'). Draw AFTER it.
+    setTimeout(()=>{lastPaintSignature='';repaint()},110);
     return {ok:true,ids:[...selected],mode:route?'indicative-route':'places'};
   }
   const originalDraw=drawMap;
-  drawMap=function(){const v=originalDraw.apply(this,arguments);if(selected.length)setTimeout(repaint,0);return v;};
+  drawMap=function(){
+    const v=originalDraw.apply(this,arguments);
+    mapDrawGeneration++;
+    if(selected.length)setTimeout(repaint,0);
+    return v;
+  };
   document.getElementById('search')?.addEventListener('input',()=>{if(selected.length)setTimeout(repaint,0)});
   document.getElementById('zoneFilter')?.addEventListener('change',()=>{if(selected.length)setTimeout(repaint,0)});
   window.A06PlannerCatalog=Object.freeze({
@@ -186,6 +199,8 @@
     resolveNative:id=>nativeFor(id)?.id||null,
     status:()=>({version:'A08.0',mapReused:true,selected:[...selected],route,
       selectedNames:selected.map(id=>byId.get(id)?.name),localOnly:safeTrip().localOnly,
-      weaver:route&&selected.length>=2,animationsStarted:routePreviewCount})
+      weaver:route&&selected.length>=2,animationsStarted:routePreviewCount,
+      previewFocused:route&&selected.length>=2,
+      mapDrawGeneration})
   });
 })();
