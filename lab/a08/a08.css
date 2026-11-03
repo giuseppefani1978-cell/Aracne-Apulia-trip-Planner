@@ -9,3 +9,79 @@
 .a08-map-pin{display:flex;align-items:center;justify-content:center;border:2px solid #fff;background:#6942ae;color:white;font-size:14px;font-weight:800;border-radius:50%;width:30px;height:30px;box-shadow:0 2px 7px #43237c55}
 #a08-map-preview>button{padding:8px 11px;border-radius:10px;margin-top:10px}
 @media(max-width:740px){#a06-open{bottom:calc(92px + env(safe-area-inset-bottom))!important;font-size:13px;padding:11px 12px}#a08-map-preview{padding:12px}.a08-map-row span{font-size:13px}}
+
+
+/* A08.1 — iOS keyboard & chat scrolling. Parent Planner has nav z-index:1000;
+   the A06 chat z-index:895 was appearing UNDER that fixed navigation. */
+@media (max-width:740px) {
+  html.a06-chat-open body nav { display:none!important; }
+  html.a06-chat-open #a06-panel {
+    z-index:2147483000!important;
+    display:flex!important;
+    flex-direction:column!important;
+    box-sizing:border-box!important;
+    /* A06.8 uses --a06-view-top/height, updated by visualViewport events. */
+    overscroll-behavior:contain;
+    contain:layout style;
+  }
+  html.a06-chat-open #a06-panel .a06-head {
+    flex:0 0 auto!important;
+    min-height:46px;
+    padding-top:8px!important;
+  }
+  html.a06-chat-open #a06-panel .a06-out {
+    flex:1 1 0!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+    scroll-behavior:auto!important;
+  }
+  html.a06-chat-open #a06-panel .a06-compose {
+    flex:0 0 auto!important;
+    min-height:0!important;
+    max-height:min(48dvh,270px);
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    padding-bottom: max(5px,env(safe-area-inset-bottom));
+  }
+  #a06-panel .a08-dismiss-keyboard {
+    display:none;
+    flex:0 0 auto;
+    border:1px solid #d9cdee;
+    border-radius:9px;
+    background:#fff;
+    color:#593891;
+    font-size:12px;
+    font-weight:700;
+    padding:7px 9px;
+    cursor:pointer;
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a08-dismiss-keyboard {display:inline-flex!important;align-items:center}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-head {padding:6px 10px!important}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-samples,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-route-action,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-details,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-status {display:none!important}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-compose{
+    max-height:min(43dvh,160px);
+    padding-bottom:4px!important;
+    overflow-y:auto!important;
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice {padding:3px 10px 0!important;gap:5px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice button {min-height:32px!important;padding:5px 8px!important;font-size:11px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-form {padding:5px 9px!important;gap:7px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel textarea.a06-input{
+    min-height:46px!important;height:46px!important;max-height:80px!important;
+    resize:none!important
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-send{
+    min-height:46px!important;padding:8px 10px!important;
+  }
+  html.a06-chat-open #a06-panel .a06-input:focus-visible{
+    outline:2px solid #9b82ca;outline-offset:0;
+  }
+}
