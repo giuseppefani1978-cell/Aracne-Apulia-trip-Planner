@@ -71,7 +71,15 @@ for(const language of ['fr','it','en','es']){
   readButton.click();
   assert.equal(voice.status().reading,true,'Reading must be tracked independent from browser speaking flag');
   assert.ok(spoken.length>=1);
-  assert.ok(spoken[0].text.length<=170,'Safari chunks should be short');
+  assert.equal(spoken.length,1,'Il Volo TTS should use one browser utterance');
+  assert.ok(spoken[0].text.length>50,'Entire assistant reply must be spoken');
+  assert.equal(voice.status().audioState,'starting');
+  spoken[0].onstart?.();
+  assert.equal(voice.status().audioState,'playing');
+  spoken[0].onend?.();
+  assert.equal(voice.status().reading,false,'Speech onend releases the read button');
+  readButton.click();
+  assert.equal(spoken.length,2,'Reading again should create one new utterance');
   const mic=panel.querySelector('.a06-voice-start');
   const before=cancelled;
   mic.click();
@@ -101,11 +109,19 @@ for(const language of ['fr','it','en','es']){
   assert.equal(voice.status().reading,false,'Reset must stop voice');
   assert.equal(panel.querySelectorAll('.a06-turn').length,0);
   assert.ok(!panel.classList.contains('a06-has-turns'));
+  input.value='Que voir à Bari ?';
+  form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+  for(let i=0;i<80&&readButton.disabled;i++)await wait(10);
+  assert.equal(readButton.disabled,false);
+  readButton.click();
+  spoken.at(-1).onerror?.({error:'synthesis-failed'});
+  assert.equal(voice.status().reading,false,'Speech errors should restore the button');
+  assert.equal(voice.status().audioState,'error:synthesis-failed');
   w.document.querySelector('.a06-x').click();
   assert.equal(panel.hidden,true);
   assert.ok(!w.document.documentElement.classList.contains('a06-chat-open'));
   assert.equal(errors.length,0,errors.join('; '));
-  console.log('PASS A06.7 '+language+': fullscreen mobile, editable input, chunks, automatic audio cancel, reset, no backend writes');
+  console.log('PASS A06.8 '+language+': fullscreen mobile, editable input, chunks, automatic audio cancel, reset, no backend writes');
  } finally {await wait(0);dom.window.close()}
 }
 })().catch(e=>{console.error(e);process.exitCode=1});
