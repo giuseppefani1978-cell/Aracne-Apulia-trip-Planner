@@ -79,7 +79,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.match(thematic.dialogueQuery,/Bari Vecchia/,'a thematic followup inherits the preceding destination');
    ctx.commit(thematic);
    const continued=ctx.prepare(lang==='it'?'poi Lecce':lang==='en'?'then Lecce':lang==='es'?'después Lecce':'puis Lecce');
-   assert.equal(continued.route,true,'a follow-up through Lecce starts the route context');
+   assert.equal(continued.route,true,'a follow-up through Lecce starts the route context: '+JSON.stringify({lang,continued,context:ctx.context(),mentioned:w.A08JourneyEngine.mentioned('poi Lecce').map(p=>p.id)}));
    assert.match(continued.routeQuery,/Bari Vecchia.*Lecce/);
    w.A08JourneyEngine.propose(continued.routeQuery,lang);ctx.commit(continued,{route:true});
    assert.deepEqual(Array.from(ctx.context().routeIds),['p11','p27']);
