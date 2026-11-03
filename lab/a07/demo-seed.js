@@ -25,6 +25,13 @@
   sample.notes=[{id:uid(),text:'Note fictive : comparer les plages et restaurants avant de partir.',privacy:'group',day:0}];
   state=validate(sample);
   save();fillForm();
+  // Supply the V5 trip-directory with a consistent synthetic active trip.
+  // This is a new lab origin and no real user, capability token or session is copied.
+  const id=crypto.randomUUID();
+  const row={id,name:state.name,state:JSON.parse(JSON.stringify(state)),session:null,
+   versions:[],updatedAt:new Date().toISOString()};
+  localStorage.setItem('aracne-v5-store',JSON.stringify({version:5,trips:{[id]:row}}));
+  localStorage.setItem('aracne-v5-active',id);
   localStorage.setItem(mark,'1');
  }catch(error){console.warn('[A07] synthetic sample could not be initialized',error)}
 })();
