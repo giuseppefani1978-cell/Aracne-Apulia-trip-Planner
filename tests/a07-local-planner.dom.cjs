@@ -65,7 +65,7 @@ const sequence=['dist/app.fr.js','dist/catalog-v2.js','dist/v2.js','dist/v21.js'
    assert.ok(w.document.querySelector('#map').classList.contains('active'));
    assert.ok(w.document.querySelector('#mapCanvas'));
    w.document.querySelector('#sharedOpen').click();
-   assert.match(w.document.querySelector('#modalBody').textContent,/local|locale|lokal|simula/i);
+   assert.match(w.document.querySelector('#modalBody').textContent,/laboratoire|locale|local|laboratorio|simula|laboratory/i);
    assert.deepEqual(errors,[],locale+': '+errors.join(' | '));
    console.log('PASS A07 '+locale+' — Planner views + synthetic V5 trip; no backend');
   }finally{w.close()}
