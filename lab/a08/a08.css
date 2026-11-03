@@ -109,3 +109,21 @@
 }
 #a08-map-preview .a08-replay-weave[hidden]{display:none!important}
 @media(prefers-reduced-motion:reduce){.a08-map-spider{animation:none}}
+
+/* A08.4 — keep verified context readable and microphone recovery visible. */
+#a06-panel .a08-stop-explanation{margin:7px 0 10px;display:grid;gap:6px;color:#4d445b;line-height:1.45;font-size:14px}
+#a06-panel .a08-stop-explanation p{margin:0;white-space:normal;overflow-wrap:anywhere}
+#a06-panel .a08-stop-tags{color:#6d5288;font-size:12px;font-weight:700}
+#a06-panel .a08-nearby{font-size:13px;color:#5b516b}
+#a06-panel .a08-stop-source{color:#6846a0;font-size:12px;text-decoration:underline;text-underline-offset:2px;display:inline-block}
+#a06-panel .a06-proposal li{padding:10px 0;border-bottom:1px solid #ece6f3}
+#a06-panel .a08-keyboard-fallback{padding:8px 11px;min-height:42px;background:#fff;color:#65458e;border:1px solid #d9c8e9;border-radius:10px;font-size:13px;font-weight:700}
+#a06-panel .a06-voice-status{flex:1 1 100%;line-height:1.35;overflow-wrap:anywhere;font-size:12px}
+#a06-panel .a06-voice[data-voice-phase="starting"] .a06-voice-start,
+#a06-panel .a06-voice[data-voice-phase="listening"] .a06-voice-start,
+#a06-panel .a06-voice[data-voice-phase="closing"] .a06-voice-start{opacity:.55}
+@media(max-width:740px){
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a08-keyboard-fallback{min-height:34px!important;font-size:11px;padding:5px 8px}
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-status{display:block!important;font-size:11px}
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice{flex-wrap:wrap}
+}
