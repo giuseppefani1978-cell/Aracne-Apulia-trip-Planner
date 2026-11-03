@@ -7,7 +7,6 @@
  const fallback=window.A06RouteProposals;
  if(!Array.isArray(catalog)||!fallback?.propose)return;
  const byId=new Map(catalog.map(p=>[p.id,p]));
- const byName=new Map(catalog.map(p=>[norm(p.name),p]));
  function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’‘']/g,' ').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();}
  const aliases={
   p11:['bari','bari vecchia','vieux bari','old bari','bari centro'],
@@ -112,7 +111,7 @@
   }
   if(ordered.length<2){
    if(!hits.length&&!memory.ids.length)return fallback.propose(q,lang);
-   if(memory.ids.length>=2)ordered=[...memory.ids];
+   if(memory.ids.length>=2&&continuing)ordered=[...memory.ids];
    else return fallback.propose(q,lang);
   }
   const unique=new Set();ordered=ordered.filter(id=>byId.has(id)&&!unique.has(id)&&unique.add(id));
@@ -121,7 +120,6 @@
   const mode=transportMode(explicitTransport);
   const hints=detourCandidates(stops);
   memory={ids:[...ordered],mode,lastQuestion:q,revision:memory.revision+1};
-  const isExplicit=!!explicitTransport||!!memory.mode&&memory.lastQuestion!==q;
   const names=stops.map(p=>p.name);
   const text=t.explain+'\n\n'+t.start+': '+names.join(' → ')+'.\n'+t.transport+': '+(mode==='driving'?t.modeCar:t.modeTransit)+' ('+(explicitTransport?t.changed:t.planner)+').\n\n'+t.note;
   return Object.freeze({ok:true,language:lang,anchor:names[0],text,stops:Object.freeze(stops.map(p=>Object.freeze({
