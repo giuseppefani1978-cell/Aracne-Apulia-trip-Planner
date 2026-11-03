@@ -6,7 +6,7 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const locales=['fr','it','en','es'];
 const a07=['dist/app.fr.js','dist/catalog-v2.js','dist/v2.js','dist/v21.js','lab/a07/local-bridge.js','lab/a07/demo-seed.js','dist/experience.js','dist/collaboration-v3.js','dist/v5.js','lab/a07/local-context.js','dist/beta.js','lab/a07/lab-chrome.js'];
-const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','dist/a06-dialogue.js','lab/a08/intelligence-panel.js','dist/a06-voice.js','lab/a08/a08-banner.js'];
+const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','lab/a08/journey-engine.js','dist/a06-dialogue.js','lab/a08/intelligence-panel.js','dist/a06-voice.js','lab/a08/a08-banner.js'];
 (async()=>{
  for(const lang of locales){
   const html=read('lab/a08/index'+(lang==='fr'?'':'.'+lang)+'.html');
@@ -53,6 +53,29 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.ok(w.A06TourismAssistant);
    assert.ok(w.A06Conversation);
    assert.ok(w.A06RouteProposals);
+   assert.ok(w.A08JourneyEngine);
+   assert.equal(w.A08JourneyEngine.state().ids.length,0);
+   // The exact user regression: Bari -> Lecce -> Gallipoli must preserve order
+   // instead of returning nearby points around the first recognized zone.
+   const tripQuestion={
+    fr:'Peux-tu proposer un parcours entre Bari ses environs jusqu’à Lecce et après Gallipoli',
+    it:'Un itinerario da Bari a Lecce e poi Gallipoli',
+    en:'A route from Bari to Lecce then Gallipoli',
+    es:'Un recorrido desde Bari a Lecce después Gallipoli'
+   }[lang];
+   const explicitRoute=w.A08JourneyEngine.propose(tripQuestion,lang);
+   assert.equal(explicitRoute.explicitWaypoints,true);
+   assert.deepEqual(Array.from(explicitRoute.stops,p=>p.plannerId),['p11','p27','p28']);
+   assert.equal(explicitRoute.mode,'driving','inherits Planner default unless user overrides');
+   assert.match(explicitRoute.text,/Bari Vecchia.*Lecce.*Gallipoli/s);
+   assert.match(explicitRoute.text,/indicati|orientativ|tracé|linea|lines/i);
+   const changeTransport=w.A08JourneyEngine.propose('en train',lang);
+   assert.equal(changeTransport.mode,'transit');
+   assert.deepEqual(Array.from(changeTransport.stops,p=>p.plannerId),['p11','p27','p28']);
+   const afterStop=w.A08JourneyEngine.propose(lang==='it'?'e poi Otranto':lang==='es'?'y después Otranto':'et après Otranto',lang);
+   assert.deepEqual(Array.from(afterStop.stops,p=>p.plannerId),['p11','p27','p28','p30']);
+   w.A08JourneyEngine.reset();
+   assert.equal(w.A08JourneyEngine.state().ids.length,0);
    assert.ok(w.A06Voice);
    const plan=()=>JSON.parse(w.localStorage.getItem('aracne-puglia-v1')).plan;
    const initially=JSON.stringify(plan());
@@ -88,10 +111,20 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(w.aracneShared.getSession(),null,'no backend session');
    const queryInput=w.document.querySelector('#a06-panel .a06-input'),routeAction=w.document.querySelector('.a06-route-action');
    assert.ok(routeAction&&queryInput,'integrated assistant controls');
+   assert.match(read('lab/a08/a08.css'),/\.a06-voice-read\s*\{display:none!important\}/);
+   assert.equal(w.document.querySelector('.a06-voice-read')!==null,true);
+   const itineraryQ='Itinéraire de Bari à Lecce puis Gallipoli';
+   queryInput.value=itineraryQ;
+   routeAction.click();
+   assert.equal(queryInput.value,'','route action clears the dictation editor');
+   assert.ok(w.document.querySelector('.a08-journey-explain'),'ordered route rationale appears');
+   assert.deepEqual(Array.from(w.A08JourneyEngine.state().ids),['p11','p27','p28']);
+   w.A08JourneyEngine.reset();
    const suggested=w.A06RouteProposals.propose(lang==='fr'?'itinéraire à Bari':'route Bari',lang);
    assert.ok(suggested && suggested.stops,'route engine available');
    queryInput.value=lang==='it'?'itinerario Bari':lang==='es'?'ruta Bari':'itinéraire Bari';
    routeAction.click();
+   assert.equal(queryInput.value,'','route action never keeps previous question text');
    assert.ok(w.document.querySelector('.a06-map-preview'),'route proposal must show map preview');
    w.document.querySelector('.a06-map-preview').click();
    await wait(160);
