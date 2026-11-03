@@ -6,12 +6,12 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const locales=['fr','it','en','es'];
 const a07=['dist/app.fr.js','dist/catalog-v2.js','dist/v2.js','dist/v21.js','lab/a07/local-bridge.js','lab/a07/demo-seed.js','dist/experience.js','dist/collaboration-v3.js','dist/v5.js','lab/a07/local-context.js','dist/beta.js','lab/a07/lab-chrome.js'];
-const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','lab/a08/journey-engine.js','dist/a06-dialogue.js','lab/a08/intelligence-panel.js','lab/a08/reliable-voice.js','lab/a08/a08-banner.js'];
+const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','lab/a08/journey-engine.js','dist/a06-dialogue.js','lab/a08/conversation-flow.js','lab/a08/intelligence-panel.js','lab/a08/reliable-voice.js','lab/a08/a08-banner.js'];
 (async()=>{
  for(const lang of locales){
   const html=read('lab/a08/index'+(lang==='fr'?'':'.'+lang)+'.html');
   const scripts=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(x=>!x.startsWith('https://'));
-  for(const src of ['../a07/local-bridge.js','map-bridge.js','intelligence-panel.js','reliable-voice.js'])assert.ok(scripts.includes(src),lang+' lacks '+src);
+  for(const src of ['../a07/local-bridge.js','map-bridge.js','conversation-flow.js','intelligence-panel.js','reliable-voice.js'])assert.ok(scripts.includes(src),lang+' lacks '+src);
   assert.ok(scripts.indexOf('map-bridge.js')<scripts.indexOf('../../dist/a06-proposals.js'));
   for(const forbidden of ['supabase.co','beta-access.js','shared-trips.js','invitations-v51.js','beta-invitations.js'])assert.ok(!html.includes(forbidden),'production reference '+forbidden);
   assert.match(html,/connect-src 'self' https:\/\/api\.open-meteo\.com/);
@@ -50,6 +50,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    w.speechSynthesis={speak(){},cancel(){},getVoices(){return[]}};
    w.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
    const sessions=[];
+   Object.defineProperty(w.navigator,'userAgent',{configurable:true,value:'Mozilla/5.0 (iPhone; CPU iPhone OS 17_6 like Mac OS X) AppleWebKit/605.1.15 Safari/604.1'});
    w.webkitSpeechRecognition=class{
      constructor(){sessions.push(this);this.stopped=false;this.aborted=false}
      start(){this.onstart?.()}
@@ -70,6 +71,20 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.ok(w.A06Conversation);
    assert.ok(w.A06RouteProposals);
    assert.ok(w.A08JourneyEngine);
+   assert.ok(w.A08ConversationFlow,'a single context coordinator is wired to the conversation');
+   const ctx=w.A08ConversationFlow;
+   const intro=ctx.prepare('Je veux visiter Bari');ctx.commit(intro);
+   assert.equal(ctx.context().lastLocation,'p11');
+   const thematic=ctx.prepare(lang==='it'?'e le spiagge?':lang==='en'?'and beaches?':lang==='es'?'y las playas?':'et les plages ?');
+   assert.match(thematic.dialogueQuery,/Bari Vecchia/,'a thematic followup inherits the preceding destination');
+   ctx.commit(thematic);
+   const continued=ctx.prepare(lang==='it'?'poi Lecce':lang==='en'?'then Lecce':lang==='es'?'después Lecce':'puis Lecce');
+   assert.equal(continued.route,true,'a follow-up through Lecce starts the route context');
+   assert.match(continued.routeQuery,/Bari Vecchia.*Lecce/);
+   w.A08JourneyEngine.propose(continued.routeQuery,lang);ctx.commit(continued,{route:true});
+   assert.deepEqual(Array.from(ctx.context().routeIds),['p11','p27']);
+   ctx.reset();w.A08JourneyEngine.reset();
+   assert.equal(ctx.context().turns,0);
    assert.equal(w.A08JourneyEngine.state().ids.length,0);
    // The exact user regression: Bari -> Lecce -> Gallipoli must preserve order
    // instead of returning nearby points around the first recognized zone.
@@ -113,6 +128,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(w.document.querySelector('#map').classList.contains('active'),true);
    assert.ok(w.document.querySelector('#a08-map-preview').textContent.includes('Bari Vecchia'));
    assert.equal(w.A08MapBridge.status().selected.length,3);
+   assert.equal(w.A08MapBridge.status().previewFocused,false);
    assert.equal(counters.map,1,'must reuse Planner map');
    assert.ok(counters.markers>=3,'should add pins to existing map');
    assert.equal(JSON.stringify(plan()),initially,'map preview must not mutate saved plan');
@@ -120,6 +136,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    await wait(160);
    for(let i=0;i<15 && counters.threadMoves<1;i++)await wait(25);
    assert.ok(counters.polylines>=1,'route preview uses indicative straight line');
+   assert.equal(w.A08MapBridge.status().previewFocused,true,'route mode isolates suggested itinerary');
    assert.equal(counters.spiderIcons,1,'Il Volo spider starts on preview route');
    assert.ok(counters.threadMoves>=1,'pink thread animates on same Leaflet map: '+JSON.stringify(counters));
    assert.ok(counters.spiderMoves>=1,'spider moves along path');
@@ -193,7 +210,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.ok(w.A06Voice.supported);
    assert.ok(w.document.querySelector('.a08-keyboard-fallback'),'native keyboard fallback available');
    mic.click();assert.equal(sessions.length,1);
-   assert.equal(sessions[0].continuous,true,'long question may remain listening until Send or Stop');
+   assert.equal(sessions[0].continuous,false,'iOS receives a separate recognition session for every question');
    assert.equal(w.A06Voice.status().phase,'listening');
    sessions[0].onresult?.({results:[{0:{transcript:'Que voir à Bari'},isFinal:true}]});
    sessions[0].onend?.();
