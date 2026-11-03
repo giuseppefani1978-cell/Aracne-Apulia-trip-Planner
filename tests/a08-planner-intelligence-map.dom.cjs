@@ -84,6 +84,14 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.deepEqual(Array.from(explicitRoute.stops,p=>p.plannerId),['p11','p27','p28']);
    assert.equal(explicitRoute.mode,'driving','inherits Planner default unless user overrides');
    assert.match(explicitRoute.text,/Bari Vecchia.*Lecce.*Gallipoli/s);
+   assert.equal(explicitRoute.stops.length,3);
+   for(const stage of explicitRoute.stops){
+     assert.ok(stage.description?.length>45,'rich description: '+stage.name);
+     assert.equal(stage.quality,'static-claim-reviewed','source-backed static descriptions');
+     assert.match(stage.sourceUrl,/^https:\/\//);
+     assert.ok(Array.isArray(stage.nearby),'nearby suggestions are present');
+     assert.ok(stage.sourceLabel,'source quality is explicit');
+   }
    assert.match(explicitRoute.text,/indicati|orientativ|tracé|linea|lines/i);
    const changeTransport=w.A08JourneyEngine.propose('en train',lang);
    assert.equal(changeTransport.mode,'transit');
@@ -142,6 +150,8 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    routeAction.click();
    assert.equal(queryInput.value,'','route action clears the dictation editor');
    assert.ok(w.document.querySelector('.a08-journey-explain'),'ordered route rationale appears');
+   assert.ok(w.document.querySelectorAll('.a08-stop-explanation').length>=3,'the response explains every city');
+   assert.ok(w.document.querySelectorAll('.a08-stop-source').length>=3,'the route gives links for reviewed facts');
    assert.deepEqual(Array.from(w.A08JourneyEngine.state().ids),['p11','p27','p28']);
    w.A08JourneyEngine.reset();
    const suggested=w.A06RouteProposals.propose(lang==='fr'?'itinéraire à Bari':'route Bari',lang);
@@ -181,7 +191,9 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    const micStop=w.document.querySelector('.a06-voice-stop');
    const form=w.document.querySelector('#a06-panel form');
    assert.ok(w.A06Voice.supported);
+   assert.ok(w.document.querySelector('.a08-keyboard-fallback'),'native keyboard fallback available');
    mic.click();assert.equal(sessions.length,1);
+   assert.equal(sessions[0].continuous,true,'long question may remain listening until Send or Stop');
    assert.equal(w.A06Voice.status().phase,'listening');
    sessions[0].onresult?.({results:[{0:{transcript:'Que voir à Bari'},isFinal:true}]});
    sessions[0].onend?.();
@@ -202,6 +214,21 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    chatInput.value='';
    mic.click();assert.equal(sessions.length,4,'microphone is unlocked after cancellation');
    sessions[3].onend?.();
+   assert.equal(w.A06Voice.status().phase,'idle');
+   // A08.4: submitting while microphone is active must stop immediately.
+   mic.click();assert.equal(sessions.length,5);
+   sessions[4].onresult?.({results:[{0:{transcript:'Visiter Otranto'},isFinal:false}]});
+   assert.equal(chatInput.value,'Visiter Otranto');
+   form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+   assert.equal(sessions[4].aborted,true,'Send aborts recognition, not merely its button');
+   assert.equal(chatInput.value,'','Send clears even an interim transcription');
+   sessions[4].onend?.();
+   assert.equal(w.A06Voice.status().phase,'idle','the microphone unlocks after submission');
+   mic.click();assert.equal(sessions.length,6,'fresh recognition can start again');
+   const keyboard=w.document.querySelector('.a08-keyboard-fallback');
+   keyboard.click();
+   assert.equal(sessions[5].stopped,true,'switching to keyboard stops listening');
+   sessions[5].onend?.();
    assert.equal(w.A06Voice.status().phase,'idle');
    w.document.querySelector('#sharedOpen').click();
    assert.match(w.document.querySelector('#modalBody').textContent,/synchron|sincron|sync/i);
