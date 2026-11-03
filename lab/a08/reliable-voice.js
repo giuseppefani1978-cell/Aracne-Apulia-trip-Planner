@@ -46,10 +46,9 @@
   if(sr!==session||id!==generation)return;
   clearAll();
   session=null;phase='idle';
-  const note=lastError||lastMessage||(everResult?tr.ended:tr.endSilent);
+  const note=lastError||(discarded?tr.ready:everResult?tr.ended:tr.endSilent);
   // Never put a late recognition result back in a submitted question.
-  // The last interim value remains editable unless the user has submitted it.
-  discarded=false;
+  discarded=false;lastMessage=note;
   draw(note);
  }
  function unlockAfterBrowserHang(sr,id){
@@ -70,8 +69,9 @@
   clearTimer('silence');
   watchSilence=setTimeout(()=>{
     if(sr!==session||id!==generation||phase!=='listening')return;
+    if(everResult)return; // Keep an established dictation session active across pauses.
     lastMessage=tr.silent;draw();
-    // A dead Safari session must not show "listening" indefinitely.
+    // If Safari is connected but yields no text, offer a recoverable state.
     watchSilence=setTimeout(()=>{
       if(sr!==session||id!==generation||phase!=='listening')return;
       lastMessage=tr.endSilent;end();
