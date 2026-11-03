@@ -221,13 +221,63 @@ routeButton.addEventListener('click',()=>{
 });
 
 for(const example of t.examples){const b=document.createElement('button');b.type='button';b.className='a06-example';b.textContent=example;b.addEventListener('click',()=>{input.value=example;panel.querySelector('form').requestSubmit()});samples.append(b)}
+// A08.1 iOS: position the single chat overlay inside the *visual* viewport.
+ // Unlike 100dvh, visualViewport.height shrinks when the software keyboard opens.
+const root=document.documentElement;
+const viewport=window.visualViewport;
+let fullViewportHeight=0;
+const mobileChat=()=>window.matchMedia?.('(max-width: 740px)')?.matches ?? (window.innerWidth<=740);
+function syncVisualViewport(){
+ if(panel.hidden||!mobileChat())return;
+ const layoutHeight=window.innerHeight||document.documentElement.clientHeight||720;
+ const vHeight=Number.isFinite(viewport?.height)&&viewport.height>0?viewport.height:layoutHeight;
+ const vTop=Number.isFinite(viewport?.offsetTop)?Math.max(0,viewport.offsetTop):0;
+ if(document.activeElement!==input)fullViewportHeight=Math.max(fullViewportHeight,vHeight);
+ const actualHeight=Math.max(180,Math.min(vHeight,layoutHeight));
+ root.style.setProperty('--a06-view-height',actualHeight+'px');
+ root.style.setProperty('--a06-view-top',Math.round(vTop)+'px');
+ const reducedBy=Math.max(0,fullViewportHeight-vHeight,layoutHeight-vHeight-vTop);
+ const keyboardOpen=document.activeElement===input&&reducedBy>100;
+ root.classList.toggle('a08-keyboard-open',keyboardOpen);
+ // The input is in the flex-fixed composer; the dialogue scrolls independently.
+}
+function syncSoon(){
+ syncVisualViewport();
+ if(typeof requestAnimationFrame==='function')requestAnimationFrame(syncVisualViewport);
+}
+viewport?.addEventListener?.('resize',syncVisualViewport);
+viewport?.addEventListener?.('scroll',syncVisualViewport);
+window.addEventListener('resize',syncVisualViewport);
+window.addEventListener('orientationchange',()=>{
+ fullViewportHeight=0;syncSoon();
+});
+input.addEventListener('focus',syncSoon);
+input.addEventListener('blur',()=>{
+ root.classList.remove('a08-keyboard-open');syncSoon();
+});
+const dismissKeyboard=document.createElement('button');
+dismissKeyboard.type='button';dismissKeyboard.className='a08-dismiss-keyboard';
+dismissKeyboard.textContent=({fr:'Clavier ↓',it:'Chiudi tastiera ↓',en:'Hide keyboard ↓',es:'Cerrar teclado ↓'}[language]||'Hide keyboard');
+dismissKeyboard.setAttribute('aria-label',dismissKeyboard.textContent);
+dismissKeyboard.addEventListener('click',()=>{
+ input.blur();root.classList.remove('a08-keyboard-open');syncSoon();
+});
+panel.querySelector('.a06-x').before(dismissKeyboard);
 function toggle(show){
  panel.hidden=!show;open.setAttribute('aria-expanded',String(show));
- document.documentElement.classList.toggle('a06-chat-open',show);
+ root.classList.toggle('a06-chat-open',show);
  document.body.classList.toggle('a06-chat-open',show);
- if(!show){window.A06Voice?.stop?.();open.focus()}
- // On iPhone, don't open the keyboard immediately when opening the chat.
- else if(window.matchMedia?.('(min-width: 741px)')?.matches)input.focus();
+ if(!show){
+  input.blur();root.classList.remove('a08-keyboard-open');
+  root.style.removeProperty('--a06-view-height');
+  root.style.removeProperty('--a06-view-top');
+  window.A06Voice?.stop?.();open.focus();
+ } else {
+  fullViewportHeight=0;
+  syncSoon();
+  // On iPhone, don't open the keyboard immediately when opening the chat.
+  if(!mobileChat())input.focus();
+ }
 }
 open.addEventListener('click',()=>toggle(panel.hidden));
 panel.querySelector('.a06-x').addEventListener('click',()=>toggle(false));
