@@ -49,7 +49,8 @@ const sequence=['dist/app.fr.js','dist/catalog-v2.js','dist/v2.js','dist/v21.js'
    assert.ok(w.document.querySelector('#a07Ribbon'));
    assert.ok(w.document.querySelector('#topMap'));
    assert.ok(w.document.querySelector('#journalContent'));
-   assert.ok(w.document.querySelector('#carnetContent'));
+   w.document.querySelector('[data-view="notes"]').click();
+   assert.ok(w.document.querySelector('#carnetOverview'),'Carnet overview is created when Notes tab renders');
    const trip=JSON.parse(w.localStorage.getItem('aracne-puglia-v1'));
    assert.match(trip.name,/Bari/);
    assert.equal(trip.plan.length,3);
