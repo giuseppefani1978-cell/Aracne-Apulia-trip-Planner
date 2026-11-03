@@ -109,6 +109,8 @@
   };
   sr.onerror=event=>{
     if(sr!==session||id!==generation)return;
+    // Safari emits "aborted" after the normal Send/Reset flow. It is not an error.
+    if(phase==='closing'&&discarded)return;
     const reason=event?.error||'unknown';
     lastError=['not-allowed','service-not-allowed','audio-capture'].includes(reason)?tr.denied:
       reason==='no-speech'?tr.endSilent:tr.error;
