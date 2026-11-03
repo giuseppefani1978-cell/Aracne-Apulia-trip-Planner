@@ -29,6 +29,10 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
     latLngBounds:x=>x
    };
    w.scrollTo=()=>{};w.matchMedia=()=>({matches:true,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}});
+   // iOS keyboard simulation: Safari visualViewport shrinks while layout viewport stays tall.
+   Object.defineProperty(w,'innerHeight',{value:820,configurable:true,writable:true});
+   const visual=new w.EventTarget();visual.height=820;visual.offsetTop=0;
+   Object.defineProperty(w,'visualViewport',{value:visual,configurable:true});
    w.confirm=()=>true;w.prompt=()=> 'Demo';w.alert=()=>{};
    w.HTMLDialogElement.prototype.showModal=function(){this.setAttribute('open','')};
    w.HTMLDialogElement.prototype.close=function(){this.removeAttribute('open');this.dispatchEvent(new w.Event('close'))};
@@ -92,6 +96,28 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    w.document.querySelector('.a06-map-preview').click();
    await wait(160);
    assert.ok(w.A08MapBridge.status().selected.length>0,'route action should send stops to map');
+   // A08.1 mobile regression: the overlay must track the visual viewport,
+   // stay above Planner's bottom nav and offer an explicit keyboard dismissal.
+   const keyboardCSS=read('lab/a08/a08.css');
+   assert.match(keyboardCSS,/html\\.a06-chat-open body nav\\s*\\{\\s*display:none!important/);
+   assert.match(keyboardCSS,/z-index:2147483000!important/);
+   assert.match(keyboardCSS,/overflow-y:auto!important/);
+   const chatButton=w.document.querySelector('#a06-open');chatButton.click();
+   assert.equal(w.document.documentElement.classList.contains('a06-chat-open'),true);
+   assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-height'),'820px');
+   const chatInput=w.document.querySelector('#a06-panel .a06-input');
+   chatInput.focus();visual.height=415;visual.offsetTop=23;
+   visual.dispatchEvent(new w.Event('resize'));
+   assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-top'),'23px');
+   assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-height'),'415px');
+   assert.equal(w.document.documentElement.classList.contains('a08-keyboard-open'),true);
+   const dismiss=w.document.querySelector('.a08-dismiss-keyboard');
+   assert.ok(dismiss,'dedicated hide-keyboard action');dismiss.click();
+   assert.notEqual(w.document.activeElement,chatInput,'keyboard dismissal blurs input');
+   assert.equal(w.document.documentElement.classList.contains('a08-keyboard-open'),false);
+   chatButton.click(); // closes the panel, since it is currently open
+   assert.equal(w.document.documentElement.classList.contains('a06-chat-open'),false);
+   assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-height'),'');
    w.document.querySelector('#sharedOpen').click();
    assert.match(w.document.querySelector('#modalBody').textContent,/synchron|sincron|sync/i);
    assert.equal(w.localStorage.getItem('aracne-beta-token-v1'),null);
