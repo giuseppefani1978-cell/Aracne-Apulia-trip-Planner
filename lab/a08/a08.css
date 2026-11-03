@@ -88,3 +88,24 @@
 
 /* A08.2: optional speech synthesis is deferred until Safari audio is validated. */
 #a06-panel .a06-voice-read {display:none!important}
+
+
+/* A08.3 — The original Il Volo web-weaver on the existing Planner map. */
+.a08-map-spider{
+ display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+ background:rgba(255,255,255,.96);border:2px solid rgba(193,38,132,.32);
+ box-shadow:0 5px 16px rgba(90,20,90,.24);font-size:19px;
+ transform-origin:center;animation:a08-weaver-pulse .8s ease-in-out infinite alternate;
+ pointer-events:none;
+}
+@keyframes a08-weaver-pulse{
+ from{transform:scale(.92) rotate(-5deg)}
+ to{transform:scale(1.08) rotate(5deg)}
+}
+#a08-map-preview .a08-replay-weave{
+ display:inline-flex;align-items:center;margin-top:10px;margin-right:8px;
+ padding:9px 12px;border-radius:10px;background:#fff;border:1px solid #c7aedc;
+ color:#603c8e;font-weight:700;font-size:13px;cursor:pointer;
+}
+#a08-map-preview .a08-replay-weave[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.a08-map-spider{animation:none}}
