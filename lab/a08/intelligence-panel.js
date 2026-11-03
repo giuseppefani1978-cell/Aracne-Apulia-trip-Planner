@@ -265,7 +265,9 @@ routeButton.addEventListener('click',()=>{
   input.value='';
   input.dispatchEvent(new Event('input',{bubbles:true}));
   if(mobileChat())input.blur();
-  beginTurn(question);renderProposal(question);
+  const prepared=window.A08ConversationFlow?.prepare?.(question)||{question,routeQuery:question,ids:[]};
+  beginTurn(question);renderProposal(prepared.routeQuery);
+  window.A08ConversationFlow?.commit?.(prepared,{route:true});
 });
 
 for(const example of t.examples){const b=document.createElement('button');b.type='button';b.className='a06-example';b.textContent=example;b.addEventListener('click',()=>{input.value=example;panel.querySelector('form').requestSubmit()});samples.append(b)}
@@ -336,6 +338,7 @@ resetControl.textContent=({fr:'Nouvelle conversation',it:'Nuova conversazione',e
 resetControl.addEventListener('click',()=>{
   window.A06Voice?.reset?.();window.A06Conversation?.reset?.();
   window.A08JourneyEngine?.reset?.();
+  window.A08ConversationFlow?.reset?.();
   window.A06TourismAssistant?.setLanguage?.(language);
   output.replaceChildren();activeReply=output;panel.classList.remove('a06-has-turns');input.value='';input.focus();
 });
@@ -349,9 +352,13 @@ panel.querySelector('form').addEventListener('submit',async event=>{
  input.dispatchEvent(new Event('input',{bubbles:true}));
  if(mobileChat())input.blur();
  submit.disabled=true;beginTurn(question);activeReply.textContent='…';
+ const prepared=window.A08ConversationFlow?.prepare?.(question)||{question,routeQuery:question,dialogueQuery:question,route:false,ids:[]};
  try{
-  if(routeIntent.test(question)||window.A08JourneyEngine?.hasRouteIntent?.(question)){renderProposal(question);return}
-  const response=await (window.A06Conversation?.ask?.(question,language)||api.ask(question,language));
+  if(prepared.route||routeIntent.test(question)||window.A08JourneyEngine?.hasRouteIntent?.(question)){
+   renderProposal(prepared.routeQuery);window.A08ConversationFlow?.commit?.(prepared,{route:true});return;
+  }
+  const response=await (window.A06Conversation?.ask?.(prepared.dialogueQuery,language)||api.ask(prepared.dialogueQuery,language));
+  window.A08ConversationFlow?.commit?.(prepared);
   window.A06Voice?.setLastAnswer?.(response.text);
   activeReply.textContent=response.text;
   if(response.sources?.length){
