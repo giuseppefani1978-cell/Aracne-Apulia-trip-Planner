@@ -29,7 +29,7 @@
  details.append(summary,privacy);controls.append(start,stopButton,read,status,details);
 
  let active=null,phase='idle',token=0,base='',finalWords='',lastError=null;
- let releaseTimer=null, lastAnswer='';
+ let releaseTimer=null, lastAnswer='', discardCurrent=false;
  const available=Boolean(SR);
  function render(note){
   start.disabled=!available||phase!=='idle';
@@ -61,7 +61,7 @@
   const sr=active;
   if(!sr){phase='idle';clearReleaseTimer();render();return}
   if(phase==='stopping')return;
-  phase='stopping';render();
+  phase='stopping';discardCurrent=discard;render();
   sr.onstart=null;
   if(discard)sr.onresult=null;
   armFallback(sr,token,discard);
@@ -73,7 +73,7 @@
  function launch(){
   if(!available||active||phase!=='idle')return;
   clearReleaseTimer();lastError=null;
-  base=input.value.trim();finalWords='';
+  base=input.value.trim();finalWords='';discardCurrent=false;
   const id=++token;
   let sr;
   try{sr=new SR()}catch(_){phase='idle';render(labels.failed);return}
@@ -103,7 +103,7 @@
    phase='stopping';render(lastError);
    armFallback(sr,id,false);
   };
-  sr.onend=()=>release(sr,id,{discard:false});
+  sr.onend=()=>release(sr,id,{discard:discardCurrent});
   try{sr.start()}catch(error){
    // If iOS refuses a new session, unlock the button and expose the failure.
    lastError=labels.failed;
