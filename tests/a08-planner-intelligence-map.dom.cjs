@@ -99,7 +99,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    // A08.1 mobile regression: the overlay must track the visual viewport,
    // stay above Planner's bottom nav and offer an explicit keyboard dismissal.
    const keyboardCSS=read('lab/a08/a08.css');
-   assert.match(keyboardCSS,/html\\.a06-chat-open body nav\\s*\\{\\s*display:none!important/);
+   assert.match(keyboardCSS,/html\.a06-chat-open body nav\s*\{\s*display:none!important/);
    assert.match(keyboardCSS,/z-index:2147483000!important/);
    assert.match(keyboardCSS,/overflow-y:auto!important/);
    const chatButton=w.document.querySelector('#a06-open');chatButton.click();
