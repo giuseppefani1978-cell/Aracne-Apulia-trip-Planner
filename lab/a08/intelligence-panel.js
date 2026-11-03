@@ -217,6 +217,12 @@ function renderProposal(question){
 routeButton.addEventListener('click',()=>{
   const question=input.value.trim();
   if(!question){input.focus();return}
+  // A08.2: new speech turn starts with a clean slate; preserve the actual
+  // question in the conversation bubble before clearing the editor.
+  window.A06Voice?.stop?.();
+  input.value='';
+  input.dispatchEvent(new Event('input',{bubbles:true}));
+  if(mobileChat())input.blur();
   beginTurn(question);renderProposal(question);
 });
 
@@ -294,7 +300,11 @@ panel.querySelector('.a06-x').before(resetControl);
 panel.querySelector('form').addEventListener('submit',async event=>{
  event.preventDefault();const question=input.value.trim();if(!question||submit.disabled)return;
  window.A06Voice?.stop?.();
- if(window.matchMedia?.('(max-width: 740px)')?.matches)input.blur();
+ // Reset the editor immediately, not when the asynchronous answer arrives.
+ // This prevents the next dictation from appending to the previous question.
+ input.value='';
+ input.dispatchEvent(new Event('input',{bubbles:true}));
+ if(mobileChat())input.blur();
  submit.disabled=true;beginTurn(question);activeReply.textContent='…';
  try{
   if(routeIntent.test(question)){renderProposal(question);return}
