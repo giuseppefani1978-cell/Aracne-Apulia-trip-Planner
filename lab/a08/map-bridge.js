@@ -101,6 +101,23 @@
     try {show('map');choosePlace(native.id);return {ok:true,opened:true};}
     catch(error){console.warn('[A08] native Planner dialog unavailable',error);return {ok:false,reason:'dialog-unavailable'};}
   }
+  // A08.6: a preview is a VIEW switch, never a permanent chat lock.
+  // The iOS full-screen assistant hid Planner nav using a06-chat-open.
+  function exitChatForMap(){
+    const panel=document.getElementById('a06-panel');
+    if(panel&&!panel.hidden)panel.querySelector('.a06-x')?.click();
+    document.documentElement.classList.remove('a06-chat-open','a08-keyboard-open');
+    document.body.classList.remove('a06-chat-open');
+    document.documentElement.style.removeProperty('--a06-view-height');
+    document.documentElement.style.removeProperty('--a06-view-top');
+    if(panel)panel.hidden=true;
+    document.getElementById('a06-open')?.setAttribute('aria-expanded','false');
+  }
+  function goPlannerView(name){
+    exitChatForMap();
+    const target=document.querySelector('nav button[data-view="'+name+'"]');
+    if(target)target.click(); // Planner's native show(view) handler
+  }
   const mapSection=document.getElementById('map');
   const summary=document.createElement('aside');
   summary.id='a08-map-preview';summary.hidden=true;summary.setAttribute('aria-live','polite');
@@ -119,6 +136,30 @@
   summary.append(heading,description,list,replay,clear);
   mapSection?.querySelector('.sectionHead')?.after(summary);
   if(mapSection&&!summary.parentElement)mapSection.prepend(summary);
+  const mapNavigation=document.createElement('div');
+  mapNavigation.id='a08-map-navigation';
+  mapNavigation.setAttribute('aria-label','Navigation Aracne Lab');
+  const tabs=[
+    ['prepare',{fr:'‹ Le voyage',it:'‹ Il viaggio',en:'‹ Trip home',es:'‹ El viaje'}],
+    ['plan',{fr:'Programme',it:'Programma',en:'Itinerary',es:'Programa'}],
+    ['notes',{fr:'Carnet',it:'Taccuino',en:'Notebook',es:'Cuaderno'}]
+  ];
+  for(const [destination,names] of tabs){
+    const button=document.createElement('button');button.type='button';
+    button.dataset.a08View=destination;
+    button.textContent=names[locale]||names.fr;
+    button.addEventListener('click',()=>goPlannerView(destination));
+    mapNavigation.append(button);
+  }
+  const conversation=document.createElement('button');
+  conversation.type='button';conversation.dataset.a08View='intelligence';
+  conversation.textContent=({fr:'✦ Aracne Intelligence',it:'✦ Aracne Intelligence',en:'✦ Aracne Intelligence',es:'✦ Aracne Intelligence'}[locale]||'✦ Aracne');
+  conversation.addEventListener('click',()=>{
+    exitChatForMap();document.getElementById('a06-open')?.click();
+  });
+  mapNavigation.append(conversation);
+  mapSection.querySelector('.sectionHead')?.after(mapNavigation);
+  if(mapSection&&!mapNavigation.parentElement)mapSection.prepend(mapNavigation);
   function repaint(){
     if(!selected.length){summary.hidden=true;overlay?.clearLayers();return;}
     const points=selected.map(id=>byId.get(id)).filter(finite);
@@ -175,6 +216,7 @@
     selected=next;route=!!isRoute;lastResult={ids:[...selected],route};lastLabel=route?t.route:t.places;
     if(!selected.length)return {ok:false,reason:'no-valid-place'};
     show('map');
+    exitChatForMap();
     // The Planner schedules drawMap() 40ms after show('map'). Draw AFTER it.
     setTimeout(repaint,110);
     return {ok:true,ids:[...selected],mode:route?'indicative-route':'places'};
