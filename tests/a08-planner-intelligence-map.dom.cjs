@@ -124,9 +124,10 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(w.A08MapBridge.showPlaces(['bad-id']).ok,false);
    const visible=w.A08MapBridge.showPlaces(['p11','p12','p13']);
    assert.equal(visible.ok,true);
-   await wait(180);
+   for(let i=0;i<45 && !w.document.querySelector('#a08-map-preview').textContent.includes('Bari Vecchia');i++)await wait(30);
    assert.equal(w.document.querySelector('#map').classList.contains('active'),true);
-   assert.ok(w.document.querySelector('#a08-map-preview').textContent.includes('Bari Vecchia'));
+   assert.ok(w.document.querySelector('#a08-map-preview').textContent.includes('Bari Vecchia'),
+     'map preview must render after Planner Leaflet initialization: '+JSON.stringify({state:w.A08MapBridge.status(),errors}));
    assert.equal(w.A08MapBridge.status().selected.length,3);
    assert.equal(w.A08MapBridge.status().previewFocused,false);
    assert.equal(counters.map,1,'must reuse Planner map');
