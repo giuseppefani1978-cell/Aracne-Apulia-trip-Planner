@@ -110,9 +110,10 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(JSON.stringify(plan()),initially,'map preview must not mutate saved plan');
    assert.equal(w.A08MapBridge.showRoute(['p11','p12','p13']).ok,true);
    await wait(160);
+   for(let i=0;i<15 && counters.threadMoves<1;i++)await wait(25);
    assert.ok(counters.polylines>=1,'route preview uses indicative straight line');
    assert.equal(counters.spiderIcons,1,'Il Volo spider starts on preview route');
-   assert.ok(counters.threadMoves>=1,'pink thread animates on same Leaflet map');
+   assert.ok(counters.threadMoves>=1,'pink thread animates on same Leaflet map: '+JSON.stringify(counters));
    assert.ok(counters.spiderMoves>=1,'spider moves along path');
    const nWeaves=w.A08MapBridge.status().animationsStarted;
    w.document.querySelector('.a08-replay-weave').click();
