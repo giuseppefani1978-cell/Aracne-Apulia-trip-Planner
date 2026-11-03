@@ -208,7 +208,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(chatInput.value,'Et ensuite Gallipoli','new transcription contains no previous text');
    mic.click();assert.equal(sessions.length,3,'third dictation starts after natural onend');
    w.A06Voice.stop();assert.equal(sessions[2].aborted,true);
-   assert.equal(w.A06Voice.status().phase,'stopping','do not launch while WebKit releases previous mic');
+   assert.equal(w.A06Voice.status().phase,'closing','do not launch while WebKit releases previous mic');
    sessions[2].onend?.();
    assert.equal(w.A06Voice.status().phase,'idle');
    chatInput.value='';
