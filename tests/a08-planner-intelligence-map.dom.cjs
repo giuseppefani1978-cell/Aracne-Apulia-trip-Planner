@@ -6,12 +6,12 @@ const root=path.resolve(__dirname,'..'),read=f=>fs.readFileSync(path.join(root,f
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
 const locales=['fr','it','en','es'];
 const a07=['dist/app.fr.js','dist/catalog-v2.js','dist/v2.js','dist/v21.js','lab/a07/local-bridge.js','lab/a07/demo-seed.js','dist/experience.js','dist/collaboration-v3.js','dist/v5.js','lab/a07/local-context.js','dist/beta.js','lab/a07/lab-chrome.js'];
-const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','lab/a08/journey-engine.js','dist/a06-dialogue.js','lab/a08/intelligence-panel.js','dist/a06-voice.js','lab/a08/a08-banner.js'];
+const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js','dist/a06-intelligence.js','dist/a06-adapter.js','dist/a06-poi-reviews.js','dist/a06-duplicate-audit.js','dist/a06-legacy-audit.js','dist/a06-commercial-audit.js','dist/a06-data-quality.js','dist/a06-puglia-knowledge.js','lab/a08/map-bridge.js','dist/a06-matcher.js','dist/a06-proposals.js','lab/a08/journey-engine.js','dist/a06-dialogue.js','lab/a08/intelligence-panel.js','lab/a08/reliable-voice.js','lab/a08/a08-banner.js'];
 (async()=>{
  for(const lang of locales){
   const html=read('lab/a08/index'+(lang==='fr'?'':'.'+lang)+'.html');
   const scripts=[...html.matchAll(/<script src="([^"]+)"/g)].map(m=>m[1]).filter(x=>!x.startsWith('https://'));
-  for(const src of ['../a07/local-bridge.js','map-bridge.js','intelligence-panel.js','../../dist/a06-voice.js'])assert.ok(scripts.includes(src),lang+' lacks '+src);
+  for(const src of ['../a07/local-bridge.js','map-bridge.js','intelligence-panel.js','reliable-voice.js'])assert.ok(scripts.includes(src),lang+' lacks '+src);
   assert.ok(scripts.indexOf('map-bridge.js')<scripts.indexOf('../../dist/a06-proposals.js'));
   for(const forbidden of ['supabase.co','beta-access.js','shared-trips.js','invitations-v51.js','beta-invitations.js'])assert.ok(!html.includes(forbidden),'production reference '+forbidden);
   assert.match(html,/connect-src 'self' https:\/\/api\.open-meteo\.com/);
@@ -19,16 +19,25 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
   const dom=new JSDOM(html,{url:'https://a08.test.invalid/lab/a08/index'+(lang==='fr'?'':'.'+lang)+'.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:vc});
   const w=dom.window;
   try {
-   const counters={map:0,markers:0,polylines:0,fit:0};
-   const emptyLayer=()=>({addTo(){return this},clearLayers(){return this},addLayer(){return this}});
-   const mockMap={setView(){return this},fitBounds(){counters.fit++;return this},invalidateSize(){return this},remove(){return this}};
+   const counters={map:0,markers:0,polylines:0,fit:0,spiderIcons:0,spiderMoves:0,threadMoves:0};
+   const emptyLayer=()=>({addTo(){return this},clearLayers(){return this},
+      addLayer(){return this},removeLayer(){return this}});
+   const mockMap={setView(){return this},fitBounds(){counters.fit++;return this},
+      invalidateSize(){return this},remove(){return this}};
    w.L={
     map(){counters.map++;return mockMap},tileLayer(){return {addTo(){return this}}},
-    layerGroup:emptyLayer,marker(){counters.markers++;return {addTo(){return this},bindPopup(){return this}}},
-    divIcon:o=>o,polyline(){counters.polylines++;return {addTo(){return this}}},
+    layerGroup:emptyLayer,
+    marker(){counters.markers++;return {addTo(){return this},bindPopup(){return this},
+       setLatLng(){counters.spiderMoves++;return this}}},
+    divIcon:o=>{if(o.html?.includes('🕷️'))counters.spiderIcons++;return o},
+    polyline(){counters.polylines++;return {addTo(){return this},
+       setLatLngs(){counters.threadMoves++;return this}}},
     latLngBounds:x=>x
    };
-   w.scrollTo=()=>{};w.matchMedia=()=>({matches:true,addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}});
+   w.requestAnimationFrame=cb=>w.setTimeout(()=>cb(w.performance.now()+15000),1);
+   w.cancelAnimationFrame=id=>w.clearTimeout(id);
+   w.scrollTo=()=>{};w.matchMedia=q=>({matches:!q.includes('prefers-reduced-motion'),
+      addListener(){},removeListener(){},addEventListener(){},removeEventListener(){}});
    // iOS keyboard simulation: Safari visualViewport shrinks while layout viewport stays tall.
    Object.defineProperty(w,'innerHeight',{value:820,configurable:true,writable:true});
    const visual=new w.EventTarget();visual.height=820;visual.offsetTop=0;
@@ -40,6 +49,13 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    w.XMLHttpRequest=class{open(){throw Error('XHR forbidden')}};
    w.speechSynthesis={speak(){},cancel(){},getVoices(){return[]}};
    w.SpeechSynthesisUtterance=class{constructor(text){this.text=text}};
+   const sessions=[];
+   w.webkitSpeechRecognition=class{
+     constructor(){sessions.push(this);this.stopped=false;this.aborted=false}
+     start(){this.onstart?.()}
+     stop(){this.stopped=true}
+     abort(){this.aborted=true}
+   };
    const context=dom.getInternalVMContext();
    for(const f of [...a07,...a06]){
     const actual=f==='dist/app.fr.js'?'dist/app.'+lang+'.js':f;
@@ -95,6 +111,13 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.equal(w.A08MapBridge.showRoute(['p11','p12','p13']).ok,true);
    await wait(160);
    assert.ok(counters.polylines>=1,'route preview uses indicative straight line');
+   assert.equal(counters.spiderIcons,1,'Il Volo spider starts on preview route');
+   assert.ok(counters.threadMoves>=1,'pink thread animates on same Leaflet map');
+   assert.ok(counters.spiderMoves>=1,'spider moves along path');
+   const nWeaves=w.A08MapBridge.status().animationsStarted;
+   w.document.querySelector('.a08-replay-weave').click();
+   await wait(25);
+   assert.equal(w.A08MapBridge.status().animationsStarted,nWeaves+1,'route replay starts new spider animation');
    assert.equal(JSON.stringify(plan()),initially,'route preview must be read-only');
    const snapshot=w.A06PlannerCatalog.proposalContext();
    // A stale proposal cannot open a native dialog.
@@ -151,6 +174,34 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    chatButton.click(); // closes the panel, since it is currently open
    assert.equal(w.document.documentElement.classList.contains('a06-chat-open'),false);
    assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-height'),'');
+   // A08.3: two successive dictated questions must acquire two independent
+   // recognition instances; submit clears the editor and cannot recycle old audio.
+   const mic=w.document.querySelector('.a06-voice-start');
+   const micStop=w.document.querySelector('.a06-voice-stop');
+   const form=w.document.querySelector('#a06-panel form');
+   assert.ok(w.A06Voice.supported);
+   mic.click();assert.equal(sessions.length,1);
+   assert.equal(w.A06Voice.status().phase,'listening');
+   sessions[0].onresult?.({results:[{0:{transcript:'Que voir à Bari'},isFinal:true}]});
+   sessions[0].onend?.();
+   assert.equal(w.A06Voice.status().phase,'idle');
+   assert.equal(chatInput.value,'Que voir à Bari');
+   form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+   assert.equal(chatInput.value,'','question sent: transcript cleared immediately');
+   await wait(50);
+   mic.click();assert.equal(sessions.length,2,'second dictation starts a fresh recognition engine');
+   sessions[1].onresult?.({results:[{0:{transcript:'Et ensuite Gallipoli'},isFinal:true}]});
+   sessions[1].onend?.();
+   assert.equal(chatInput.value,'Et ensuite Gallipoli','new transcription contains no previous text');
+   mic.click();assert.equal(sessions.length,3,'third dictation starts after natural onend');
+   w.A06Voice.stop();assert.equal(sessions[2].aborted,true);
+   assert.equal(w.A06Voice.status().phase,'stopping','do not launch while WebKit releases previous mic');
+   sessions[2].onend?.();
+   assert.equal(w.A06Voice.status().phase,'idle');
+   chatInput.value='';
+   mic.click();assert.equal(sessions.length,4,'microphone is unlocked after cancellation');
+   sessions[3].onend?.();
+   assert.equal(w.A06Voice.status().phase,'idle');
    w.document.querySelector('#sharedOpen').click();
    assert.match(w.document.querySelector('#modalBody').textContent,/synchron|sincron|sync/i);
    assert.equal(w.localStorage.getItem('aracne-beta-token-v1'),null);
