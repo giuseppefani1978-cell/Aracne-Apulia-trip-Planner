@@ -204,7 +204,41 @@ function renderProposal(question){
       if(open?.ok){toggle(false)}
       else{activeReply.replaceChildren();activeReply.textContent=rt.stale}
     });
-    li.append(name,button);list.append(li);
+    const details=document.createElement('div');details.className='a08-stop-explanation';
+    if(stop.description){
+      const para=document.createElement('p');para.textContent=stop.description;
+      details.append(para);
+    }
+    if(stop.type?.length){
+      const tags=document.createElement('small');tags.className='a08-stop-tags';
+      tags.textContent=stop.type.map(x=>({
+        city:{fr:'Patrimoine',it:'Patrimonio',en:'Heritage',es:'Patrimonio'},
+        beach:{fr:'Mer',it:'Mare',en:'Sea',es:'Mar'},
+        nature:{fr:'Nature',it:'Natura',en:'Nature',es:'Naturaleza'},
+        food:{fr:'Gastronomie',it:'Gastronomia',en:'Food',es:'Gastronomía'}
+      }[x]?.[language]||x)).join(' · ');
+      details.append(tags);
+    }
+    if(stop.nearby?.length){
+      const around=document.createElement('p');around.className='a08-nearby';
+      around.textContent=({
+        fr:'À proximité : ',it:'Nei dintorni : ',en:'Nearby: ',es:'Cerca: '
+      }[language]||'Nearby: ')+stop.nearby.map(x=>x.name).join(' · ')+'.';
+      details.append(around);
+    }
+    if(stop.sourceUrl){
+      const src=document.createElement('a');
+      src.className='a08-stop-source';src.href=stop.sourceUrl;
+      src.target='_blank';src.rel='noopener noreferrer';
+      src.textContent=stop.sourceLabel||({
+        fr:'Source touristique (à contrôler)',it:'Fonte turistica (da verificare)',
+        en:'Tourism reference (verify)',es:'Fuente turística (verificar)'
+      }[language]||'Source');
+      details.append(src);
+    }else if(stop.sourceLabel){
+      const limit=document.createElement('small');limit.textContent=stop.sourceLabel;details.append(limit);
+    }
+    li.append(name,details,button);list.append(li);
   }
   const warning=document.createElement('p');
   warning.textContent=proposal.disclaimer+' '+rt.pending;
