@@ -7,6 +7,39 @@
  const fallback=window.A06RouteProposals;
  if(!Array.isArray(catalog)||!fallback?.propose)return;
  const byId=new Map(catalog.map(p=>[p.id,p]));
+ const reviewed=window.A06POIReviews;
+ const guidance={
+   fr:{why:'À découvrir',day:'À explorer autour de cette étape',detail:'Description indicative issue du catalogue, à vérifier',review:'Information statique vérifiée',context:'Source régionale ou de catalogue, pas une validation individuelle',more:'Suggestions proches',transport:'Liaisons à confirmer selon le mode choisi'},
+   it:{why:'Da scoprire',day:'Da vedere nei dintorni',detail:'Descrizione indicativa del catalogo, da verificare',review:'Informazione statica verificata',context:'Fonte regionale o di catalogo, non convalida individuale',more:'Idee vicine',transport:'Verificare collegamenti secondo il mezzo scelto'},
+   en:{why:'What to explore',day:'Around this stop',detail:'Indicative catalogue description; verify before visiting',review:'Static fact reviewed',context:'Regional or catalogue source, not a place-specific verification',more:'Nearby ideas',transport:'Check connections for your transport mode'},
+   es:{why:'Para descubrir',day:'Alrededor de la etapa',detail:'Descripción orientativa del catálogo; verificar',review:'Información estática verificada',context:'Fuente regional o de catálogo, no validación individual',more:'Ideas cercanas',transport:'Confirmar conexiones para el transporte elegido'}
+ };
+ const haversine=(a,b)=>{
+   const rad=x=>x*Math.PI/180,dy=rad(a.lat-b.lat),dx=rad(a.lon-b.lon);
+   const t=Math.sin(dy/2)**2+Math.cos(rad(a.lat))*Math.cos(rad(b.lat))*Math.sin(dx/2)**2;
+   return 12742*Math.atan2(Math.sqrt(Math.max(0,t)),Math.sqrt(Math.max(0,1-t)));
+ };
+ function enrichStop(p,lang){
+   const g=guidance[lang]||guidance.fr;
+   const r=reviewed?.get?.(p.id);
+   const verified=r?.verification==='static-claim-reviewed';
+   const description=verified?r.claim?.[lang]||r.claim?.fr||'':p.description?.[lang]||p.description?.fr||'';
+   const source=verified?r.source?.url||null:p.sourceUrl||null;
+   const selected=catalog.filter(q=>q.id!==p.id&&q.zone===p.zone&&Number.isFinite(q.lat)&&Number.isFinite(q.lon))
+       .map(q=>({p:q,d:haversine(p,q)})).filter(x=>x.d<=22).sort((a,b)=>a.d-b.d).slice(0,2)
+       .map(x=>Object.freeze({id:x.p.id,name:x.p.name}));
+   return Object.freeze({plannerId:p.id,name:p.name,description,
+     quality:verified?'static-claim-reviewed':'catalogue-unreverified',
+     sourceUrl:source,sourceLabel:verified?g.review:g.context,
+     durationMinutes:Number.isFinite(p.duration)&&p.duration>0?p.duration:null,
+     nearby:Object.freeze(selected),type:p.tags?.filter(x=>['city','beach','nature','food'].includes(x)).slice(0,3)||[],
+     provenance:p.sourceGrade,matchType:'ordered-waypoint'});
+ }
+ function enrichProposal(proposal,lang){
+   if(!proposal?.ok||!Array.isArray(proposal.stops))return proposal;
+   const details=proposal.stops.map(stop=>byId.get(stop.plannerId)).filter(Boolean).map(p=>enrichStop(p,lang));
+   return Object.freeze({...proposal,stops:Object.freeze(details),enriched:true});
+ }
  function norm(s){return String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[’‘']/g,' ').replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();}
  const aliases={
   p11:['bari','bari vecchia','vieux bari','old bari','bari centro'],
@@ -99,7 +132,7 @@
  function propose(query,language='fr'){
   const q=String(query||'').trim().slice(0,600),lang=words[language]?language:'fr',t=words[lang],hits=mentioned(q);
   const isRoute=hasRouteIntent(q);
-  if(!isRoute)return fallback.propose(q,lang);
+  if(!isRoute)return enrichProposal(fallback.propose(q,lang),lang);
   const explicitTransport=transport(q);
   let ordered=hits.map(x=>x.id);
   const continuing=memory.ids.length>=2&&ordered.length<=1&&(follow.test(q)||explicitTransport||revise.test(q));
@@ -110,7 +143,7 @@
    else if(hits[0]&&revise.test(q)&&ordered.length>1)ordered[ordered.length-1]=hits[0].id;
   }
   if(ordered.length<2){
-   if(!hits.length&&!memory.ids.length)return fallback.propose(q,lang);
+   if(!hits.length&&!memory.ids.length)return enrichProposal(fallback.propose(q,lang),lang);
    if(memory.ids.length>=2&&continuing)ordered=[...memory.ids];
    else return fallback.propose(q,lang);
   }
@@ -122,14 +155,12 @@
   memory={ids:[...ordered],mode,lastQuestion:q,revision:memory.revision+1};
   const names=stops.map(p=>p.name);
   const text=t.explain+'\n\n'+t.start+': '+names.join(' → ')+'.\n'+t.transport+': '+(mode==='driving'?t.modeCar:t.modeTransit)+' ('+(explicitTransport?t.changed:t.planner)+').\n\n'+t.note;
-  return Object.freeze({ok:true,language:lang,anchor:names[0],text,stops:Object.freeze(stops.map(p=>Object.freeze({
-   plannerId:p.id,name:p.name,matchType:'ordered-waypoint',provenance:p.sourceGrade
-  }))),routing:'indicative-only',mode,explicitWaypoints:true,
-  optionalStops:Object.freeze(hints.map(p=>({plannerId:p.id,name:p.name}))),
+  return Object.freeze({ok:true,language:lang,anchor:names[0],text,stops:Object.freeze(stops.map(p=>enrichStop(p,lang))),routing:'indicative-only',mode,explicitWaypoints:true,
+  optionalStops:Object.freeze(hints.map(p=>enrichStop(p,lang))),
   disclaimer:t.note});
  }
  // A08.2 routes are now understood before the one-zone A06 fallback.
- window.A08JourneyEngine=Object.freeze({version:'0.1.0',propose,reset,mentioned,hasRouteIntent,
+ window.A08JourneyEngine=Object.freeze({version:'0.2.0',propose,reset,mentioned,hasRouteIntent,
    state:()=>Object.freeze({...memory,ids:[...memory.ids]})});
  window.A06RouteProposals=Object.freeze({version:'0.4.0-lab-route',propose});
 })();
