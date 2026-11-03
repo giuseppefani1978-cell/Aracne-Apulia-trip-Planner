@@ -1,0 +1,7 @@
+/* Isolated Lab chrome; not loaded in production. */
+#a07Ribbon{position:sticky;top:0;z-index:6000;background:#352250;color:white;padding:9px 12px;display:flex;align-items:center;flex-wrap:wrap;gap:8px 14px;font-family:Outfit,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;box-shadow:0 4px 14px #22153530}
+#a07Ribbon strong{font-weight:850;font-size:13px;white-space:nowrap}
+#a07Ribbon span{font-size:12px;flex:1;min-width:140px}
+#a07Ribbon button{border:1px solid #ffffff88;background:#ffffff18;color:white;border-radius:9px;padding:7px 9px;font:600 12px inherit;cursor:pointer}
+#sharedOpen,#v51Invite{opacity:.7}
+@media(max-width:600px){#a07Ribbon{padding:calc(7px + env(safe-area-inset-top)) 10px 8px;gap:4px 9px}#a07Ribbon span{font-size:10px}#a07Ribbon strong{font-size:11px}#a07Ribbon button{padding:5px 8px;font-size:10px}}
