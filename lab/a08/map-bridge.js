@@ -176,7 +176,7 @@
     if(!selected.length)return {ok:false,reason:'no-valid-place'};
     show('map');
     // The Planner schedules drawMap() 40ms after show('map'). Draw AFTER it.
-    setTimeout(()=>{lastPaintSignature='';repaint()},110);
+    setTimeout(repaint,110);
     return {ok:true,ids:[...selected],mode:route?'indicative-route':'places'};
   }
   const originalDraw=drawMap;
