@@ -1,4 +1,4 @@
-/* A06.7 — Explicit voice dictation, editable transcript and optional read-aloud.
+/* A06.8 — Port Il Volo 1.1.9 single-utterance TTS, with A06.7 mic UX.
  * Browser-provided Web Speech API only, feature-detected. Microphone is never
  * started automatically. Browser speech processing may use platform services.
  * No custom audio recording, uploads, analytics, or storage.
@@ -34,26 +34,14 @@
  start.disabled=!SpeechRecognition;stopButton.disabled=true;read.disabled=true;
  controls.append(start,stopButton,read,status,details);
  let recognition=null,base='',finalWords='',lastAnswer='',runId=0;
- let readRun=0,readState='idle',chunks=[],chunkIndex=0,currentUtterance=null;
+ let readRun=0,readState='idle',currentUtterance=null,audioState='idle';
  const isReading=()=>readState==='reading';
  const ready=()=>SpeechRecognition?labels.ready:labels.unsupported;
- const textForVoice=answer=>String(answer||'').slice(0,3000)
+ const textForVoice=answer=>String(answer||'')
   .replace(/https?:\/\/\S+/gi,'').replace(/[•*_#]+/g,' ')
   .replace(/[ \t]+/g,' ').replace(/\s*\n+\s*/g,'. ').trim();
- function segment(text){
-  const output=[];let remaining=text;
-  while(remaining.length){
-   if(remaining.length<=170){output.push(remaining);break}
-   let cut=remaining.lastIndexOf('. ',170)+1;
-   if(cut<55)cut=remaining.lastIndexOf(' ',170);
-   if(cut<45)cut=170;
-   output.push(remaining.slice(0,cut).trim());
-   remaining=remaining.slice(cut).trim();
-  }
-  return output.filter(Boolean);
- }
  function stopSpeaking(){
-  readRun++;readState='idle';chunks=[];chunkIndex=0;currentUtterance=null;
+  readRun++;readState='idle';audioState='idle';currentUtterance=null;
   try{synth?.cancel?.()}catch(_){}
   read.textContent=labels.speak;read.dataset.reading='false';
   if(!recognition)status.textContent=ready();
@@ -69,28 +57,43 @@
  }
  function stop(){stopDictation();stopSpeaking()}
  function finishReading(message){
-  readState='idle';currentUtterance=null;chunks=[];chunkIndex=0;
+  readState='idle';currentUtterance=null;
   read.textContent=labels.speak;read.dataset.reading='false';
   status.textContent=message||ready();
  }
- function nextChunk(id){
-  if(id!==readRun||!isReading())return;
-  if(chunkIndex>=chunks.length){finishReading();return}
-  const utterance=new window.SpeechSynthesisUtterance(chunks[chunkIndex++]);
+ // This follows the working Il Volo Aracne Intelligence speech engine:
+ // one native SpeechSynthesisUtterance, locale-specific voice, rate 0.96,
+ // and normal browser onstart/onend/onerror lifecycle. Do not segment on iOS.
+ function speakIlVoloStyle(text,id){
+  const utterance=new window.SpeechSynthesisUtterance(text);
   currentUtterance=utterance;
-  utterance.lang=locale;utterance.rate=0.94;
+  utterance.lang=locale;utterance.rate=0.96;
   try{
    const voices=synth.getVoices?.()||[];
-   const selected=voices.find(v=>v.lang?.toLowerCase()===locale.toLowerCase())||
-    voices.find(v=>v.lang?.slice(0,2).toLowerCase()===locale.slice(0,2).toLowerCase());
+   const selected=voices.find(v=>v.lang===utterance.lang)||
+    voices.find(v=>(v.lang||'').toLowerCase().startsWith(lang));
    if(selected)utterance.voice=selected;
   }catch(_){}
-  utterance.onend=()=>{if(id!==readRun)return;nextChunk(id)};
-  utterance.onerror=()=>{if(id!==readRun)return;try{synth.cancel()}catch(_){}finishReading(labels.failed)};
+  utterance.onstart=()=>{
+   if(id!==readRun)return;
+   audioState='playing';
+   status.textContent={fr:'Lecture en cours…',it:'Lettura in corso…',en:'Reading aloud…',es:'Leyendo en voz alta…'}[lang]||'Reading…';
+  };
+  utterance.onend=()=>{
+   if(id!==readRun)return;
+   audioState='ended';finishReading();
+  };
+  utterance.onerror=event=>{
+   if(id!==readRun)return;
+   audioState='error:'+(event?.error||'unknown');
+   finishReading(({fr:'Lecture audio impossible dans ce navigateur',it:'Lettura audio non disponibile in questo browser',en:'Audio playback unavailable in this browser',es:'La lectura de audio no funciona en este navegador'}[lang]||'Speech unavailable')+' ('+(event?.error||'erreur')+')');
+  };
   try{
-   if(synth.paused)synth.resume();
-   synth.speak(utterance);
-  }catch(_){finishReading(labels.failed)}
+   synth.speak(utterance); // Must run synchronously in the user click gesture.
+  }catch(error){
+   audioState='error:'+(error?.name||'unknown');
+   finishReading(({fr:'Lecture audio impossible',it:'Audio non disponibile',en:'Speech unavailable',es:'Audio no disponible'}[lang]||'Speech unavailable'));
+  }
  }
  start.addEventListener('click',()=>{
   if(!SpeechRecognition)return;
@@ -135,11 +138,12 @@
   if(!canRead){status.textContent=labels.failed;return}
   if(!lastAnswer.trim())return;
   stopDictation();stopSpeaking();
-  chunks=segment(textForVoice(lastAnswer));
-  if(!chunks.length){finishReading(labels.failed);return}
-  readState='reading';read.textContent=labels.stopSpeech;read.dataset.reading='true';
-  status.textContent={fr:'Lecture en cours…',it:'Lettura in corso…',en:'Reading aloud…',es:'Leyendo en voz alta…'}[lang]||'Reading…';
-  nextChunk(readRun); // Invoke speech while inside the explicit click gesture.
+  const spokenText=textForVoice(lastAnswer);
+  if(!spokenText){finishReading(labels.failed);return}
+  readState='reading';audioState='starting';
+  read.textContent=labels.stopSpeech;read.dataset.reading='true';
+  status.textContent={fr:'Démarrage de la lecture…',it:'Avvio lettura…',en:'Starting playback…',es:'Iniciando lectura…'}[lang]||'Starting…';
+  speakIlVoloStyle(spokenText,readRun);
  });
  // Any new question or text entry cancels playback; user need not press Stop.
  input.addEventListener('focus',()=>{if(isReading())stopSpeaking()});
@@ -155,6 +159,6 @@
   },
   reset:()=>{stop();lastAnswer='';read.disabled=true},
   status:()=>Object.freeze({listening:Boolean(recognition),reading:isReading(),
-   lang:locale,webRecognitionAvailable:Boolean(SpeechRecognition),speechAvailable:canRead})
+   lang:locale,webRecognitionAvailable:Boolean(SpeechRecognition),speechAvailable:canRead,audioState})
  });
 })();
