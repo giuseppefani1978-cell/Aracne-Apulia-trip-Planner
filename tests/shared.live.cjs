@@ -1,3 +1,4 @@
+throw new Error('Legacy live tests disabled: use npm run test:lab; never test against beta.');
 const {JSDOM}=require(process.env.JSDOM_PATH||'jsdom');
 const fs=require('node:fs'),vm=require('node:vm'),assert=require('node:assert/strict'),path=require('node:path');
 const root=path.join(__dirname,'..'),clients=[];

@@ -1,0 +1,32 @@
+[
+  {
+    "path": "dist/index.html",
+    "url": "https://myapuliatrip.com/dist/index.html",
+    "sameAsBaseCommit": true,
+    "sha256": "73f9822ec2a9dff9c006d6f3c34fa4aa6802976cca3d1c457cfb9c8c514e3b03"
+  },
+  {
+    "path": "dist/shared-trips.js",
+    "url": "https://myapuliatrip.com/dist/shared-trips.js",
+    "sameAsBaseCommit": true,
+    "sha256": "e992c2462f179e42cc00662844cc877ad1f6a6d4545e78bb3e687f7cb6fd5226"
+  },
+  {
+    "path": "dist/v5.js",
+    "url": "https://myapuliatrip.com/dist/v5.js",
+    "sameAsBaseCommit": true,
+    "sha256": "5d72e0ff541a48d2e5ae0632b399db3c0fd5265381b8e81d321b5e93d6099261"
+  },
+  {
+    "path": "dist/beta-access.js",
+    "url": "https://myapuliatrip.com/dist/beta-access.js",
+    "sameAsBaseCommit": true,
+    "sha256": "041fb741303753848a74ffa92aa91bb747eaeb77d6a4d180dcaa67c94dcb2ce8"
+  },
+  {
+    "path": "lab/index.html",
+    "url": "https://myapuliatrip.com/lab/",
+    "sameAsBaseCommit": true,
+    "sha256": "cbf064f576e4f8fe7844b2ce0e663960ff57a7c9b328b1b4607b682f6766880f"
+  }
+]
