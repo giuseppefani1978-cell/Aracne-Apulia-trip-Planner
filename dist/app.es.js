@@ -141,7 +141,7 @@ function a06OpenNativeAdd(plannerId,expectedFingerprint) {
       (state.plan[requested]?.length||0)>=50){
       event.preventDefault();event.stopImmediatePropagation();
       document.querySelector('#modal')?.close();
-      toast('Le voyage ou les droits ont changé. Recommencez depuis Aracne Intelligence.');
+      toast('El viaje o los permisos han cambiado. Vuelve a empezar desde Aracne Intelligence.');
     }
   },{capture:true,once:true});
   return {ok:true,opened:true};

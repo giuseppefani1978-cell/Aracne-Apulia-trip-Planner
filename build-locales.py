@@ -52,10 +52,14 @@ $('#language').onchange=()=>{
 try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=id==='tripName'&&Object.prototype.hasOwnProperty.call(defaultNames,v.value)?defaultNames[v.value]:v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
 catch{}
 """.replace('LANG',json.dumps(lang))
-    out+=extra
+    # Preserve initialization order: language draft restoration precedes the catalog bridge.
+    bridge_marker = '\n\n/* A06.2 public catalog bridge:'
+    if out.count(bridge_marker) != 1:
+        raise ValueError('Expected exactly one Planner catalog bridge')
+    out = out.replace(bridge_marker, extra + bridge_marker, 1)
     (root/f'dist/app.{lang}.js').write_text(out)
-    page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js"')
-    page=page.replace('</head>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=5.0.0"><link rel="stylesheet" href="collaboration-v3.css?v=5.2.0"><link rel="stylesheet" href="v5.css?v=5.1.0"><link rel="stylesheet" href="beta.css?v=1.0.0-beta.9"></head>')
+    page=tr(html,col).replace('<html lang="fr">',f'<html lang="{lang}">').replace('src="app.js"',f'src="app.{lang}.js?v=5.2.1"')
+    page=page.replace('<script src="beta-access.js?v=1.0.0-beta.9"></script>', '<link rel="stylesheet" href="v2.css"><link rel="stylesheet" href="v21.css"><link rel="stylesheet" href="shared-trips.css"><link rel="stylesheet" href="experience.css?v=5.0.0"><link rel="stylesheet" href="collaboration-v3.css?v=5.2.0"><link rel="stylesheet" href="v5.css?v=5.1.0"><link rel="stylesheet" href="beta.css?v=1.0.0-beta.9"><script src="beta-access.js?v=1.0.0-beta.9"></script>')
     page=page.replace('</body>', '<script src="catalog-v2.js?v=1.0.0-beta.1"></script><script src="v2.js"></script><script src="v21.js"></script><script src="shared-trips.js?v=5.2.2"></script><script src="experience.js?v=5.1.0"></script><script src="collaboration-v3.js?v=5.2.1"></script><script src="v5.js?v=5.1.0"></script><script src="invitations-v51.js?v=5.2.2"></script><script src="beta-invitations.js?v=1.0.0-beta.11"></script><script src="beta.js?v=1.0.0-beta.10"></script></body>')
     # A06 pilot in Lab/development only: read-only tourism information.
     # Keep the original five Planner navigation tabs, data contracts and IDs intact.

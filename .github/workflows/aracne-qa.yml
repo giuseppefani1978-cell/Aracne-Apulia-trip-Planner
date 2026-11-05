@@ -18,6 +18,10 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci --ignore-scripts --no-audit
+      - name: Verify generated locales match source
+        run: |
+          npm run build
+          git diff --exit-code -- dist
       - name: Run unit and DOM regression tests
         run: npm test
       - name: Validate isolated Lab and synthetic database recovery
