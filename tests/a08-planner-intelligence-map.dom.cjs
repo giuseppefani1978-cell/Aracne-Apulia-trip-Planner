@@ -223,58 +223,69 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    chatButton.click(); // closes the panel, since it is currently open
    assert.equal(w.document.documentElement.classList.contains('a06-chat-open'),false);
    assert.equal(w.document.documentElement.style.getPropertyValue('--a06-view-height'),'');
-   // A08.3: two successive dictated questions must acquire two independent
-   // recognition instances; submit clears the editor and cannot recycle old audio.
-   const nativeDictate=w.document.querySelector('.a06-voice-start');
-   const mic=w.document.querySelector('.a08-keyboard-fallback');
+   // A09.2: restore the Il Volo browser microphone on iPhone. It must
+   // listen continuously, recover when WebKit ends a session and never
+   // recycle submitted text or restart after Send/Stop.
+   const mic=w.document.querySelector('.a06-voice-start');
+   const keyboard=w.document.querySelector('.a08-keyboard-fallback');
    const micStop=w.document.querySelector('.a06-voice-stop');
    const form=w.document.querySelector('#a06-panel form');
    assert.ok(w.A06Voice.supported);
-   assert.equal(w.A06Voice.status().nativeKeyboardDefault,true,'iOS defaults to native keyboard');
-   assert.match(nativeDictate.textContent,/iPhone/);
-   assert.match(mic.textContent,/Micro|mic|Mic/i,'experimental Web Speech is clearly labelled');
-   chatInput.blur();nativeDictate.click();
-   assert.equal(w.document.activeElement,chatInput,'native dictation button focuses editable field');
-   assert.equal(sessions.length,0,'native dictation never pretends to start browser speech capture');
-   assert.match(w.document.querySelector('.a06-voice-status').textContent,/clavier|tastiera|keyboard|teclado/i);
-   mic.click();assert.equal(sessions.length,1);
-   assert.equal(sessions[0].continuous,false,'iOS receives a separate recognition session for every question');
-   assert.equal(w.A06Voice.status().phase,'listening');
-   sessions[0].onresult?.({results:[{0:{transcript:'Que voir à Bari'},isFinal:true}]});
-   sessions[0].onend?.();
-   assert.equal(w.A06Voice.status().phase,'idle');
-   assert.equal(chatInput.value,'Que voir à Bari');
-   form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
-   assert.equal(chatInput.value,'','question sent: transcript cleared immediately');
-   await wait(50);
-   mic.click();assert.equal(sessions.length,2,'second dictation starts a fresh recognition engine');
-   sessions[1].onresult?.({results:[{0:{transcript:'Et ensuite Gallipoli'},isFinal:true}]});
-   sessions[1].onend?.();
-   assert.equal(chatInput.value,'Et ensuite Gallipoli','new transcription contains no previous text');
-   mic.click();assert.equal(sessions.length,3,'third dictation starts after natural onend');
-   w.A06Voice.stop();assert.equal(sessions[2].aborted,true);
-   assert.equal(w.A06Voice.status().phase,'closing','do not launch while WebKit releases previous mic');
-   sessions[2].onend?.();
-   assert.equal(w.A06Voice.status().phase,'idle');
+   assert.equal(w.A06Voice.status().nativeKeyboardDefault,false,'browser mic is primary on iPhone');
+   assert.match(mic.textContent,/Dicter|Detta|Dictate|Dictar/);
+   assert.match(keyboard.textContent,/Clavier|Tastiera|Keyboard|Teclado/);
    chatInput.value='';
-   mic.click();assert.equal(sessions.length,4,'microphone is unlocked after cancellation');
-   sessions[3].onend?.();
-   assert.equal(w.A06Voice.status().phase,'idle');
-   // A08.4: submitting while microphone is active must stop immediately.
-   mic.click();assert.equal(sessions.length,5);
-   sessions[4].onresult?.({results:[{0:{transcript:'Visiter Otranto'},isFinal:false}]});
-   assert.equal(chatInput.value,'Visiter Otranto');
+   chatInput.blur();
+   mic.click();
+   assert.equal(sessions.length,1,'first microphone click starts Web Speech without keyboard');
+   assert.equal(sessions[0].continuous,true,'matches continuous Il Volo recognition');
+   assert.equal(w.A06Voice.status().phase,'listening');
+   assert.notEqual(w.document.activeElement,chatInput,'browser recording does not focus iOS keyboard');
+   sessions[0].onresult?.({results:[{0:{transcript:'Que voir à Bari'},isFinal:true}]});
+   assert.equal(chatInput.value,'Que voir à Bari');
+   sessions[0].onend?.(); // Mobile Safari ended recognition without a user stop
+   await wait(330);
+   assert.equal(sessions.length,2,'Il Volo mechanism automatically relaunches an ended listening session');
+   assert.equal(sessions[1].continuous,true);
+   sessions[1].onresult?.({results:[{0:{transcript:'et les plages'},isFinal:true}]});
+   assert.match(chatInput.value,/Que voir à Bari et les plages/);
    form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
-   assert.equal(sessions[4].aborted,true,'Send aborts recognition, not merely its button');
-   assert.equal(chatInput.value,'','Send clears even an interim transcription');
-   sessions[4].onend?.();
-   assert.equal(w.A06Voice.status().phase,'idle','the microphone unlocks after submission');
-   mic.click();assert.equal(sessions.length,6,'fresh recognition can start again');
-   nativeDictate.click();
-   assert.equal(sessions[5].stopped,true,'switching to native iPhone keyboard stops experimental web mic');
-   assert.equal(w.document.activeElement,chatInput);
-   sessions[5].onend?.();
-   assert.equal(w.A06Voice.status().phase,'idle');
+   assert.equal(chatInput.value,'','sending clears the prior dictated question');
+   assert.equal(sessions[1].stopped,true,'sending stops browser recognition');
+   sessions[1].onend?.();
+   await wait(320);
+   assert.equal(sessions.length,2,'Send prevents background microphone restart');
+
+   // Five consecutive browser-mic questions: fresh engine and clean text each time.
+   for(let turn=0;turn<5;turn++){
+     for(let tries=0;tries<50&&w.document.querySelector('#a06-panel .a06-send').disabled;tries++)await wait(10);
+     mic.click();
+     const current=sessions.at(-1);
+     assert.equal(sessions.length,3+turn,'new question receives a fresh recognition instance');
+     assert.equal(current.continuous,true);
+     assert.equal(w.A06Voice.status().phase,'listening');
+     current.onresult?.({results:[{0:{transcript:'Question '+turn+' sur Lecce'},isFinal:true}]});
+     assert.equal(chatInput.value,'Question '+turn+' sur Lecce','no text from previous question leaks');
+     form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+     assert.equal(chatInput.value,'');
+     assert.equal(current.stopped,true,'microphone released after each sent question');
+     current.onend?.();
+   }
+   for(let tries=0;tries<50&&w.document.querySelector('#a06-panel .a06-send').disabled;tries++)await wait(10);
+   mic.click();
+   const stopSession=sessions.at(-1);
+   micStop.click();assert.equal(stopSession.stopped,true,'Stop closes recognition');
+   stopSession.onend?.();
+   const countAfterStop=sessions.length;
+   await wait(320);
+   assert.equal(sessions.length,countAfterStop,'manual Stop must not auto-restart');
+   mic.click();
+   const keyboardSession=sessions.at(-1);
+   keyboard.click();
+   assert.equal(keyboardSession.stopped,true,'keyboard fallback ends browser speech');
+   assert.equal(w.document.activeElement,chatInput,'keyboard fallback focuses field');
+   keyboardSession.onend?.();
+   
    w.document.querySelector('#sharedOpen').click();
    assert.match(w.document.querySelector('#modalBody').textContent,/synchron|sincron|sync/i);
    assert.equal(w.localStorage.getItem('aracne-beta-token-v1'),null);
