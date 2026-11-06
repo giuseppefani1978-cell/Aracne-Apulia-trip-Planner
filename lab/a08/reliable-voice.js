@@ -37,12 +37,9 @@
  const summary=document.createElement('summary');summary.textContent=tr.privTitle;
  const privacy=document.createElement('small');privacy.textContent=tr.privacy;
  details.append(summary,privacy);controls.append(start,finish,keyboard,read,status,details);
- if(webkitMobile){
-   start.textContent=({fr:'⌨️ Dictée iPhone',it:'⌨️ Dettatura iPhone',en:'⌨️ iPhone dictation',es:'⌨️ Dictado iPhone'}[lang]||'⌨️ iPhone dictation');
-   keyboard.textContent=({fr:'🎙 Micro web (essai)',it:'🎙 Micro web (test)',en:'🎙 Web mic (test)',es:'🎙 Micro web (prueba)'}[lang]||'🎙 Web mic (test)');
-   finish.hidden=true;
-   controls.classList.add('a08-native-voice-default');
- }
+ // Preserve the working Il Volo behavior on Safari: the main button starts
+ // Web Speech directly. The system keyboard remains an optional fallback.
+ keyboard.textContent=tr.keyboard;
  function openNativeKeyboard(){
    if(session)end({discard:false});
    input.focus();
@@ -51,6 +48,11 @@
  }
  let session=null,phase='idle',generation=0,base='',finalText='',lastMessage='',lastError=null;
  let discarded=false,everResult=false,watchStart=null,watchSilence=null,watchRelease=null;
+ let keepListening=false,stoppedByUser=true,restartTimer=null;
+ function clearRestart(){
+   if(restartTimer!==null)clearTimeout(restartTimer);
+   restartTimer=null;
+ }
  function clearTimer(which){
   const id=which==='start'?watchStart:which==='silence'?watchSilence:watchRelease;
   if(id!==null)clearTimeout(id);
@@ -61,8 +63,8 @@
  function clearAll(){clearTimer('start');clearTimer('silence');clearTimer('release')}
  function draw(message=''){
   // A tap during WebKit's delayed closing state is an explicit retry gesture.
-  start.disabled=webkitMobile?false:(!supported||phase==='starting'||phase==='listening');
-  keyboard.disabled=webkitMobile?(!supported||phase==='starting'||phase==='listening'):false;
+  start.disabled=!supported||phase==='starting'||phase==='listening';
+  keyboard.disabled=false;
   finish.disabled=phase==='idle'||phase==='closing';
   start.dataset.listening=String(phase==='listening'||phase==='starting');
   controls.dataset.voicePhase=phase;
@@ -72,16 +74,26 @@
   if(sr!==session||id!==generation)return;
   clearAll();
   session=null;phase='idle';
+  // Like Il Volo 1.2.6, resume listening after WebKit ends a session
+  // spontaneously. Never restart after Send, Stop, reset or page hiding.
+  if(keepListening&&!stoppedByUser&&!discarded){
+    lastMessage=tr.listening;draw(tr.listening);
+    clearRestart();
+    restartTimer=setTimeout(()=>{
+      restartTimer=null;
+      if(keepListening&&!stoppedByUser&&!session)launch(true);
+    },260);
+    return;
+  }
   const note=lastError||(discarded?tr.ready:everResult?tr.ended:tr.endSilent);
-  // Never put a late recognition result back in a submitted question.
-  discarded=false;lastMessage=note;
-  draw(note);
+  discarded=false;lastMessage=note;draw(note);
  }
  function unlockAfterBrowserHang(sr,id){
   clearTimer('release');
   watchRelease=setTimeout(()=>release(sr,id),1200);
  }
- function end({discard=false}={}){
+ function end({discard=false,manual=false}={}){
+  if(discard||manual){keepListening=false;stoppedByUser=true;clearRestart()}
   if(!session){phase='idle';draw();return;}
   const sr=session,id=generation;
   discarded=discarded||discard;
@@ -89,7 +101,9 @@
   phase='closing';lastMessage=discard?tr.ready:tr.closing;clearTimer('start');clearTimer('silence');draw();
   if(discard)sr.onresult=null;
   unlockAfterBrowserHang(sr,id);
-  try{if(discard&&typeof sr.abort==='function')sr.abort();else sr.stop()}catch(_){release(sr,id)}
+  // Il Volo explicitly stops recognition; handlers above prevent late text
+  // from leaking into the already submitted next question.
+  try{sr.stop()}catch(_){try{sr.abort()}catch(__){}release(sr,id)}
  }
  function armSilence(sr,id){
   clearTimer('silence');
@@ -104,14 +118,19 @@
     },9000);
   },6500);
  }
- function launch(){
-  if(!supported){draw(tr.unsupported);return;}
+ function launch(isRestart=false){
+  if(!supported){keepListening=false;draw(tr.unsupported);return;}
+  if(!isRestart){
+    if(phase==='starting'||phase==='listening')return;
+    clearRestart();keepListening=true;stoppedByUser=false;
+  }else if(!keepListening||stoppedByUser||session)return;
   if(phase==='closing'&&session){
     // A previous aborted recognition may never emit onend on Safari.
     // Detach the obsolete handlers and create a fresh instance in THIS click.
     const prior=session,id=generation;
     prior.onresult=null;prior.onstart=null;prior.onerror=null;prior.onend=null;
-    release(prior,id);
+    // Do not schedule an automatic restart for the obsolete recording.
+    discarded=true;release(prior,id);
   }
   if(phase!=='idle'||session)return;
   lastError=null;lastMessage='';discarded=false;everResult=false;
@@ -120,9 +139,9 @@
   let sr;try{sr=new Recognition()}catch(_){draw(tr.error);return}
   session=sr;phase='starting';draw();
   sr.lang=language;
-  // Continuous recognition is not consistently reliable in WebKit on iPhone.
-  // One question per session, followed by an explicit fresh click, is safer.
-  sr.continuous=!webkitMobile;
+  // Match Il Volo's continuous Web Speech session on iPhone/Android.
+  // Safari may still terminate it, in which case onend restarts automatically.
+  sr.continuous=true;
   sr.interimResults=true;sr.maxAlternatives=1;
   sr.onstart=()=>{
     if(sr!==session||id!==generation||phase!=='starting')return;
@@ -152,8 +171,9 @@
     // Safari emits "aborted" after the normal Send/Reset flow. It is not an error.
     if(phase==='closing'&&discarded)return;
     const reason=event?.error||'unknown';
-    lastError=['not-allowed','service-not-allowed','audio-capture'].includes(reason)?tr.denied:
-      reason==='no-speech'?tr.endSilent:tr.error;
+    const fatal=['not-allowed','service-not-allowed','audio-capture','network'].includes(reason);
+    if(fatal){keepListening=false;stoppedByUser=true;clearRestart();}
+    lastError=fatal?tr.denied:reason==='no-speech'?tr.endSilent:tr.error;
     lastMessage=lastError;
     // WebKit may emit an error without the matching onend.
     end({discard:false});
@@ -167,11 +187,11 @@
   },8000);
   try{input.blur();sr.start()}catch(_){lastError=tr.error;release(sr,id)}
  }
- start.addEventListener('click',()=>webkitMobile?openNativeKeyboard():launch());
- finish.addEventListener('click',()=>end({discard:false}));
+ start.addEventListener('click',()=>launch());
+ finish.addEventListener('click',()=>end({discard:false,manual:true}));
  keyboard.addEventListener('click',()=>{
-   if(webkitMobile){launch();return;}
-   end({discard:false});input.focus();draw(supported?tr.ready:tr.unsupported);
+   end({discard:true});input.focus();
+   lastMessage=nativeTip;draw(nativeTip);
  });
  function stop(){end({discard:true})}
  document.addEventListener('visibilitychange',()=>{if(document.hidden)stop()});
@@ -185,6 +205,6 @@
   status:()=>Object.freeze({phase,listening:phase==='starting'||phase==='listening',
    lang:language,webRecognitionAvailable:supported,speechAvailable:false,audioState:'disabled',
    transcript:input.value,lastError,messages:lastMessage,hasTranscript:everResult,
-   embeddedBrowser,webkitMobile,nativeKeyboardDefault:webkitMobile})
+   embeddedBrowser,webkitMobile,nativeKeyboardDefault:false,keepListening})
  });
 })();
