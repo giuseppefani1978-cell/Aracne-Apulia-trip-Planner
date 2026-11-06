@@ -91,3 +91,69 @@ $('#language').onchange=()=>{
 };
 try{const packed=sessionStorage.getItem('aracne-language-draft');if(packed){sessionStorage.removeItem('aracne-language-draft');const draft=JSON.parse(packed);if(['prepare','map','plan','budget','notes'].includes(draft.view)){day=Math.max(0,Math.min(state.days-1,Number(draft.day)||0));show(draft.view)}for(const [id,v] of Object.entries(draft.fields||{})){const e=document.getElementById(id);if(e&&e.type!=='file'&&e.closest('main')){e.value=id==='tripName'&&Object.prototype.hasOwnProperty.call(defaultNames,v.value)?defaultNames[v.value]:v.value;if(e.type==='checkbox')e.checked=v.checked}}}}
 catch{}
+
+
+/* A06.2 public catalog bridge: no trip state, no sessions, no mutations. 
+   Includes V2 additions because \`places\` is queried after all scripts loaded. */
+/* A06.3: the assistant only opens the EXISTING Planner add-step modal.
+ * The existing confirmAdd handler owns the write; capture guards enforce role,
+ * trip identity and revision AGAIN immediately before native confirmation.
+ */
+const a06FingerprintSalt = Math.random().toString(36).slice(2);
+function a06Fingerprint(input) {
+  // Opaque UI change detector, not an authorization token or a security hash.
+  let hash=2166136261;
+  for(let i=0;i<input.length;i++){hash^=input.charCodeAt(i);hash=Math.imul(hash,16777619)}
+  return a06FingerprintSalt+':'+(hash>>>0).toString(16)+':'+input.length;
+}
+function a06ProposalContext() {
+  const shared=window.aracneShared;
+  const session=shared?.getSession?.()||null;
+  const role=session?.role||'owner';
+  const id=session?.id||state.localTripId||localStorage.getItem('aracne-v5-active')||'local';
+  const status=session ? shared?._status?.() : 'local';
+  const plan=Array.isArray(state.plan) ? state.plan.map(row=>Array.isArray(row)?row.map(p=>[p.uid,p.id,p.name,p.time,p.status]):[]) : [];
+  const fingerprint=a06Fingerprint(JSON.stringify({id,role,revision:session?.revision??null,
+    name:state.name,start:state.start,days:state.days,plan}));
+  const busy=Boolean(session&&(shared?._busy?.()||shared?._pending?.()));
+  const canEdit=Boolean(['owner','edit'].includes(role)&&
+    (!session || status==='synced')&&!busy&&typeof state.name==='string'&&state.name.trim().length>0&&
+    window.aracneBetaAccess?.active!==false);
+  return Object.freeze({canEdit,role,status,days:state.days,fingerprint,
+    reason:canEdit?null:role==='read'?'read-only':'sync-or-permission'});
+}
+function a06OpenNativeAdd(plannerId,expectedFingerprint) {
+  const before=a06ProposalContext();
+  if(!before.canEdit||before.fingerprint!==expectedFingerprint)return {ok:false,reason:before.reason||'stale'};
+  const item=places.find(p=>p.id===plannerId);
+  if(!item||!Number.isInteger(before.days)||before.days<1||before.days>14)return {ok:false,reason:'missing-place'};
+  if(document.querySelector('#modal')?.open)return {ok:false,reason:'modal-busy'};
+  // Existing V2 choosePlace wrapper renders the Planner confirmation modal.
+  choosePlace(item.id);
+  const button=document.querySelector('#confirmAdd');
+  if(!button)return {ok:false,reason:'missing-confirm'};
+  button.addEventListener('click',event=>{
+    const now=a06ProposalContext();
+    const input=document.querySelector('#addDay');
+    const requested=Number(input?.value);
+    if(!now.canEdit||now.fingerprint!==before.fingerprint||
+      !Number.isInteger(requested)||requested<0||requested>=state.days||
+      (state.plan[requested]?.length||0)>=50){
+      event.preventDefault();event.stopImmediatePropagation();
+      document.querySelector('#modal')?.close();
+      toast('El viaje o los permisos han cambiado. Vuelve a empezar desde Aracne Intelligence.');
+    }
+  },{capture:true,once:true});
+  return {ok:true,opened:true};
+}
+window.A06PlannerCatalog = Object.freeze({
+  list: () => places.map(p => Object.freeze({
+    id: String(p.id), name: String(p.name),
+    lat: Number.isFinite(p.lat) ? p.lat : null,
+    lon: Number.isFinite(p.lon) ? p.lon : null,
+    zone: String(p.zone || ''),
+    tags: Array.isArray(p.tags) ? Object.freeze([...p.tags]) : Object.freeze([])
+  })),
+  proposalContext:a06ProposalContext,
+  openNativeAdd:a06OpenNativeAdd
+});

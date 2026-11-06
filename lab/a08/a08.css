@@ -1,0 +1,142 @@
+#a06-panel .a06-map-preview{display:block;width:100%;background:#f0eafb;color:#513389;border:1px solid #cbb9ed;border-radius:11px;padding:11px 13px;margin:9px 0;font-weight:700;cursor:pointer}
+#a08-map-preview{margin:14px 0;padding:15px;background:#f5f1fc;border:1px solid #ddd0f2;border-radius:14px;display:block;color:#3a2a54}
+#a08-map-preview[hidden]{display:none!important}
+#a08-map-preview>strong{display:block;font-size:17px}
+#a08-map-preview>p{font-size:12px;color:#695b77;margin:7px 0 12px}
+.a08-map-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid #e5def1}
+.a08-map-row span{font-size:14px;font-weight:650;min-width:0}
+.a08-map-row button{font-size:12px;max-width:46%;padding:8px 10px;border:1px solid #b3a4d6;border-radius:9px;background:#fff;color:#4c327b}
+.a08-map-pin{display:flex;align-items:center;justify-content:center;border:2px solid #fff;background:#6942ae;color:white;font-size:14px;font-weight:800;border-radius:50%;width:30px;height:30px;box-shadow:0 2px 7px #43237c55}
+#a08-map-preview>button{padding:8px 11px;border-radius:10px;margin-top:10px}
+@media(max-width:740px){#a06-open{bottom:calc(92px + env(safe-area-inset-bottom))!important;font-size:13px;padding:11px 12px}#a08-map-preview{padding:12px}.a08-map-row span{font-size:13px}}
+
+
+/* A08.1 — iOS keyboard & chat scrolling. Parent Planner has nav z-index:1000;
+   the A06 chat z-index:895 was appearing UNDER that fixed navigation. */
+@media (max-width:740px) {
+  html.a06-chat-open body nav { display:none!important; }
+  html.a06-chat-open #a06-panel {
+    z-index:2147483000!important;
+    display:flex!important;
+    flex-direction:column!important;
+    box-sizing:border-box!important;
+    /* A06.8 uses --a06-view-top/height, updated by visualViewport events. */
+    overscroll-behavior:contain;
+    contain:layout style;
+  }
+  html.a06-chat-open #a06-panel .a06-head {
+    flex:0 0 auto!important;
+    min-height:46px;
+    padding-top:8px!important;
+  }
+  html.a06-chat-open #a06-panel .a06-out {
+    flex:1 1 0!important;
+    min-height:0!important;
+    overflow-y:auto!important;
+    overflow-x:hidden!important;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    touch-action:pan-y;
+    scroll-behavior:auto!important;
+  }
+  html.a06-chat-open #a06-panel .a06-compose {
+    flex:0 0 auto!important;
+    min-height:0!important;
+    max-height:min(48dvh,270px);
+    overflow-x:hidden!important;
+    overflow-y:auto!important;
+    overscroll-behavior:contain;
+    padding-bottom: max(5px,env(safe-area-inset-bottom));
+  }
+  #a06-panel .a08-dismiss-keyboard {
+    display:none;
+    flex:0 0 auto;
+    border:1px solid #d9cdee;
+    border-radius:9px;
+    background:#fff;
+    color:#593891;
+    font-size:12px;
+    font-weight:700;
+    padding:7px 9px;
+    cursor:pointer;
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a08-dismiss-keyboard {display:inline-flex!important;align-items:center}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-head {padding:6px 10px!important}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-samples,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-route-action,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-details,
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-status {display:none!important}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-compose{
+    max-height:min(43dvh,160px);
+    padding-bottom:4px!important;
+    overflow-y:auto!important;
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice {padding:3px 10px 0!important;gap:5px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice button {min-height:32px!important;padding:5px 8px!important;font-size:11px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-form {padding:5px 9px!important;gap:7px}
+  html.a06-chat-open.a08-keyboard-open #a06-panel textarea.a06-input{
+    min-height:46px!important;height:46px!important;max-height:80px!important;
+    resize:none!important
+  }
+  html.a06-chat-open.a08-keyboard-open #a06-panel .a06-send{
+    min-height:46px!important;padding:8px 10px!important;
+  }
+  html.a06-chat-open #a06-panel .a06-input:focus-visible{
+    outline:2px solid #9b82ca;outline-offset:0;
+  }
+}
+
+/* A08.2: optional speech synthesis is deferred until Safari audio is validated. */
+#a06-panel .a06-voice-read {display:none!important}
+
+
+/* A08.3 — The original Il Volo web-weaver on the existing Planner map. */
+.a08-map-spider{
+ display:grid;place-items:center;width:34px;height:34px;border-radius:50%;
+ background:rgba(255,255,255,.96);border:2px solid rgba(193,38,132,.32);
+ box-shadow:0 5px 16px rgba(90,20,90,.24);font-size:19px;
+ transform-origin:center;animation:a08-weaver-pulse .8s ease-in-out infinite alternate;
+ pointer-events:none;
+}
+@keyframes a08-weaver-pulse{
+ from{transform:scale(.92) rotate(-5deg)}
+ to{transform:scale(1.08) rotate(5deg)}
+}
+#a08-map-preview .a08-replay-weave{
+ display:inline-flex;align-items:center;margin-top:10px;margin-right:8px;
+ padding:9px 12px;border-radius:10px;background:#fff;border:1px solid #c7aedc;
+ color:#603c8e;font-weight:700;font-size:13px;cursor:pointer;
+}
+#a08-map-preview .a08-replay-weave[hidden]{display:none!important}
+@media(prefers-reduced-motion:reduce){.a08-map-spider{animation:none}}
+
+/* A08.4 — keep verified context readable and microphone recovery visible. */
+#a06-panel .a08-stop-explanation{margin:7px 0 10px;display:grid;gap:6px;color:#4d445b;line-height:1.45;font-size:14px}
+#a06-panel .a08-stop-explanation p{margin:0;white-space:normal;overflow-wrap:anywhere}
+#a06-panel .a08-stop-tags{color:#6d5288;font-size:12px;font-weight:700}
+#a06-panel .a08-nearby{font-size:13px;color:#5b516b}
+#a06-panel .a08-stop-source{color:#6846a0;font-size:12px;text-decoration:underline;text-underline-offset:2px;display:inline-block}
+#a06-panel .a06-proposal li{padding:10px 0;border-bottom:1px solid #ece6f3}
+#a06-panel .a08-keyboard-fallback{padding:8px 11px;min-height:42px;background:#fff;color:#65458e;border:1px solid #d9c8e9;border-radius:10px;font-size:13px;font-weight:700}
+#a06-panel .a06-voice-status{flex:1 1 100%;line-height:1.35;overflow-wrap:anywhere;font-size:12px}
+#a06-panel .a06-voice[data-voice-phase="starting"] .a06-voice-start,
+#a06-panel .a06-voice[data-voice-phase="listening"] .a06-voice-start,
+#a06-panel .a06-voice[data-voice-phase="closing"] .a06-voice-start{opacity:.55}
+@media(max-width:740px){
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a08-keyboard-fallback{min-height:34px!important;font-size:11px;padding:5px 8px}
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice-status{display:block!important;font-size:11px}
+ html.a06-chat-open.a08-keyboard-open #a06-panel .a06-voice{flex-wrap:wrap}
+}
+
+/* A08.6 — Navigation explicitly recovered when leaving Intelligence for map. */
+#a08-map-navigation{display:flex;flex-wrap:wrap;gap:7px;align-items:center;margin:4px 0 12px}
+#a08-map-navigation button{border:1px solid #cbb9e3;background:#fff;color:#56337c;
+ border-radius:10px;padding:9px 11px;font-size:13px;font-weight:700;min-height:42px;cursor:pointer}
+#a08-map-navigation button[data-a08-view="intelligence"]{background:#f2ebfb}
+@media(max-width:740px){
+ html:not(.a06-chat-open) body nav{display:grid!important}
+ #a08-map-navigation{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ #a08-map-navigation button{width:100%;padding:10px 5px;font-size:12px}
+ #a06-panel .a06-voice.a08-native-voice-default .a06-voice-start{opacity:1!important}
+ #a06-panel .a06-voice.a08-native-voice-default .a08-keyboard-fallback{font-weight:500;font-size:11px}
+}

@@ -1,0 +1,8 @@
+{
+  "environment": "lab",
+  "syntheticOnly": true,
+  "origin": "http://127.0.0.1:4173",
+  "supabaseUrl": "http://127.0.0.1:54321",
+  "projectRef": "local-only",
+  "publishableKey": "sb_publishable_LOCAL_SYNTHETIC_NOT_A_REAL_KEY"
+}
