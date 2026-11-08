@@ -251,7 +251,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    assert.match(chatInput.value,/Que voir à Bari et les plages/);
    form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
    assert.equal(chatInput.value,'','sending clears the prior dictated question');
-   assert.equal(sessions[1].stopped,true,'sending stops browser recognition');
+   assert.equal(sessions[1].aborted,true,'sending aborts browser recognition');
    sessions[1].onend?.();
    await wait(320);
    assert.equal(sessions.length,2,'Send prevents background microphone restart');
@@ -268,7 +268,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
      assert.equal(chatInput.value,'Question '+turn+' sur Lecce','no text from previous question leaks');
      form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
      assert.equal(chatInput.value,'');
-     assert.equal(current.stopped,true,'microphone released after each sent question');
+     assert.equal(current.aborted,true,'native cancellation requested after each sent question');
      current.onend?.();
    }
    for(let tries=0;tries<50&&w.document.querySelector('#a06-panel .a06-send').disabled;tries++)await wait(10);
@@ -282,7 +282,7 @@ const a06=['dist/a06-puglia-data.js','dist/a06-places.js','dist/a06-knowledge.js
    mic.click();
    const keyboardSession=sessions.at(-1);
    keyboard.click();
-   assert.equal(keyboardSession.stopped,true,'keyboard fallback ends browser speech');
+   assert.equal(keyboardSession.aborted,true,'keyboard fallback aborts browser speech');
    assert.equal(w.document.activeElement,chatInput,'keyboard fallback focuses field');
    keyboardSession.onend?.();
    
