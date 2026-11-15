@@ -113,9 +113,12 @@
   if(discard||manual){keepListening=false;stoppedByUser=true;clearRestart()}
   if(!session){phase='idle';draw();return;}
   const sr=session,id=generation;
+  const alreadyDiscarded=discarded;
   discarded=discarded||discard;
   if(phase==='closing'||phase==='blocked'){
-   if(discard){sr.onresult=null;try{trace('abort-discard');sr.abort()}catch(error){trace('abort-exception',error.name)}}
+   // Capture and panel submit handlers may both call stop(). Cancel once,
+   // but still allow Send to escalate a previously graceful Finish.
+   if(discard&&!alreadyDiscarded){sr.onresult=null;try{trace('abort-discard');sr.abort()}catch(error){trace('abort-exception',error.name)}}
    return;
   }
   phase='closing';lastMessage=discard?tr.ready:tr.closing;clearTimer('start');clearTimer('silence');draw();

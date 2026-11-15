@@ -24,6 +24,9 @@ function setup(){
  const h=setup(),{w,tick,sessions,click,input}=h;
  click('.a06-voice-start');const first=sessions[0];first.result('Bari');
  w.document.querySelector('form').dispatchEvent(new w.Event('submit'));
+ // The panel submit handler also calls stop after the capture listener.
+ w.A06Voice.stop();
+ assert.equal(first.aborts,1,'duplicate Send handlers must cancel native recognition only once');
  tick(1500);
  assert.equal(sessions.length,1);
  assert.notEqual(w.A06Voice.status().phase,'idle','timeout must not pretend Safari acknowledged release');
@@ -51,3 +54,12 @@ function setup(){
  h.dom.window.close();
 }
 console.log('PASS A09 voice: delayed/missing end, native ownership, abort, final result, stale events, errors and private diagnostics');
+{
+ const h=setup();h.click('.a06-voice-start');const sr=h.sessions[0];
+ sr.result('Bari');h.click('.a06-voice-stop');assert.equal(sr.stops,1);
+ h.w.A06Voice.stop();h.w.A06Voice.stop();
+ assert.equal(sr.aborts,1,'Send escalates Finish once');
+ sr.result('stale');assert.equal(h.input.value,'Bari');
+ sr.ended();assert.equal(h.w.A06Voice.status().phase,'idle');
+ h.dom.window.close();
+}
